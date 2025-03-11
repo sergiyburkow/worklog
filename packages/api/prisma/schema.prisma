@@ -21,6 +21,49 @@ enum UserRole {
   GUEST
 }
 
+enum ProjectUserRole {
+  MANAGER
+  QA
+  ENGINEER
+  PADAWAN
+}
+
+enum ProjectStatus {
+  PLANNED
+  NEW
+  IN_PROGRESS
+  ON_HOLD
+  COMPLETED
+  SHIPPED
+  REJECTED
+  FINISHED
+}
+
+enum TaskStatus {
+  NEW
+  IN_PROGRESS
+  COMPLETED
+  ON_HOLD
+}
+
+enum TaskType {
+  PRODUCT
+  GENERAL
+}
+
+enum TaskLogStatus {
+  NEW
+  IN_PROGRESS
+  COMPLETED
+  ON_HOLD
+}
+
+enum TaskLogApprovalStatus {
+  APPROVED
+  NEEDS_FIXES
+  ON_HOLD
+}
+
 model User {
   id           String          @id @default(uuid())
   name         String
@@ -30,11 +73,9 @@ model User {
   role         UserRole       @default(ENGINEER)
   tokens       UserToken[]
   projects     ProjectUser[]
-  taskLogs     ProductTaskLog[]
-  verifiedLogs ProductTaskLog[] @relation("VerifiedBy")
+  taskLogs     TaskLog[]     @relation("CreatedBy")
   skills       UserSkill[]
   statusHistory TaskLogStatusHistory[]
-  productTasks  ProductTask[]
 
   @@map("Users")
 }
@@ -78,14 +119,6 @@ model ClientContact {
   @@map("ClientContacts")
 }
 
-model ProjectStatus {
-  id       String     @id @default(uuid())
-  name     String     @unique
-  projects Project[]
-
-  @@map("ProjectStatuses")
-}
-
 model Project {
   id            String         @id @default(uuid())
   name          String
@@ -93,114 +126,82 @@ model Project {
   startDate     DateTime      @map("start_date")
   deadline      DateTime
   actualEndDate DateTime?     @map("actual_end_date")
-  statusId      String        @map("status_id")
+  status        ProjectStatus @default(NEW)
+  quantity      Int?
   updatedAt     DateTime      @updatedAt @map("updated_at")
   client        Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  status        ProjectStatus @relation(fields: [statusId], references: [id], onDelete: Cascade)
   users         ProjectUser[]
-  productTasks  ProductTask[]
-  projectTasks  ProjectTask[]
+  tasks         Task[]
   products      Product[]
 
   @@map("Projects")
 }
 
 model ProjectUser {
-  userId    String   @map("user_id")
-  projectId String   @map("project_id")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String         @map("user_id")
+  projectId String         @map("project_id")
+  role      ProjectUserRole @map("role")
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project   Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@id([userId, projectId])
   @@map("ProjectUsers")
 }
 
-model TaskType {
-  id            String          @id @default(uuid())
-  name          String         @unique
-  productTasks  ProductTask[]
-  projectTasks  ProjectTask[]
+model Task {
+  id            String      @id @default(uuid())
+  name          String
+  description   String?
+  estimatedTime Decimal     @map("estimated_time")
+  complexity    Int?
+  tags          String?
+  type          TaskType    @default(GENERAL)
 
-  @@map("TaskTypes")
-}
+  // Relations
+  project       Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId     String      @map("project_id")
+  
+  logs          TaskLog[]
 
-model ProductTask {
-  id             String            @id @default(uuid())
-  projectId      String           @map("project_id")
-  userId         String           @map("user_id")
-  name           String
-  typeId         String           @map("type_id")
-  tags           String?
-  complexity     Int?
-  estimatedTime  Int?             @map("estimated_time")
-  updatedAt      DateTime         @updatedAt @map("updated_at")
-  project        Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type           TaskType         @relation(fields: [typeId], references: [id], onDelete: Cascade)
-  logs           ProductTaskLog[]
-
-  @@map("ProductTasks")
-}
-
-model ProjectTask {
-  id           String    @id @default(uuid())
-  projectId    String    @map("project_id")
-  name         String
-  typeId       String    @map("type_id")
-  tags         String?
-  complexity   Int?
-  trackedTime  Int?      @map("tracked_time")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
-  project      Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  type         TaskType  @relation(fields: [typeId], references: [id], onDelete: Cascade)
-
-  @@map("ProjectTasks")
+  @@map("tasks")
 }
 
 model Product {
-  id        String           @id @default(uuid())
-  projectId String          @map("project_id")
-  createdAt DateTime        @default(now()) @map("created_at")
-  project   Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  taskLogs  ProductTaskLog[]
+  id        String    @id @default(uuid())
+  code      String
+  projectId String    @map("project_id")
+  createdAt DateTime  @default(now()) @map("created_at")
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  taskLogs  TaskLog[]
 
+  @@unique([code, projectId])
   @@map("Products")
 }
 
-model ProductTaskLog {
+model TaskLog {
   id              String                  @id @default(uuid())
   userId          String                 @map("user_id")
   taskId          String                 @map("task_id")
-  productId       String                 @map("product_id")
-  completedAt     DateTime               @default(now()) @map("completed_at")
-  timeSpent       Int                    @map("time_spent")
-  verifiedByUserId String?               @map("verified_by_user_id")
-  user            User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  verifiedBy      User?                  @relation("VerifiedBy", fields: [verifiedByUserId], references: [id])
-  task            ProductTask            @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  product         Product                @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId       String?                @map("product_id")
+  completedAt     DateTime?              @map("completed_at")
+  registeredAt    DateTime               @map("registered_at")
+  timeSpent       Decimal?               @map("time_spent")
+  user            User                   @relation("CreatedBy", fields: [userId], references: [id], onDelete: Cascade)
+  task            Task                   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  product         Product?               @relation(fields: [productId], references: [id])
   statusHistory   TaskLogStatusHistory[]
 
-  @@map("ProductTaskLogs")
-}
-
-model TaskLogStatus {
-  id            String                  @id @default(uuid())
-  name          String                 @unique
-  statusHistory TaskLogStatusHistory[]
-
-  @@map("TaskLogStatuses")
+  @@map("task_logs")
 }
 
 model TaskLogStatusHistory {
-  id         String          @id @default(uuid())
-  taskLogId  String         @map("task_log_id")
-  statusId   String         @map("status_id")
-  userId     String         @map("user_id")
-  createdAt  DateTime       @default(now()) @map("created_at")
-  taskLog    ProductTaskLog @relation(fields: [taskLogId], references: [id], onDelete: Cascade)
-  status     TaskLogStatus  @relation(fields: [statusId], references: [id], onDelete: Cascade)
-  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String                @id @default(uuid())
+  taskLogId  String               @map("task_log_id")
+  status     TaskLogApprovalStatus
+  userId     String               @map("user_id")
+  createdAt  DateTime             @default(now()) @map("created_at")
+  taskLog    TaskLog              @relation(fields: [taskLogId], references: [id], onDelete: Cascade)
+  user       User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("TaskLogStatusHistory")
 }

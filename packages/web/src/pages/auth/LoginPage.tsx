@@ -14,6 +14,7 @@ import { Formik, Form } from 'formik';
 import * as Yup from 'yup';
 import type { LoginCredentials } from '../../types/auth';
 import { FormInput, Button } from '../../components/ui';
+import { useAuth } from '../../contexts/AuthContext';
 
 const validationSchema = Yup.object({
   email: Yup.string()
@@ -32,10 +33,13 @@ const initialValues: LoginCredentials = {
 export const LoginPage = () => {
   const toast = useToast();
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleSubmit = async (values: LoginCredentials, { setSubmitting }: { setSubmitting: (isSubmitting: boolean) => void }) => {
     try {
       const response = await authService.login(values);
+      
+      login(response.user);
       
       toast({
         title: 'Успішний вхід',

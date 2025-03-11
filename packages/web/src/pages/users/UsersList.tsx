@@ -10,26 +10,40 @@ import {
   Td,
   Button,
   useToast,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  ModalCloseButton,
-  FormControl,
-  FormLabel,
-  Select,
+  HStack,
+  Badge,
   useDisclosure,
 } from '@chakra-ui/react';
 import { api } from '../../lib/api';
+import { DashboardMenu } from '../../components/DashboardMenu';
+import { CreateUserModal } from '../../components/users/CreateUserModal';
 import { User, UserRole } from '../../types/auth';
+import { EditUserForm } from '../../components/users/EditUserForm';
+import { ConfirmModal } from '../../components/ui/ConfirmModal';
+
+const USER_ROLE_LABELS: Record<UserRole, string> = {
+  'ADMIN': 'Адміністратор',
+  'PROJECT_MANAGER': 'Менеджер проекту',
+  'ENGINEER': 'Інженер',
+  'QA': 'QA інженер',
+  'GUEST': 'Гість',
+};
+
+const USER_ROLE_COLORS: Record<UserRole, string> = {
+  'ADMIN': 'red',
+  'PROJECT_MANAGER': 'green',
+  'ENGINEER': 'blue',
+  'QA': 'purple',
+  'GUEST': 'gray',
+};
 
 export const UsersList = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDeleteLoading, setIsDeleteLoading] = useState(false);
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
   const toast = useToast();
 
   const fetchUsers = async () => {
@@ -56,21 +70,23 @@ export const UsersList = () => {
     onOpen();
   };
 
-  const handleRoleChange = async () => {
+  const handleDeleteClick = (user: User) => {
+    setSelectedUser(user);
+    onDeleteOpen();
+  };
+
+  const handleUpdateUser = async (userData: any) => {
     if (!selectedUser) return;
 
     setIsLoading(true);
     try {
-      await api.patch(`/users/${selectedUser.id}`, {
-        role: selectedUser.role,
-      });
-      
+      await api.put(`/users/${selectedUser.id}`, userData);
       await fetchUsers();
       onClose();
       
       toast({
         title: 'Успіх',
-        description: 'Роль користувача оновлено',
+        description: 'Дані користувача оновлено',
         status: 'success',
         duration: 5000,
         isClosable: true,
@@ -78,7 +94,7 @@ export const UsersList = () => {
     } catch (error) {
       toast({
         title: 'Помилка',
-        description: 'Не вдалося оновити роль користувача',
+        description: 'Не вдалося оновити дані користувача',
         status: 'error',
         duration: 5000,
         isClosable: true,
@@ -88,14 +104,14 @@ export const UsersList = () => {
     }
   };
 
-  const handleDeleteUser = async (userId: string) => {
-    if (!window.confirm('Ви впевнені, що хочете видалити цього користувача?')) {
-      return;
-    }
+  const handleDeleteUser = async () => {
+    if (!selectedUser) return;
 
+    setIsDeleteLoading(true);
     try {
-      await api.delete(`/users/${userId}`);
+      await api.delete(`/users/${selectedUser.id}`);
       await fetchUsers();
+      onDeleteClose();
       
       toast({
         title: 'Успіх',
@@ -112,91 +128,94 @@ export const UsersList = () => {
         duration: 5000,
         isClosable: true,
       });
+    } finally {
+      setIsDeleteLoading(false);
     }
   };
 
   return (
-    <Box p={5}>
-      <Heading mb={6}>Управління користувачами</Heading>
+    <>
+      <DashboardMenu />
+      <Box p={5}>
+        <HStack mb={6} justify="space-between">
+          <Heading>Користувачі</Heading>
+          <Button
+            colorScheme="blue"
+            onClick={onOpen}
+          >
+            Додати користувача
+          </Button>
+        </HStack>
 
-      <Table variant="simple">
-        <Thead>
-          <Tr>
-            <Th>Email</Th>
-            <Th>Ім'я</Th>
-            <Th>Роль</Th>
-            <Th>Дії</Th>
-          </Tr>
-        </Thead>
-        <Tbody>
-          {users.map((user) => (
-            <Tr key={user.id}>
-              <Td>{user.email}</Td>
-              <Td>{user.name}</Td>
-              <Td>{user.role}</Td>
-              <Td>
-                <Button
-                  colorScheme="blue"
-                  size="sm"
-                  mr={2}
-                  onClick={() => handleEditClick(user)}
-                >
-                  Редагувати
-                </Button>
-                <Button
-                  colorScheme="red"
-                  size="sm"
-                  onClick={() => handleDeleteUser(user.id)}
-                >
-                  Видалити
-                </Button>
-              </Td>
+        <Table variant="simple">
+          <Thead>
+            <Tr>
+              <Th>Ім'я</Th>
+              <Th>Email</Th>
+              <Th>Телефон</Th>
+              <Th>Роль</Th>
+              <Th>Дії</Th>
             </Tr>
-          ))}
-        </Tbody>
-      </Table>
+          </Thead>
+          <Tbody>
+            {users.map((user) => (
+              <Tr key={user.id}>
+                <Td>{user.name}</Td>
+                <Td>{user.email}</Td>
+                <Td>{user.phone || '-'}</Td>
+                <Td>
+                  <Badge colorScheme={USER_ROLE_COLORS[user.role]}>
+                    {USER_ROLE_LABELS[user.role]}
+                  </Badge>
+                </Td>
+                <Td>
+                  <Button
+                    size="sm"
+                    colorScheme="blue"
+                    mr={2}
+                    onClick={() => handleEditClick(user)}
+                  >
+                    Редагувати
+                  </Button>
+                  <Button
+                    size="sm"
+                    colorScheme="red"
+                    onClick={() => handleDeleteClick(user)}
+                  >
+                    Видалити
+                  </Button>
+                </Td>
+              </Tr>
+            ))}
+          </Tbody>
+        </Table>
 
-      <Modal isOpen={isOpen} onClose={onClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Редагування ролі користувача</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            {selectedUser && (
-              <FormControl>
-                <FormLabel>Роль</FormLabel>
-                <Select
-                  value={selectedUser.role}
-                  onChange={(e) => 
-                    setSelectedUser({ 
-                      ...selectedUser, 
-                      role: e.target.value as UserRole 
-                    })
-                  }
-                >
-                  <option value="ADMIN">Адміністратор</option>
-                  <option value="PROJECT_MANAGER">Менеджер проекту</option>
-                  <option value="ENGINEER">Інженер</option>
-                  <option value="QA">Тестувальник</option>
-                  <option value="GUEST">Гість</option>
-                </Select>
-              </FormControl>
-            )}
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={onClose}>
-              Скасувати
-            </Button>
-            <Button
-              colorScheme="blue"
-              onClick={handleRoleChange}
-              isLoading={isLoading}
-            >
-              Зберегти
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-    </Box>
+        <CreateUserModal
+          isOpen={isOpen}
+          onClose={onClose}
+          onSuccess={fetchUsers}
+        />
+
+        {selectedUser && (
+          <EditUserForm
+            user={selectedUser}
+            isOpen={isOpen}
+            onClose={onClose}
+            onSubmit={handleUpdateUser}
+            isLoading={isLoading}
+          />
+        )}
+
+        <ConfirmModal
+          isOpen={isDeleteOpen}
+          onClose={onDeleteClose}
+          onConfirm={handleDeleteUser}
+          title="Видалення користувача"
+          message={`Ви впевнені, що хочете видалити користувача ${selectedUser?.name}?`}
+          confirmText="Видалити"
+          isLoading={isDeleteLoading}
+        />
+      </Box>
+    </>
   );
 }; 

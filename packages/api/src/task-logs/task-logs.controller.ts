@@ -1,0 +1,37 @@
+import { Controller, Post, Body, UseGuards, Get, Param } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { TaskLogsService } from './task-logs.service';
+import { RegisterTaskLogDto } from './dto/register-task-log.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+
+@ApiTags('task-logs')
+@Controller('task-logs')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
+export class TaskLogsController {
+  constructor(private readonly taskLogsService: TaskLogsService) {}
+
+  @Post('register')
+  @ApiOperation({ summary: 'Register completed task' })
+  @ApiResponse({ status: 201, description: 'Task has been registered' })
+  async register(@Body() registerTaskLogDto: RegisterTaskLogDto) {
+    return this.taskLogsService.register(registerTaskLogDto);
+  }
+
+  @Get('project/:projectId')
+  @ApiOperation({ summary: 'Get all registered tasks for project' })
+  @ApiResponse({ status: 200, description: 'Return all registered tasks for project' })
+  async findByProject(@Param('projectId') projectId: string) {
+    return this.taskLogsService.findByProject(projectId);
+  }
+
+  @Get('project/:projectId/user/:userId')
+  @ApiOperation({ summary: 'Get all registered tasks for user in project' })
+  @ApiResponse({ status: 200, description: 'Return all registered tasks for user in project' })
+  async findByProjectAndUser(
+    @Param('projectId') projectId: string,
+    @Param('userId') userId: string,
+  ) {
+    return this.taskLogsService.findByProjectAndUser(projectId, userId);
+  }
+} 

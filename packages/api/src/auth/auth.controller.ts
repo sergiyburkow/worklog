@@ -1,15 +1,25 @@
-import { Controller, Post, Body } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Controller, Post, Body, Get, UseGuards, Request } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { AnonymousLoginDto } from './dto/anonymous-login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { JwtAuthGuard } from './jwt-auth.guard';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get current user data' })
+  @ApiResponse({ status: 200, description: 'Return current user data' })
+  async getCurrentUser(@Request() req) {
+    return req.user;
+  }
 
   @Post('login')
   @ApiOperation({ summary: 'Login with email and password' })
@@ -26,6 +36,8 @@ export class AuthController {
       registerDto.email,
       registerDto.password,
       registerDto.name,
+      registerDto.role,
+      registerDto.phone,
     );
   }
 

@@ -10,10 +10,11 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  phone?: string;
 }
 
 export interface LoginResponse {
-  accessToken: string;
+  access_token: string;
   user: User;
 }
 

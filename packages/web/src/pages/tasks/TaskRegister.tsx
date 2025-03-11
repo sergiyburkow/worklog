@@ -1,60 +1,59 @@
-import { useState } from 'react';
-import {
-  Box,
-  Heading,
-  Card,
-  CardBody,
-  FormControl,
-  FormLabel,
-  Input,
-  Textarea,
-  Button,
-  VStack,
-  useToast,
-  Tabs,
-  TabList,
-  TabPanels,
-  Tab,
-  TabPanel,
-} from '@chakra-ui/react';
-import { DashboardMenu } from '../../components/DashboardMenu';
-import { QRScanner } from '../../components/QRScanner';
+import React from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { Container, Heading, useToast } from '@chakra-ui/react';
+import { TaskRegisterForm } from '../../components/forms/TaskRegisterForm';
+import { api } from '../../lib/api';
+import { useAuth } from '../../hooks/useAuth';
 
-interface TaskFormData {
-  code: string;
-  name: string;
-  description: string;
-  estimatedTime: string;
-}
-
-export const TaskRegister = () => {
+export const TaskRegister: React.FC = () => {
+  const { projectId } = useParams<{ projectId: string }>();
+  const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
-  const [formData, setFormData] = useState<TaskFormData>({
-    code: '',
-    name: '',
-    description: '',
-    estimatedTime: '',
-  });
+  const { user } = useAuth();
 
-  const handleScan = (result: string) => {
-    setFormData(prev => ({ ...prev, code: result }));
-  };
+  const isProductTask = location.pathname.includes('/register/product');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  if (!projectId || !user) {
+    return null;
+  }
+
+  const handleSubmit = async (formData: {
+    productCode: string;
+    taskId: string;
+    completedAt: string;
+    userId?: string;
+    timeSpent?: string;
+    hours?: string;
+    minutes?: string;
+  }) => {
     try {
-      // TODO: Відправка даних на сервер
+      const payload = {
+        projectId,
+        taskId: formData.taskId,
+        completedAt: formData.completedAt,
+        userId: formData.userId,
+        type: isProductTask ? 'PRODUCT' : 'GENERAL',
+        ...(isProductTask 
+          ? { productCode: formData.productCode }
+          : { timeSpent: parseFloat(formData.timeSpent || '0') }
+        )
+      };
+
+      await api.post('/task-logs/register', payload);
       toast({
-        title: 'Завдання зареєстровано',
+        title: 'Успіх',
+        description: 'Задачу успішно зареєстровано',
         status: 'success',
         duration: 3000,
         isClosable: true,
       });
-    } catch (error) {
+      navigate(`/projects/${projectId}`);
+    } catch (error: any) {
+      console.error('Помилка при реєстрації задачі:', error);
       toast({
         title: 'Помилка',
-        description: 'Не вдалося зареєструвати завдання',
+        description: error.response?.data?.message || 'Не вдалося зареєструвати задачу',
         status: 'error',
         duration: 3000,
         isClosable: true,
@@ -63,79 +62,19 @@ export const TaskRegister = () => {
   };
 
   return (
-    <>
-      <DashboardMenu />
-      <Box p={5}>
-        <Heading mb={6}>Реєстрація завдання</Heading>
-
-        <Card>
-          <CardBody>
-            <Tabs isFitted variant="enclosed">
-              <TabList mb="1em">
-                <Tab>Сканування коду</Tab>
-                <Tab>Ручне введення</Tab>
-              </TabList>
-
-              <TabPanels>
-                <TabPanel>
-                  <QRScanner onScan={handleScan} />
-                </TabPanel>
-                <TabPanel>
-                  <form onSubmit={handleSubmit}>
-                    <VStack spacing={4}>
-                      <FormControl isRequired>
-                        <FormLabel>Код завдання</FormLabel>
-                        <Input
-                          value={formData.code}
-                          onChange={(e) => setFormData(prev => ({ ...prev, code: e.target.value }))}
-                          placeholder="Введіть код завдання"
-                        />
-                      </FormControl>
-
-                      <FormControl isRequired>
-                        <FormLabel>Назва завдання</FormLabel>
-                        <Input
-                          value={formData.name}
-                          onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                          placeholder="Введіть назву завдання"
-                        />
-                      </FormControl>
-
-                      <FormControl>
-                        <FormLabel>Опис</FormLabel>
-                        <Textarea
-                          value={formData.description}
-                          onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                          placeholder="Введіть опис завдання"
-                        />
-                      </FormControl>
-
-                      <FormControl isRequired>
-                        <FormLabel>Очікуваний час виконання (годин)</FormLabel>
-                        <Input
-                          type="number"
-                          value={formData.estimatedTime}
-                          onChange={(e) => setFormData(prev => ({ ...prev, estimatedTime: e.target.value }))}
-                          placeholder="Введіть очікуваний час"
-                        />
-                      </FormControl>
-
-                      <Button
-                        type="submit"
-                        colorScheme="blue"
-                        size="lg"
-                        width="100%"
-                      >
-                        Зареєструвати завдання
-                      </Button>
-                    </VStack>
-                  </form>
-                </TabPanel>
-              </TabPanels>
-            </Tabs>
-          </CardBody>
-        </Card>
-      </Box>
-    </>
+    <Container maxW="container.md" py={8}>
+      <Heading mb={6}>
+        {isProductTask ? 'Реєстрація виконаної продуктової задачі' : 'Реєстрація виконаної загальної задачі'}
+      </Heading>
+      <TaskRegisterForm
+        projectId={projectId}
+        currentUser={{
+          id: user.id,
+          role: user.role
+        }}
+        onSubmit={handleSubmit}
+        isProductTask={isProductTask}
+      />
+    </Container>
   );
 }; 

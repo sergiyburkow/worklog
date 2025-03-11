@@ -3,25 +3,22 @@ import { TaskLogStatusResponseDto } from './task-log-status-response.dto';
 
 export class TaskLogResponseDto {
   @ApiProperty()
-  id: number;
+  id: string;
 
   @ApiProperty()
-  userId: number;
+  userId: string;
 
   @ApiProperty()
-  taskId: number;
+  taskId: string;
 
-  @ApiProperty()
-  productId: number;
+  @ApiProperty({ required: false })
+  productId?: string;
 
   @ApiProperty()
   completedAt: Date;
 
-  @ApiProperty()
-  timeSpent: number;
-
   @ApiProperty({ required: false })
-  verifiedByUserId?: number;
+  timeSpent?: number;
 
   @ApiProperty({ type: [TaskLogStatusResponseDto] })
   statusHistory: TaskLogStatusResponseDto[];

@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectDto, UpdateProjectDto } from './dto';
+import { ProjectStatus, Prisma } from '@prisma/client';
 
 @Injectable()
 export class ProjectsService {
@@ -10,8 +11,20 @@ export class ProjectsService {
     const projects = await this.prisma.project.findMany({
       include: {
         users: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
+        client: {
           select: {
-            userId: true,
+            id: true,
+            name: true,
           },
         },
       },
@@ -19,7 +32,7 @@ export class ProjectsService {
 
     return projects.map(project => ({
       ...project,
-      userIds: project.users.map(u => u.userId),
+      projectUsers: project.users,
     }));
   }
 
@@ -28,8 +41,20 @@ export class ProjectsService {
       where: { id },
       include: {
         users: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
+        client: {
           select: {
-            userId: true,
+            id: true,
+            name: true,
           },
         },
       },
@@ -41,26 +66,31 @@ export class ProjectsService {
 
     return {
       ...project,
-      userIds: project.users.map(u => u.userId),
+      projectUsers: project.users,
     };
   }
 
   async create(createProjectDto: CreateProjectDto) {
-    const { userIds, ...projectData } = createProjectDto;
+    const { projectUsers, startDate, deadline, ...projectData } = createProjectDto;
 
     const project = await this.prisma.project.create({
       data: {
         ...projectData,
+        startDate: new Date(startDate),
+        deadline: new Date(deadline),
         users: {
-          create: userIds.map(userId => ({
+          create: projectUsers.map(({ userId, role }) => ({
             userId,
+            role,
           })),
         },
       },
       include: {
-        users: {
+        users: true,
+        client: {
           select: {
-            userId: true,
+            id: true,
+            name: true,
           },
         },
       },
@@ -68,36 +98,42 @@ export class ProjectsService {
 
     return {
       ...project,
-      userIds: project.users.map(u => u.userId),
+      projectUsers: project.users,
     };
   }
 
   async update(id: string, updateProjectDto: UpdateProjectDto) {
-    const { userIds, ...projectData } = updateProjectDto;
+    const { projectUsers, startDate, deadline, ...projectData } = updateProjectDto;
 
-    // If userIds is provided, update user associations
-    if (userIds) {
-      // First, remove all existing associations
-      await this.prisma.projectUser.deleteMany({
-        where: { projectId: id },
-      });
-
-      // Then create new associations
-      await this.prisma.projectUser.createMany({
-        data: userIds.map(userId => ({
-          projectId: id,
-          userId,
-        })),
+    // If projectUsers is provided, update user associations
+    if (projectUsers) {
+      await this.prisma.project.update({
+        where: { id },
+        data: {
+          users: {
+            deleteMany: {},
+            create: projectUsers.map(({ userId, role }) => ({
+              userId,
+              role,
+            })),
+          },
+        },
       });
     }
 
     const project = await this.prisma.project.update({
       where: { id },
-      data: projectData,
+      data: {
+        ...projectData,
+        ...(startDate && { startDate: new Date(startDate) }),
+        ...(deadline && { deadline: new Date(deadline) }),
+      },
       include: {
-        users: {
+        users: true,
+        client: {
           select: {
-            userId: true,
+            id: true,
+            name: true,
           },
         },
       },
@@ -105,7 +141,7 @@ export class ProjectsService {
 
     return {
       ...project,
-      userIds: project.users.map(u => u.userId),
+      projectUsers: project.users,
     };
   }
 
@@ -125,17 +161,51 @@ export class ProjectsService {
         },
       },
       include: {
-        users: {
-          select: {
-            userId: true,
-          },
-        },
+        users: true,
       },
     });
 
     return projects.map(project => ({
       ...project,
-      userIds: project.users.map(u => u.userId),
+      projectUsers: project.users,
+    }));
+  }
+
+  async findTasksByProject(id: string) {
+    const project = await this.prisma.project.findUnique({
+      where: { id },
+    });
+
+    if (!project) {
+      throw new NotFoundException(`Project with ID ${id} not found`);
+    }
+
+    return this.prisma.task.findMany({
+      where: {
+        projectId: id,
+      },
+    });
+  }
+
+  async findUsersByProject(id: string) {
+    const projectUsers = await this.prisma.projectUser.findMany({
+      where: { projectId: id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    return projectUsers.map(pu => ({
+      id: pu.user.id,
+      name: pu.user.name,
+      email: pu.user.email,
+      role: pu.role,
     }));
   }
 } 

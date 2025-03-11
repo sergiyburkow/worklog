@@ -2,7 +2,7 @@ import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nes
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { ProjectsService } from './projects.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ProjectResponseDto, CreateProjectDto, UpdateProjectDto } from './dto';
+import { ProjectResponseDto, CreateProjectDto, UpdateProjectDto, TaskResponseDto, ProjectUserResponseDto } from './dto';
 
 @ApiTags('projects')
 @Controller('projects')
@@ -51,5 +51,19 @@ export class ProjectsController {
   @ApiResponse({ status: 200, description: 'Return projects by user id', type: [ProjectResponseDto] })
   async findByUser(@Param('userId') userId: string) {
     return this.projectsService.findByUser(userId);
+  }
+
+  @Get(':id/tasks')
+  @ApiOperation({ summary: 'Get tasks by project id' })
+  @ApiResponse({ status: 200, description: 'Return tasks by project id', type: [TaskResponseDto] })
+  async findTasksByProject(@Param('id') id: string) {
+    return this.projectsService.findTasksByProject(id);
+  }
+
+  @Get(':id/users')
+  @ApiOperation({ summary: 'Get users by project id' })
+  @ApiResponse({ status: 200, description: 'Return users by project id', type: [ProjectUserResponseDto] })
+  async findUsersByProject(@Param('id') id: string) {
+    return this.projectsService.findUsersByProject(id);
   }
 } 

@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsDateString, IsUUID } from 'class-validator';
+import { IsNumber, IsDateString, IsUUID, IsEnum } from 'class-validator';
+import { TaskLogApprovalStatus } from '@prisma/client';
 
 export class CreateTaskLogDto {
   @ApiProperty()
@@ -22,7 +23,7 @@ export class CreateTaskLogDto {
   @IsNumber()
   timeSpent: number;
 
-  @ApiProperty()
-  @IsUUID()
-  statusId: string;
+  @ApiProperty({ enum: TaskLogApprovalStatus })
+  @IsEnum(TaskLogApprovalStatus)
+  status: TaskLogApprovalStatus;
 } 

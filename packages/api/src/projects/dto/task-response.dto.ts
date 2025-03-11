@@ -1,30 +1,27 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class ProductTaskResponseDto {
+export class TaskResponseDto {
   @ApiProperty()
-  id: number;
-
-  @ApiProperty()
-  projectId: number;
-
-  @ApiProperty()
-  userId: number;
+  id: string;
 
   @ApiProperty()
   name: string;
 
-  @ApiProperty()
-  typeId: number;
-
   @ApiProperty({ required: false })
-  tags?: string;
+  description?: string;
+
+  @ApiProperty()
+  estimatedTime: number;
 
   @ApiProperty({ required: false })
   complexity?: number;
 
   @ApiProperty({ required: false })
-  estimatedTime?: number;
+  tags?: string;
+
+  @ApiProperty({ enum: ['PRODUCT', 'GENERAL'] })
+  type: 'PRODUCT' | 'GENERAL';
 
   @ApiProperty()
-  updatedAt: Date;
+  projectId: string;
 } 

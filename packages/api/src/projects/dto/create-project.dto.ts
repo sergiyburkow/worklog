@@ -1,5 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsDateString, IsArray, IsUUID } from 'class-validator';
+import { ProjectStatus } from '@prisma/client';
+import { IsString, IsDateString, IsArray, IsUUID, IsEnum, IsOptional, IsInt, Min } from 'class-validator';
+import { ProjectUserDto } from './project-user.dto';
 
 export class CreateProjectDto {
   @ApiProperty()
@@ -19,11 +21,16 @@ export class CreateProjectDto {
   deadline: string;
 
   @ApiProperty()
-  @IsUUID()
-  statusId: string;
+  @IsEnum(ProjectStatus)
+  status: ProjectStatus;
 
-  @ApiProperty({ type: [String] })
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  quantity?: number;
+
+  @ApiProperty({ type: [ProjectUserDto] })
   @IsArray()
-  @IsUUID(undefined, { each: true })
-  userIds: string[];
+  projectUsers: ProjectUserDto[];
 } 

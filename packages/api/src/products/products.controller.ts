@@ -2,6 +2,7 @@ import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nes
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { ProductsService } from './products.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+
 import {
   ProductResponseDto,
   TaskLogResponseDto,
@@ -51,53 +52,4 @@ export class ProductsController {
     return this.productsService.remove(id);
   }
 
-  // Task Logs
-  @Get('logs')
-  @ApiOperation({ summary: 'Get all task logs' })
-  @ApiResponse({ status: 200, description: 'Return all task logs', type: [TaskLogResponseDto] })
-  async findAllTaskLogs() {
-    return this.productsService.findAllTaskLogs();
-  }
-
-  @Get('logs/:id')
-  @ApiOperation({ summary: 'Get task log by id' })
-  @ApiResponse({ status: 200, description: 'Return task log by id', type: TaskLogResponseDto })
-  async findTaskLogById(@Param('id') id: string) {
-    return this.productsService.findTaskLogById(id);
-  }
-
-  @Get(':id/logs')
-  @ApiOperation({ summary: 'Get task logs by product id' })
-  @ApiResponse({ status: 200, description: 'Return task logs by product id', type: [TaskLogResponseDto] })
-  async findTaskLogsByProduct(@Param('id') id: string) {
-    return this.productsService.findTaskLogsByProduct(id);
-  }
-
-  @Post('logs')
-  @ApiOperation({ summary: 'Create task log' })
-  @ApiResponse({ status: 201, description: 'Task log has been created', type: TaskLogResponseDto })
-  async createTaskLog(@Body() createTaskLogDto: CreateTaskLogDto) {
-    return this.productsService.createTaskLog(createTaskLogDto);
-  }
-
-  @Put('logs/:id/verify')
-  @ApiOperation({ summary: 'Verify task log' })
-  @ApiResponse({ status: 200, description: 'Task log has been verified', type: TaskLogResponseDto })
-  async verifyTaskLog(
-    @Param('id') id: string,
-    @Body('verifiedByUserId') verifiedByUserId: string,
-  ) {
-    return this.productsService.verifyTaskLog(id, verifiedByUserId);
-  }
-
-  @Put('logs/:id/status')
-  @ApiOperation({ summary: 'Update task log status' })
-  @ApiResponse({ status: 200, description: 'Task log status has been updated', type: TaskLogResponseDto })
-  async updateTaskLogStatus(
-    @Param('id') id: string,
-    @Body('statusId') statusId: string,
-    @Body('userId') userId: string,
-  ) {
-    return this.productsService.updateTaskLogStatus(id, statusId, userId);
-  }
-} 
+}

@@ -6,7 +6,7 @@ export const authService = {
     const { data } = await api.post<LoginResponse>('/auth/login', credentials);
     
     // Зберігаємо токен
-    localStorage.setItem('accessToken', data.accessToken);
+    localStorage.setItem('accessToken', data.access_token);
     
     // Створюємо об'єкт користувача з усіма необхідними полями
     const user: User = {
@@ -19,10 +19,7 @@ export const authService = {
     // Зберігаємо інформацію про користувача
     localStorage.setItem('user', JSON.stringify(user));
     
-    return {
-      accessToken: data.accessToken,
-      user
-    };
+    return data;
   },
 
   logout() {

@@ -37,15 +37,6 @@ export const EngineerDashboard = () => {
           </Card>
         </SimpleGrid>
 
-        <Button
-          colorScheme="blue"
-          size="lg"
-          mb={5}
-          onClick={() => navigate('/tasks/register')}
-        >
-          Зареєструвати нове завдання
-        </Button>
-
         <Card mb={5}>
           <CardBody>
             <Heading size="md" mb={4}>Поточний проект</Heading>

@@ -1,9 +1,29 @@
-import { Box, Heading, Button, SimpleGrid, Stat, StatLabel, StatNumber, Card, CardBody, Text } from '@chakra-ui/react';
+import { Box, Heading, Button, Text, HStack, Flex } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { DashboardMenu } from '../../components/DashboardMenu';
+import { ProjectCard, Project } from '../../components/ProjectCard';
+import { api } from '../../lib/api';
 
 export const AdminDashboard = () => {
   const navigate = useNavigate();
+  const [activeProjects, setActiveProjects] = useState<Project[]>([]);
+
+  useEffect(() => {
+    const fetchActiveProjects = async () => {
+      try {
+        const response = await api.get('/projects');
+        const projects = response.data.filter((project: Project) => 
+          ['NEW', 'IN_PROGRESS', 'ON_HOLD'].includes(project.status)
+        );
+        setActiveProjects(projects);
+      } catch (error) {
+        console.error('Помилка при завантаженні проектів:', error);
+      }
+    };
+
+    fetchActiveProjects();
+  }, []);
 
   return (
     <>
@@ -11,49 +31,48 @@ export const AdminDashboard = () => {
       <Box p={5}>
         <Heading mb={5}>Адміністративна панель</Heading>
         
-        <Button
-          colorScheme="blue"
-          size="lg"
-          mb={8}
-          onClick={() => navigate('/users')}
-        >
-          Управління користувачами
-        </Button>
+        <HStack spacing={4} mb={8}>
+          <Button
+            colorScheme="blue"
+            size="lg"
+            onClick={() => navigate('/users')}
+          >
+            Управління користувачами
+          </Button>
+          <Button
+            colorScheme="green"
+            size="lg"
+            onClick={() => navigate('/projects')}
+          >
+            Управління проектами
+          </Button>
+          <Button
+            colorScheme="purple"
+            size="lg"
+            onClick={() => navigate('/clients')}
+          >
+            Управління клієнтами
+          </Button>
+        </HStack>
 
-        <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={5}>
-          <Card>
-            <CardBody>
-              <Stat>
-                <StatLabel>Всього користувачів</StatLabel>
-                <StatNumber>0</StatNumber>
-              </Stat>
-            </CardBody>
-          </Card>
-          <Card>
-            <CardBody>
-              <Stat>
-                <StatLabel>Активних проектів</StatLabel>
-                <StatNumber>0</StatNumber>
-              </Stat>
-            </CardBody>
-          </Card>
-          <Card>
-            <CardBody>
-              <Stat>
-                <StatLabel>Завершених проектів</StatLabel>
-                <StatNumber>0</StatNumber>
-              </Stat>
-            </CardBody>
-          </Card>
-          <Card>
-            <CardBody>
-              <Stat>
-                <StatLabel>Клієнтів</StatLabel>
-                <StatNumber>0</StatNumber>
-              </Stat>
-            </CardBody>
-          </Card>
-        </SimpleGrid>
+        <Box mb={8}>
+          <Heading size="md" mb={4}>Активні проекти</Heading>
+          <Flex overflowX="auto" pb={4}>
+            <HStack spacing={4}>
+              {activeProjects.length > 0 ? (
+                activeProjects.map((project) => (
+                  <ProjectCard
+                    key={project.id}
+                    project={project}
+                    onClick={() => navigate(`/projects/${project.id}`)}
+                  />
+                ))
+              ) : (
+                <Text color="gray.500">Немає активних проектів</Text>
+              )}
+            </HStack>
+          </Flex>
+        </Box>
       </Box>
     </>
   );
