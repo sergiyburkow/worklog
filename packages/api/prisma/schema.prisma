@@ -16,8 +16,7 @@ datasource db {
 enum UserRole {
   ADMIN
   PROJECT_MANAGER
-  ENGINEER
-  QA
+  WORKER
   GUEST
 }
 
@@ -67,15 +66,19 @@ enum TaskLogApprovalStatus {
 model User {
   id           String          @id @default(uuid())
   name         String
+  lastName     String?
   email        String         @unique
   phone        String?
+  callSign     String?
   passwordHash String         @map("password_hash")
-  role         UserRole       @default(ENGINEER)
+  role         UserRole       @default(WORKER)
   tokens       UserToken[]
   projects     ProjectUser[]
   taskLogs     TaskLog[]     @relation("CreatedBy")
   skills       UserSkill[]
   statusHistory TaskLogStatusHistory[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
   @@map("Users")
 }

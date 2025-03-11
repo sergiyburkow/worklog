@@ -17,7 +17,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../lib/api';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
-import { DashboardMenu } from '../../components/DashboardMenu';
+import { AdminLayout } from '../../components/admin/AdminLayout';
 
 enum ProjectStatus {
   PLANNED = 'PLANNED',
@@ -136,73 +136,71 @@ export const ProjectsList = () => {
   };
 
   return (
-    <>
-      <DashboardMenu />
-      <Box p={5}>
-        <HStack mb={6} justify="space-between">
+    <AdminLayout>
+      <Box p={5} width="100%">
+        <HStack mb={6} justify="space-between" width="100%">
           <Heading>Проекти</Heading>
-          <Button
-            colorScheme="blue"
-            onClick={() => navigate('/projects/new')}
-          >
-            Створити проект
+          <Button colorScheme="blue" onClick={() => navigate('/projects/new')}>
+            Додати проект
           </Button>
         </HStack>
 
-        <Table variant="simple">
-          <Thead>
-            <Tr>
-              <Th>Назва</Th>
-              <Th>Клієнт</Th>
-              <Th>Кількість</Th>
-              <Th>Дата початку</Th>
-              <Th>Дедлайн</Th>
-              <Th>Статус</Th>
-              <Th>Дії</Th>
-            </Tr>
-          </Thead>
-          <Tbody>
-            {projects.map((project) => (
-              <Tr key={project.id}>
-                <Td>{project.name}</Td>
-                <Td>{project.client.name}</Td>
-                <Td>{project.quantity || '-'}</Td>
-                <Td>{new Date(project.startDate).toLocaleDateString()}</Td>
-                <Td>{new Date(project.deadline).toLocaleDateString()}</Td>
-                <Td>
-                  <Badge colorScheme={getStatusColor(project.status)}>
-                    {PROJECT_STATUS_LABELS[project.status]}
-                  </Badge>
-                </Td>
-                <Td>
-                  <Button
-                    colorScheme="blue"
-                    size="sm"
-                    mr={2}
-                    onClick={() => handleEditClick(project)}
-                  >
-                    Редагувати
-                  </Button>
-                  <Button
-                    colorScheme="red"
-                    size="sm"
-                    mr={2}
-                    onClick={() => handleDeleteClick(project)}
-                  >
-                    Видалити
-                  </Button>
-                  <Button
-                    colorScheme="teal"
-                    size="sm"
-                    onClick={() => navigate(`/projects/${project.id}`)}
-                  >
-                    Деталі
-                  </Button>
-                </Td>
+        <Box overflowX="auto" width="100%">
+          <Table variant="simple" width="100%">
+            <Thead>
+              <Tr>
+                <Th>Назва</Th>
+                <Th>Клієнт</Th>
+                <Th>Кількість</Th>
+                <Th>Дата початку</Th>
+                <Th>Дедлайн</Th>
+                <Th>Статус</Th>
+                <Th>Дії</Th>
               </Tr>
-            ))}
-          </Tbody>
-        </Table>
+            </Thead>
+            <Tbody>
+              {projects.map((project) => (
+                <Tr key={project.id}>
+                  <Td>{project.name}</Td>
+                  <Td>{project.client.name}</Td>
+                  <Td>{project.quantity || '-'}</Td>
+                  <Td>{new Date(project.startDate).toLocaleDateString()}</Td>
+                  <Td>{new Date(project.deadline).toLocaleDateString()}</Td>
+                  <Td>
+                    <Badge colorScheme={getStatusColor(project.status)}>
+                      {PROJECT_STATUS_LABELS[project.status]}
+                    </Badge>
+                  </Td>
+                  <Td>
+                    <Button
+                      colorScheme="blue"
+                      size="sm"
+                      mr={2}
+                      onClick={() => handleEditClick(project)}
+                    >
+                      Редагувати
+                    </Button>
+                    <Button
+                      colorScheme="red"
+                      size="sm"
+                      mr={2}
+                      onClick={() => handleDeleteClick(project)}
+                    >
+                      Видалити
+                    </Button>
+                    <Button
+                      colorScheme="teal"
+                      size="sm"
+                      onClick={() => navigate(`/projects/${project.id}`)}
+                    >
+                      Деталі
+                    </Button>
+                  </Td>
+                </Tr>
+              ))}
+            </Tbody>
+          </Table>
+        </Box>
 
         <ConfirmModal
           isOpen={isDeleteOpen}
@@ -214,6 +212,6 @@ export const ProjectsList = () => {
           isLoading={isDeleteLoading}
         />
       </Box>
-    </>
+    </AdminLayout>
   );
 }; 

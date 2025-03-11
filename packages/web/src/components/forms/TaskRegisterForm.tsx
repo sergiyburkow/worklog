@@ -48,7 +48,7 @@ interface TaskRegisterFormProps {
   projectId: string;
   currentUser: {
     id: string;
-    role: 'ADMIN' | 'PROJECT_MANAGER' | 'ENGINEER' | 'QA' | 'GUEST';
+    role: 'ADMIN' | 'PROJECT_MANAGER' | 'WORKER' | 'GUEST';
   };
   isProductTask: boolean;
 }

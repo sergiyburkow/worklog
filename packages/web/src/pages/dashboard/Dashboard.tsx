@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { AdminDashboard } from './AdminDashboard';
 import { PMDashboard } from './PMDashboard';
-import { EngineerDashboard } from './EngineerDashboard';
-import { QADashboard } from './QADashboard';
+import { WorkerDashboard } from './WorkerDashboard';
 import { GuestDashboard } from './GuestDashboard';
 import { UnknownRoleDashboard } from './UnknownRoleDashboard';
 
@@ -27,10 +26,8 @@ export const Dashboard = () => {
       return <AdminDashboard />;
     case 'PROJECT_MANAGER':
       return <PMDashboard />;
-    case 'ENGINEER':
-      return <EngineerDashboard />;
-    case 'QA':
-      return <QADashboard />;
+    case 'WORKER':
+      return <WorkerDashboard />;
     case 'GUEST':
       return <GuestDashboard />;
     default:

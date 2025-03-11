@@ -21,6 +21,8 @@ import {
 } from '@chakra-ui/react';
 import { api } from '../../lib/api';
 import { DashboardMenu } from '../../components/DashboardMenu';
+import { AdminLayout } from '../../components/admin/AdminLayout';
+import { GlobalFormWrapper } from '../../components/ui/GlobalFormWrapper';
 
 enum ProjectStatus {
   PLANNED = 'PLANNED',
@@ -205,159 +207,164 @@ export const EditProject = () => {
   };
 
   return (
-    <>
-      <DashboardMenu />
+    <AdminLayout>
       <Box p={5}>
-        <Heading mb={6}>{id ? 'Редагування проекту' : 'Створення проекту'}</Heading>
+        <Heading mb={6}>{id ? 'Редагування проекту' : 'Новий проект'}</Heading>
+        <GlobalFormWrapper>
+          <form onSubmit={handleSubmit}>
+            <VStack spacing={4} align="stretch">
+              <FormControl isRequired>
+                <FormLabel>Назва проекту</FormLabel>
+                <Input
+                  value={projectData.name}
+                  onChange={(e) => setProjectData({ ...projectData, name: e.target.value })}
+                />
+              </FormControl>
 
-        <form onSubmit={handleSubmit}>
-          <VStack spacing={4} align="stretch">
-            <FormControl isRequired>
-              <FormLabel>Назва проекту</FormLabel>
-              <Input
-                value={projectData.name}
-                onChange={(e) => setProjectData({ ...projectData, name: e.target.value })}
-              />
-            </FormControl>
+              <FormControl>
+                <FormLabel>Кількість шт</FormLabel>
+                <Input
+                  type="number"
+                  min={0}
+                  value={projectData.quantity || ''}
+                  onChange={(e) => setProjectData({ 
+                    ...projectData, 
+                    quantity: e.target.value ? parseInt(e.target.value) : undefined 
+                  })}
+                  placeholder="Введіть кількість"
+                />
+              </FormControl>
 
-            <FormControl>
-              <FormLabel>Кількість шт</FormLabel>
-              <Input
-                type="number"
-                min={0}
-                value={projectData.quantity || ''}
-                onChange={(e) => setProjectData({ 
-                  ...projectData, 
-                  quantity: e.target.value ? parseInt(e.target.value) : undefined 
-                })}
-                placeholder="Введіть кількість"
-              />
-            </FormControl>
-
-            <FormControl isRequired>
-              <FormLabel>Клієнт</FormLabel>
-              <Select
-                value={projectData.clientId}
-                onChange={(e) => setProjectData({ ...projectData, clientId: e.target.value })}
-              >
-                <option value="">Оберіть клієнта</option>
-                {clients.map((client) => (
-                  <option key={client.id} value={client.id}>
-                    {client.name}
-                  </option>
-                ))}
-              </Select>
-            </FormControl>
-
-            <FormControl isRequired>
-              <FormLabel>Дата початку</FormLabel>
-              <Input
-                type="date"
-                value={projectData.startDate}
-                onChange={(e) => setProjectData({ ...projectData, startDate: e.target.value })}
-              />
-            </FormControl>
-
-            <FormControl isRequired>
-              <FormLabel>Дедлайн</FormLabel>
-              <Input
-                type="date"
-                value={projectData.deadline}
-                onChange={(e) => setProjectData({ ...projectData, deadline: e.target.value })}
-              />
-            </FormControl>
-
-            <FormControl isRequired>
-              <FormLabel>Статус</FormLabel>
-              <Select
-                value={projectData.status}
-                onChange={(e) => setProjectData({ ...projectData, status: e.target.value as ProjectStatus })}
-              >
-                {Object.entries(PROJECT_STATUS_LABELS).map(([status, label]) => (
-                  <option key={status} value={status}>
-                    {label}
-                  </option>
-                ))}
-              </Select>
-            </FormControl>
-
-            <FormControl>
-              <FormLabel>Учасники проекту</FormLabel>
-              <HStack>
+              <FormControl isRequired>
+                <FormLabel>Клієнт</FormLabel>
                 <Select
-                  value={selectedUser}
-                  onChange={(e) => setSelectedUser(e.target.value)}
-                  placeholder="Оберіть користувача"
+                  value={projectData.clientId}
+                  onChange={(e) => setProjectData({ ...projectData, clientId: e.target.value })}
                 >
-                  {users
-                    .filter(user => !projectData.projectUsers.some(pu => pu.userId === user.id))
-                    .map((user) => (
-                      <option key={user.id} value={user.id}>
-                        {user.name}
-                      </option>
-                    ))}
+                  <option value="">Оберіть клієнта</option>
+                  {clients.map((client) => (
+                    <option key={client.id} value={client.id}>
+                      {client.name}
+                    </option>
+                  ))}
                 </Select>
+              </FormControl>
+
+              <FormControl isRequired>
+                <FormLabel>Дата початку</FormLabel>
+                <Input
+                  type="date"
+                  value={projectData.startDate}
+                  onChange={(e) => setProjectData({ ...projectData, startDate: e.target.value })}
+                />
+              </FormControl>
+
+              <FormControl isRequired>
+                <FormLabel>Дедлайн</FormLabel>
+                <Input
+                  type="date"
+                  value={projectData.deadline}
+                  onChange={(e) => setProjectData({ ...projectData, deadline: e.target.value })}
+                />
+              </FormControl>
+
+              <FormControl isRequired>
+                <FormLabel>Статус</FormLabel>
                 <Select
-                  value={selectedRole}
-                  onChange={(e) => setSelectedRole(e.target.value as ProjectUserRole)}
+                  value={projectData.status}
+                  onChange={(e) => setProjectData({ ...projectData, status: e.target.value as ProjectStatus })}
                 >
-                  {Object.entries(PROJECT_USER_ROLE_LABELS).map(([role, label]) => (
-                    <option key={role} value={role}>
+                  {Object.entries(PROJECT_STATUS_LABELS).map(([status, label]) => (
+                    <option key={status} value={status}>
                       {label}
                     </option>
                   ))}
                 </Select>
-                <Button onClick={handleAddUser}>
-                  Додати
+              </FormControl>
+
+              <FormControl>
+                <FormLabel>Учасники проекту</FormLabel>
+                <HStack>
+                  <Select
+                    value={selectedUser}
+                    onChange={(e) => setSelectedUser(e.target.value)}
+                    placeholder="Оберіть користувача"
+                  >
+                    {users
+                      .filter(user => !projectData.projectUsers.some(pu => pu.userId === user.id))
+                      .map((user) => (
+                        <option key={user.id} value={user.id}>
+                          {user.name}
+                        </option>
+                      ))}
+                  </Select>
+                  <Select
+                    value={selectedRole}
+                    onChange={(e) => setSelectedRole(e.target.value as ProjectUserRole)}
+                  >
+                    {Object.entries(PROJECT_USER_ROLE_LABELS).map(([role, label]) => (
+                      <option key={role} value={role}>
+                        {label}
+                      </option>
+                    ))}
+                  </Select>
+                  <Button onClick={handleAddUser}>
+                    Додати
+                  </Button>
+                </HStack>
+              </FormControl>
+
+              <Table variant="simple" size="sm">
+                <Thead>
+                  <Tr>
+                    <Th>Ім'я</Th>
+                    <Th>Роль</Th>
+                    <Th>Дії</Th>
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  {projectData.projectUsers.map((projectUser) => {
+                    const user = users.find(u => u.id === projectUser.userId);
+                    return (
+                      <Tr key={projectUser.userId}>
+                        <Td>{user?.name || 'Невідомий користувач'}</Td>
+                        <Td>
+                          <Badge colorScheme={PROJECT_USER_ROLE_COLORS[projectUser.role]}>
+                            {PROJECT_USER_ROLE_LABELS[projectUser.role]}
+                          </Badge>
+                        </Td>
+                        <Td>
+                          <Button
+                            size="sm"
+                            colorScheme="red"
+                            onClick={() => handleRemoveUser(projectUser.userId)}
+                          >
+                            Видалити
+                          </Button>
+                        </Td>
+                      </Tr>
+                    );
+                  })}
+                </Tbody>
+              </Table>
+
+              <HStack spacing={4} justify="flex-end">
+                <Button variant="ghost" onClick={() => navigate('/projects')}>
+                  Скасувати
+                </Button>
+                <Button
+                  colorScheme="blue"
+                  type="submit"
+                  isLoading={isLoading}
+                  width="100%"
+                >
+                  {id ? 'Зберегти' : 'Створити'}
                 </Button>
               </HStack>
-            </FormControl>
-
-            <Table variant="simple" size="sm">
-              <Thead>
-                <Tr>
-                  <Th>Ім'я</Th>
-                  <Th>Роль</Th>
-                  <Th>Дії</Th>
-                </Tr>
-              </Thead>
-              <Tbody>
-                {projectData.projectUsers.map((projectUser) => {
-                  const user = users.find(u => u.id === projectUser.userId);
-                  return (
-                    <Tr key={projectUser.userId}>
-                      <Td>{user?.name || 'Невідомий користувач'}</Td>
-                      <Td>
-                        <Badge colorScheme={PROJECT_USER_ROLE_COLORS[projectUser.role]}>
-                          {PROJECT_USER_ROLE_LABELS[projectUser.role]}
-                        </Badge>
-                      </Td>
-                      <Td>
-                        <Button
-                          size="sm"
-                          colorScheme="red"
-                          onClick={() => handleRemoveUser(projectUser.userId)}
-                        >
-                          Видалити
-                        </Button>
-                      </Td>
-                    </Tr>
-                  );
-                })}
-              </Tbody>
-            </Table>
-
-            <HStack spacing={4} justify="flex-end">
-              <Button variant="ghost" onClick={() => navigate('/projects')}>
-                Скасувати
-              </Button>
-              <Button type="submit" colorScheme="blue" isLoading={isLoading}>
-                {id ? 'Зберегти' : 'Створити'}
-              </Button>
-            </HStack>
-          </VStack>
-        </form>
+            </VStack>
+          </form>
+        </GlobalFormWrapper>
       </Box>
-    </>
+    </AdminLayout>
   );
 }; 

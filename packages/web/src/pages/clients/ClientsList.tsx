@@ -15,7 +15,7 @@ import {
 } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../lib/api';
-import { DashboardMenu } from '../../components/DashboardMenu';
+import { AdminLayout } from '../../components/admin/AdminLayout';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 
 interface Client {
@@ -92,68 +92,68 @@ export const ClientsList = () => {
   };
 
   return (
-    <>
-      <DashboardMenu />
-      <Box p={5}>
-        <HStack mb={6} justify="space-between">
-          <Heading>Клієнти</Heading>
-          <Button
-            colorScheme="blue"
-            onClick={() => navigate('/clients/new')}
-          >
-            Додати клієнта
-          </Button>
-        </HStack>
+    <AdminLayout>
+      <Box width="100%" maxW="100%">
+        <Box p={5}>
+          <HStack mb={6} justify="space-between" width="100%">
+            <Heading>Клієнти</Heading>
+            <Button colorScheme="blue" onClick={() => navigate('/clients/new')}>
+              Додати клієнта
+            </Button>
+          </HStack>
 
-        <Table variant="simple">
-          <Thead>
-            <Tr>
-              <Th>Назва</Th>
-              <Th>Опис</Th>
-              <Th>Адреса</Th>
-              <Th>Контактна інформація</Th>
-              <Th>Дії</Th>
-            </Tr>
-          </Thead>
-          <Tbody>
-            {clients.map((client) => (
-              <Tr key={client.id}>
-                <Td>{client.name}</Td>
-                <Td>{client.description || '-'}</Td>
-                <Td>{client.address || '-'}</Td>
-                <Td>{client.contactInfo || '-'}</Td>
-                <Td>
-                  <Button
-                    colorScheme="blue"
-                    size="sm"
-                    mr={2}
-                    onClick={() => handleEditClick(client)}
-                  >
-                    Редагувати
-                  </Button>
-                  <Button
-                    colorScheme="red"
-                    size="sm"
-                    onClick={() => handleDeleteClick(client)}
-                  >
-                    Видалити
-                  </Button>
-                </Td>
-              </Tr>
-            ))}
-          </Tbody>
-        </Table>
+          <Box overflowX="auto" width="100%">
+            <Table variant="simple" width="100%">
+              <Thead>
+                <Tr>
+                  <Th>Назва</Th>
+                  <Th>Опис</Th>
+                  <Th>Адреса</Th>
+                  <Th>Контактна інформація</Th>
+                  <Th>Дії</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+                {clients.map((client) => (
+                  <Tr key={client.id}>
+                    <Td>{client.name}</Td>
+                    <Td>{client.description || '-'}</Td>
+                    <Td>{client.address || '-'}</Td>
+                    <Td>{client.contactInfo || '-'}</Td>
+                    <Td>
+                      <Button
+                        colorScheme="blue"
+                        size="sm"
+                        mr={2}
+                        onClick={() => handleEditClick(client)}
+                      >
+                        Редагувати
+                      </Button>
+                      <Button
+                        colorScheme="red"
+                        size="sm"
+                        onClick={() => handleDeleteClick(client)}
+                      >
+                        Видалити
+                      </Button>
+                    </Td>
+                  </Tr>
+                ))}
+              </Tbody>
+            </Table>
+          </Box>
 
-        <ConfirmModal
-          isOpen={isDeleteOpen}
-          onClose={onDeleteClose}
-          onConfirm={handleDeleteClient}
-          title="Видалення клієнта"
-          message={`Ви впевнені, що хочете видалити клієнта "${selectedClient?.name}"?`}
-          confirmText="Видалити"
-          isLoading={isDeleteLoading}
-        />
+          <ConfirmModal
+            isOpen={isDeleteOpen}
+            onClose={onDeleteClose}
+            onConfirm={handleDeleteClient}
+            title="Видалення клієнта"
+            message={`Ви впевнені, що хочете видалити клієнта "${selectedClient?.name}"?`}
+            confirmText="Видалити"
+            isLoading={isDeleteLoading}
+          />
+        </Box>
       </Box>
-    </>
+    </AdminLayout>
   );
 }; 

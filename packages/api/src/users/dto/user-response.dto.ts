@@ -8,15 +8,27 @@ export class UserResponseDto {
   @ApiProperty()
   name: string;
 
+  @ApiProperty({ required: false })
+  lastName?: string;
+
   @ApiProperty()
   email: string;
 
   @ApiProperty({ required: false })
   phone?: string;
 
+  @ApiProperty({ required: false })
+  callSign?: string;
+
   @ApiProperty({ enum: UserRole })
   role: UserRole;
 
   @ApiProperty({ type: [String] })
   skills: string[];
+
+  @ApiProperty()
+  createdAt: Date;
+
+  @ApiProperty()
+  updatedAt: Date;
 } 

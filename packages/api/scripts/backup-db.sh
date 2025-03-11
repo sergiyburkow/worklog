@@ -6,7 +6,7 @@ mkdir -p "$BACKUP_DIR"
 
 # Створюємо бекап
 BACKUP_FILE="$BACKUP_DIR/$(date +%Y%m%d_%H%M%S).sql"
-/opt/homebrew/opt/postgresql@15/bin/pg_dump -h localhost -U maestro -d worklog -Fp --clean --if-exists > "$BACKUP_FILE"
+pg_dump -h localhost -U maestro -d worklog -Fp --clean --if-exists > "$BACKUP_FILE"
 
 if [ $? -eq 0 ]; then
     echo "Database backup created successfully: $(basename "$BACKUP_FILE")"

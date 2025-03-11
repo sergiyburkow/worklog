@@ -14,6 +14,8 @@ import {
 } from '@chakra-ui/react';
 import { api } from '../../lib/api';
 import { DashboardMenu } from '../../components/DashboardMenu';
+import { AdminLayout } from '../../components/admin/AdminLayout';
+import { GlobalFormWrapper } from '../../components/ui/GlobalFormWrapper';
 
 interface ClientData {
   name: string;
@@ -95,59 +97,65 @@ export const EditClient = () => {
   };
 
   return (
-    <>
-      <DashboardMenu />
+    <AdminLayout>
       <Box p={5}>
-        <Heading mb={6}>{id ? 'Редагування клієнта' : 'Створення клієнта'}</Heading>
+        <Heading mb={6}>{id ? 'Редагування клієнта' : 'Новий клієнт'}</Heading>
+        <GlobalFormWrapper>
+          <form onSubmit={handleSubmit}>
+            <VStack spacing={4} align="stretch">
+              <FormControl isRequired>
+                <FormLabel>Назва</FormLabel>
+                <Input
+                  value={clientData.name}
+                  onChange={(e) => setClientData({ ...clientData, name: e.target.value })}
+                />
+              </FormControl>
 
-        <form onSubmit={handleSubmit}>
-          <VStack spacing={4} align="stretch">
-            <FormControl isRequired>
-              <FormLabel>Назва</FormLabel>
-              <Input
-                value={clientData.name}
-                onChange={(e) => setClientData({ ...clientData, name: e.target.value })}
-              />
-            </FormControl>
+              <FormControl>
+                <FormLabel>Опис</FormLabel>
+                <Textarea
+                  value={clientData.description}
+                  onChange={(e) => setClientData({ ...clientData, description: e.target.value })}
+                  rows={4}
+                />
+              </FormControl>
 
-            <FormControl>
-              <FormLabel>Опис</FormLabel>
-              <Textarea
-                value={clientData.description}
-                onChange={(e) => setClientData({ ...clientData, description: e.target.value })}
-                rows={4}
-              />
-            </FormControl>
+              <FormControl>
+                <FormLabel>Адреса</FormLabel>
+                <Input
+                  value={clientData.address}
+                  onChange={(e) => setClientData({ ...clientData, address: e.target.value })}
+                />
+              </FormControl>
 
-            <FormControl>
-              <FormLabel>Адреса</FormLabel>
-              <Input
-                value={clientData.address}
-                onChange={(e) => setClientData({ ...clientData, address: e.target.value })}
-              />
-            </FormControl>
+              <FormControl>
+                <FormLabel>Контактна інформація</FormLabel>
+                <Textarea
+                  value={clientData.contactInfo}
+                  onChange={(e) => setClientData({ ...clientData, contactInfo: e.target.value })}
+                  rows={3}
+                  placeholder="Телефони, email, контактні особи тощо"
+                />
+              </FormControl>
 
-            <FormControl>
-              <FormLabel>Контактна інформація</FormLabel>
-              <Textarea
-                value={clientData.contactInfo}
-                onChange={(e) => setClientData({ ...clientData, contactInfo: e.target.value })}
-                rows={3}
-                placeholder="Телефони, email, контактні особи тощо"
-              />
-            </FormControl>
-
-            <HStack spacing={4} justify="flex-end">
-              <Button variant="ghost" onClick={() => navigate('/clients')}>
-                Скасувати
-              </Button>
-              <Button type="submit" colorScheme="blue" isLoading={isLoading}>
-                {id ? 'Зберегти' : 'Створити'}
-              </Button>
-            </HStack>
-          </VStack>
-        </form>
+              <HStack spacing={4} justify="flex-end">
+                <Button variant="ghost" onClick={() => navigate('/clients')}>
+                  Скасувати
+                </Button>
+                <Button
+                  mt={4}
+                  colorScheme="blue"
+                  type="submit"
+                  isLoading={isLoading}
+                  width="100%"
+                >
+                  {id ? 'Зберегти' : 'Створити'}
+                </Button>
+              </HStack>
+            </VStack>
+          </form>
+        </GlobalFormWrapper>
       </Box>
-    </>
+    </AdminLayout>
   );
 }; 

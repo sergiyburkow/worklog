@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { api } from '../lib/api';
 
-type UserRole = 'ADMIN' | 'PROJECT_MANAGER' | 'ENGINEER' | 'QA' | 'GUEST';
+type UserRole = 'ADMIN' | 'PROJECT_MANAGER' | 'WORKER' | 'GUEST';
 
 interface User {
   id: string;
@@ -12,7 +12,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (userData: User) => void;
   logout: () => Promise<void>;
 }
 
@@ -46,16 +46,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkAuth();
   }, []);
 
-  const login = async (email: string, password: string) => {
-    try {
-      const response = await api.post('/auth/login', { email, password });
-      const { accessToken, user: userData } = response.data;
-      localStorage.setItem('accessToken', accessToken);
-      setUser(userData);
-    } catch (error) {
-      console.error('Помилка при вході:', error);
-      throw error;
-    }
+  const login = (userData: User) => {
+    setUser(userData);
   };
 
   const logout = async () => {

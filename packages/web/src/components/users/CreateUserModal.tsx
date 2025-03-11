@@ -24,20 +24,21 @@ interface CreateUserModalProps {
   onSuccess: () => void;
 }
 
-const USER_ROLE_LABELS: Record<UserRole, string> = {
+const USER_ROLE_LABELS: Record<string, string> = {
   'ADMIN': 'Адміністратор',
-  'PROJECT_MANAGER': 'Менеджер проекту',
-  'ENGINEER': 'Інженер',
-  'QA': 'QA інженер',
+  'PROJECT_MANAGER': 'Менеджер проектів',
+  'WORKER': 'Працівник',
   'GUEST': 'Гість',
 };
 
 interface CreateUserData {
   name: string;
+  lastName?: string;
   email: string;
   password: string;
   phone: string;
   role: UserRole;
+  callSign: string;
 }
 
 export const CreateUserModal = ({ isOpen, onClose, onSuccess }: CreateUserModalProps) => {
@@ -45,10 +46,12 @@ export const CreateUserModal = ({ isOpen, onClose, onSuccess }: CreateUserModalP
   const [isLoading, setIsLoading] = useState(false);
   const [userData, setUserData] = useState<CreateUserData>({
     name: '',
+    lastName: '',
     email: '',
     password: '',
     phone: '',
-    role: 'ENGINEER',
+    role: 'WORKER',
+    callSign: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -70,10 +73,12 @@ export const CreateUserModal = ({ isOpen, onClose, onSuccess }: CreateUserModalP
       onClose();
       setUserData({
         name: '',
+        lastName: '',
         email: '',
         password: '',
         phone: '',
-        role: 'ENGINEER',
+        role: 'WORKER',
+        callSign: '',
       });
     } catch (error: any) {
       toast({
@@ -92,7 +97,7 @@ export const CreateUserModal = ({ isOpen, onClose, onSuccess }: CreateUserModalP
     <Modal isOpen={isOpen} onClose={onClose}>
       <ModalOverlay />
       <ModalContent>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} autoComplete="off">
           <ModalHeader>Створення нового користувача</ModalHeader>
           <ModalCloseButton />
           
@@ -104,6 +109,27 @@ export const CreateUserModal = ({ isOpen, onClose, onSuccess }: CreateUserModalP
                   value={userData.name}
                   onChange={(e) => setUserData({ ...userData, name: e.target.value })}
                   placeholder="Введіть ім'я"
+                  autoComplete="off"
+                />
+              </FormControl>
+
+              <FormControl>
+                <FormLabel>Прізвище</FormLabel>
+                <Input
+                  value={userData.lastName}
+                  onChange={(e) => setUserData({ ...userData, lastName: e.target.value })}
+                  placeholder="Введіть прізвище"
+                  autoComplete="off"
+                />
+              </FormControl>
+
+              <FormControl>
+                <FormLabel>Позивний</FormLabel>
+                <Input
+                  value={userData.callSign}
+                  onChange={(e) => setUserData({ ...userData, callSign: e.target.value })}
+                  placeholder="Введіть позивний"
+                  autoComplete="off"
                 />
               </FormControl>
 
@@ -114,6 +140,7 @@ export const CreateUserModal = ({ isOpen, onClose, onSuccess }: CreateUserModalP
                   value={userData.email}
                   onChange={(e) => setUserData({ ...userData, email: e.target.value })}
                   placeholder="Введіть email"
+                  autoComplete="off"
                 />
               </FormControl>
 
@@ -124,6 +151,7 @@ export const CreateUserModal = ({ isOpen, onClose, onSuccess }: CreateUserModalP
                   value={userData.password}
                   onChange={(e) => setUserData({ ...userData, password: e.target.value })}
                   placeholder="Введіть пароль"
+                  autoComplete="new-password"
                 />
               </FormControl>
 
@@ -133,6 +161,7 @@ export const CreateUserModal = ({ isOpen, onClose, onSuccess }: CreateUserModalP
                   value={userData.phone}
                   onChange={(e) => setUserData({ ...userData, phone: e.target.value })}
                   placeholder="Введіть номер телефону"
+                  autoComplete="off"
                 />
               </FormControl>
 

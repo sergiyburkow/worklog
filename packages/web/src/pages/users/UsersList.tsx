@@ -15,25 +15,24 @@ import {
   useDisclosure,
 } from '@chakra-ui/react';
 import { api } from '../../lib/api';
-import { DashboardMenu } from '../../components/DashboardMenu';
+import { AdminLayout } from '../../components/admin/AdminLayout';
 import { CreateUserModal } from '../../components/users/CreateUserModal';
 import { User, UserRole } from '../../types/auth';
 import { EditUserForm } from '../../components/users/EditUserForm';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
+import { useNavigate } from 'react-router-dom';
 
 const USER_ROLE_LABELS: Record<UserRole, string> = {
   'ADMIN': 'Адміністратор',
   'PROJECT_MANAGER': 'Менеджер проекту',
-  'ENGINEER': 'Інженер',
-  'QA': 'QA інженер',
+  'WORKER': 'Робітник',
   'GUEST': 'Гість',
 };
 
 const USER_ROLE_COLORS: Record<UserRole, string> = {
   'ADMIN': 'red',
   'PROJECT_MANAGER': 'green',
-  'ENGINEER': 'blue',
-  'QA': 'purple',
+  'WORKER': 'blue',
   'GUEST': 'gray',
 };
 
@@ -42,9 +41,23 @@ export const UsersList = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleteLoading, setIsDeleteLoading] = useState(false);
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
+  const { 
+    isOpen: isCreateOpen, 
+    onOpen: onCreateOpen, 
+    onClose: onCreateClose 
+  } = useDisclosure();
+  const { 
+    isOpen: isEditOpen, 
+    onOpen: onEditOpen, 
+    onClose: onEditClose 
+  } = useDisclosure();
+  const { 
+    isOpen: isDeleteOpen, 
+    onOpen: onDeleteOpen, 
+    onClose: onDeleteClose 
+  } = useDisclosure();
   const toast = useToast();
+  const navigate = useNavigate();
 
   const fetchUsers = async () => {
     try {
@@ -67,7 +80,7 @@ export const UsersList = () => {
 
   const handleEditClick = (user: User) => {
     setSelectedUser(user);
-    onOpen();
+    onEditOpen();
   };
 
   const handleDeleteClick = (user: User) => {
@@ -82,7 +95,7 @@ export const UsersList = () => {
     try {
       await api.put(`/users/${selectedUser.id}`, userData);
       await fetchUsers();
-      onClose();
+      onEditClose();
       
       toast({
         title: 'Успіх',
@@ -134,88 +147,87 @@ export const UsersList = () => {
   };
 
   return (
-    <>
-      <DashboardMenu />
-      <Box p={5}>
-        <HStack mb={6} justify="space-between">
-          <Heading>Користувачі</Heading>
-          <Button
-            colorScheme="blue"
-            onClick={onOpen}
-          >
-            Додати користувача
-          </Button>
-        </HStack>
+    <AdminLayout>
+      <Box width="100%" maxW="100%">
+        <Box p={5}>
+          <HStack mb={6} justify="space-between" width="100%">
+            <Heading>Користувачі</Heading>
+            <Button colorScheme="blue" onClick={onCreateOpen}>
+              Додати користувача
+            </Button>
+          </HStack>
 
-        <Table variant="simple">
-          <Thead>
-            <Tr>
-              <Th>Ім'я</Th>
-              <Th>Email</Th>
-              <Th>Телефон</Th>
-              <Th>Роль</Th>
-              <Th>Дії</Th>
-            </Tr>
-          </Thead>
-          <Tbody>
-            {users.map((user) => (
-              <Tr key={user.id}>
-                <Td>{user.name}</Td>
-                <Td>{user.email}</Td>
-                <Td>{user.phone || '-'}</Td>
-                <Td>
-                  <Badge colorScheme={USER_ROLE_COLORS[user.role]}>
-                    {USER_ROLE_LABELS[user.role]}
-                  </Badge>
-                </Td>
-                <Td>
-                  <Button
-                    size="sm"
-                    colorScheme="blue"
-                    mr={2}
-                    onClick={() => handleEditClick(user)}
-                  >
-                    Редагувати
-                  </Button>
-                  <Button
-                    size="sm"
-                    colorScheme="red"
-                    onClick={() => handleDeleteClick(user)}
-                  >
-                    Видалити
-                  </Button>
-                </Td>
-              </Tr>
-            ))}
-          </Tbody>
-        </Table>
+          <Box overflowX="auto" width="100%">
+            <Table variant="simple" width="100%">
+              <Thead>
+                <Tr>
+                  <Th>Ім'я</Th>
+                  <Th>Email</Th>
+                  <Th>Телефон</Th>
+                  <Th>Роль</Th>
+                  <Th>Дії</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+                {users.map((user) => (
+                  <Tr key={user.id}>
+                    <Td>{user.name}</Td>
+                    <Td>{user.email}</Td>
+                    <Td>{user.phone || '-'}</Td>
+                    <Td>
+                      <Badge colorScheme={USER_ROLE_COLORS[user.role]}>
+                        {USER_ROLE_LABELS[user.role]}
+                      </Badge>
+                    </Td>
+                    <Td>
+                      <Button
+                        size="sm"
+                        colorScheme="blue"
+                        mr={2}
+                        onClick={() => handleEditClick(user)}
+                      >
+                        Редагувати
+                      </Button>
+                      <Button
+                        size="sm"
+                        colorScheme="red"
+                        onClick={() => handleDeleteClick(user)}
+                      >
+                        Видалити
+                      </Button>
+                    </Td>
+                  </Tr>
+                ))}
+              </Tbody>
+            </Table>
+          </Box>
 
-        <CreateUserModal
-          isOpen={isOpen}
-          onClose={onClose}
-          onSuccess={fetchUsers}
-        />
-
-        {selectedUser && (
-          <EditUserForm
-            user={selectedUser}
-            isOpen={isOpen}
-            onClose={onClose}
-            onSubmit={handleUpdateUser}
-            isLoading={isLoading}
+          <CreateUserModal
+            isOpen={isCreateOpen}
+            onClose={onCreateClose}
+            onSuccess={fetchUsers}
           />
-        )}
 
-        <ConfirmModal
-          isOpen={isDeleteOpen}
-          onClose={onDeleteClose}
-          onConfirm={handleDeleteUser}
-          title="Видалення користувача"
-          message={`Ви впевнені, що хочете видалити користувача ${selectedUser?.name}?`}
-          confirmText="Видалити"
-          isLoading={isDeleteLoading}
-        />
+          {selectedUser && (
+            <EditUserForm
+              user={selectedUser}
+              isOpen={isEditOpen}
+              onClose={onEditClose}
+              onSubmit={handleUpdateUser}
+              isLoading={isLoading}
+            />
+          )}
+
+          <ConfirmModal
+            isOpen={isDeleteOpen}
+            onClose={onDeleteClose}
+            onConfirm={handleDeleteUser}
+            title="Видалення користувача"
+            message="Ви впевнені, що хочете видалити цього користувача?"
+            isLoading={isDeleteLoading}
+          />
+        </Box>
       </Box>
-    </>
+    </AdminLayout>
   );
 }; 

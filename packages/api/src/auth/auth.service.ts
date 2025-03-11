@@ -66,7 +66,7 @@ export class AuthService {
         email,
         name,
         passwordHash: hashedPassword,
-        role: role || UserRole.ENGINEER,
+        role: role || UserRole.WORKER,
         phone
       }
     });
