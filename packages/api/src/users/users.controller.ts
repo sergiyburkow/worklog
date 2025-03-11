@@ -1,8 +1,8 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Request, Patch } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { CreateUserDto, UpdateUserDto, UserResponseDto } from './dto';
+import { CreateUserDto, UpdateUserDto, UserResponseDto, UpdateProfileDto } from './dto';
 
 @ApiTags('users')
 @Controller('users')
@@ -58,5 +58,15 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'Skill has been removed from user' })
   async removeSkill(@Param('id') id: string, @Param('skillId') skillId: string) {
     return this.usersService.removeSkill(id, skillId);
+  }
+
+  @Get('profile')
+  getProfile(@Request() req) {
+    return this.usersService.findById(req.user.id);
+  }
+
+  @Patch('profile')
+  updateProfile(@Request() req, @Body() updateProfileDto: UpdateProfileDto) {
+    return this.usersService.updateProfile(req.user.id, updateProfileDto);
   }
 } 

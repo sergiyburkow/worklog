@@ -6,7 +6,10 @@ type UserRole = 'ADMIN' | 'PROJECT_MANAGER' | 'WORKER' | 'GUEST';
 interface User {
   id: string;
   name: string;
+  lastName?: string;
   email: string;
+  phone?: string;
+  callSign?: string;
   role: UserRole;
 }
 
@@ -14,6 +17,7 @@ interface AuthContextType {
   user: User | null;
   login: (userData: User) => void;
   logout: () => Promise<void>;
+  updateUser: (userData: User) => void;
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null);
@@ -50,6 +54,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(userData);
   };
 
+  const updateUser = (userData: User) => {
+    setUser(userData);
+  };
+
   const logout = async () => {
     try {
       await api.post('/auth/logout');
@@ -66,7 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

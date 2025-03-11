@@ -14,6 +14,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProjectDetails } from './pages/projects/ProjectDetails';
 import { RegisteredTasks } from './pages/tasks/RegisteredTasks';
+import { EditProfile } from './pages/profile/EditProfile';
 
 export default function App() {
   return (
@@ -142,6 +143,14 @@ export default function App() {
                   element={
                     <ProtectedRoute allowedRoles={['ADMIN']}>
                       <EditClient />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/profile" 
+                  element={
+                    <ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER', 'WORKER']}>
+                      <EditProfile />
                     </ProtectedRoute>
                   } 
                 />

@@ -40,6 +40,9 @@ export const DashboardMenu = () => {
             </Flex>
           </MenuButton>
           <MenuList>
+            <MenuItem onClick={() => navigate('/profile')}>
+              Мій профіль
+            </MenuItem>
             <MenuItem onClick={handleLogout}>
               Вийти
             </MenuItem>
