@@ -8,6 +8,11 @@ import { RegisteredTasks } from './pages/tasks/RegisteredTasks';
 import { AuthProvider } from './contexts/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { theme } from './theme';
+import { Dashboard } from './pages/dashboard/Dashboard';
+import { ClientsList } from './pages/clients/ClientsList';
+import { EditClient } from './pages/clients/EditClient';
+import { UsersList } from './pages/users/UsersList';
+import { ProjectDetails } from './pages/projects/ProjectDetails';
 
 function App() {
   return (
@@ -17,10 +22,26 @@ function App() {
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER', 'WORKER', 'GUEST']}>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/projects"
               element={
                 <ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER']}>
                   <ProjectsList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/projects/:id"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER']}>
+                  <ProjectDetails />
                 </ProtectedRoute>
               }
             />
@@ -56,6 +77,30 @@ function App() {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/clients"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER']}>
+                  <ClientsList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/clients/:id"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER']}>
+                  <EditClient />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/users"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN']}>
+                  <UsersList />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/" element={<LoginPage />} />
           </Routes>
         </AuthProvider>
@@ -63,5 +108,5 @@ function App() {
     </ChakraProvider>
   );
 }
-
 export default App;
+

@@ -1,36 +1,45 @@
 #!/bin/bash
 
-# Перевіряємо наявність бекапів
-BACKUP_DIR="$(dirname "$0")/../prisma/backup"
-backups=($(ls -1 "$BACKUP_DIR"/*.sql 2>/dev/null))
+# Додаємо шлях до PostgreSQL 15 в PATH
+export PATH="/opt/homebrew/opt/postgresql@15/bin:$PATH"
 
-if [ ${#backups[@]} -eq 0 ]; then
-    echo "No backup files found in $BACKUP_DIR/"
+# Перевіряємо версію psql
+PG_VERSION=$(psql --version | grep -oE '[0-9]+' | head -1)
+if [ "$PG_VERSION" != "15" ]; then
+    echo "Error: Wrong psql version. Expected 15, got $PG_VERSION"
     exit 1
 fi
 
-# Виводимо список доступних бекапів
-echo "Available backups:"
-for i in "${!backups[@]}"; do
-    echo "[$i] $(basename "${backups[$i]}")"
-done
-
-# Запитуємо користувача, який бекап відновити
-read -p "Enter the number of the backup to restore: " backup_number
-
-if ! [[ "$backup_number" =~ ^[0-9]+$ ]] || [ "$backup_number" -ge "${#backups[@]}" ]; then
-    echo "Error: Invalid backup number"
+# Перевіряємо наявність аргументу
+if [ "$#" -ne 1 ]; then
+    echo "Usage: $0 <backup_file>"
     exit 1
 fi
 
-selected_backup="${backups[$backup_number]}"
-echo "Restoring from: $(basename "$selected_backup")"
+BACKUP_FILE="$1"
 
-# Відновлюємо базу даних
-/opt/homebrew/opt/postgresql@15/bin/psql -h localhost -U maestro -d worklog < "$selected_backup"
+# Перевіряємо існування файлу
+if [ ! -f "$BACKUP_FILE" ]; then
+    echo "Error: Backup file not found: $BACKUP_FILE"
+    exit 1
+fi
+
+# Якщо це повний бекап (містить _full.sql в імені)
+if [[ "$BACKUP_FILE" == *"_full.sql" ]]; then
+    echo "Restoring full backup..."
+    psql worklog -f "$BACKUP_FILE"
+else
+    # Якщо це бекап тільки даних
+    echo "Restoring data backup..."
+    # Спочатку скидаємо базу і застосовуємо міграції
+    echo "Resetting database and applying migrations..."
+    npx prisma migrate reset --force
+    # Потім відновлюємо дані
+    psql worklog -f "$BACKUP_FILE"
+fi
 
 if [ $? -eq 0 ]; then
-    echo "Database restored successfully!"
+    echo "Database restored successfully"
 else
     echo "Error: Failed to restore database"
     exit 1

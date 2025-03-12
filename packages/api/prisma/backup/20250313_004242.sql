@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 14.17 (Homebrew)
--- Dumped by pg_dump version 14.17 (Homebrew)
+-- Dumped from database version 15.12 (Homebrew)
+-- Dumped by pg_dump version 15.12 (Homebrew)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -66,8 +66,25 @@ DROP TYPE IF EXISTS public."TaskLogStatus";
 DROP TYPE IF EXISTS public."TaskLogApprovalStatus";
 DROP TYPE IF EXISTS public."ProjectUserRole";
 DROP TYPE IF EXISTS public."ProjectStatus";
+-- *not* dropping schema, since initdb creates it
 --
--- Name: ProjectStatus; Type: TYPE; Schema: public; Owner: postgres
+-- Name: public; Type: SCHEMA; Schema: -; Owner: maestro
+--
+
+-- *not* creating schema, since initdb creates it
+
+
+ALTER SCHEMA public OWNER TO maestro;
+
+--
+-- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: maestro
+--
+
+COMMENT ON SCHEMA public IS '';
+
+
+--
+-- Name: ProjectStatus; Type: TYPE; Schema: public; Owner: maestro
 --
 
 CREATE TYPE public."ProjectStatus" AS ENUM (
@@ -82,10 +99,10 @@ CREATE TYPE public."ProjectStatus" AS ENUM (
 );
 
 
-ALTER TYPE public."ProjectStatus" OWNER TO postgres;
+ALTER TYPE public."ProjectStatus" OWNER TO maestro;
 
 --
--- Name: ProjectUserRole; Type: TYPE; Schema: public; Owner: postgres
+-- Name: ProjectUserRole; Type: TYPE; Schema: public; Owner: maestro
 --
 
 CREATE TYPE public."ProjectUserRole" AS ENUM (
@@ -96,10 +113,10 @@ CREATE TYPE public."ProjectUserRole" AS ENUM (
 );
 
 
-ALTER TYPE public."ProjectUserRole" OWNER TO postgres;
+ALTER TYPE public."ProjectUserRole" OWNER TO maestro;
 
 --
--- Name: TaskLogApprovalStatus; Type: TYPE; Schema: public; Owner: postgres
+-- Name: TaskLogApprovalStatus; Type: TYPE; Schema: public; Owner: maestro
 --
 
 CREATE TYPE public."TaskLogApprovalStatus" AS ENUM (
@@ -109,10 +126,10 @@ CREATE TYPE public."TaskLogApprovalStatus" AS ENUM (
 );
 
 
-ALTER TYPE public."TaskLogApprovalStatus" OWNER TO postgres;
+ALTER TYPE public."TaskLogApprovalStatus" OWNER TO maestro;
 
 --
--- Name: TaskLogStatus; Type: TYPE; Schema: public; Owner: postgres
+-- Name: TaskLogStatus; Type: TYPE; Schema: public; Owner: maestro
 --
 
 CREATE TYPE public."TaskLogStatus" AS ENUM (
@@ -123,10 +140,10 @@ CREATE TYPE public."TaskLogStatus" AS ENUM (
 );
 
 
-ALTER TYPE public."TaskLogStatus" OWNER TO postgres;
+ALTER TYPE public."TaskLogStatus" OWNER TO maestro;
 
 --
--- Name: TaskStatus; Type: TYPE; Schema: public; Owner: postgres
+-- Name: TaskStatus; Type: TYPE; Schema: public; Owner: maestro
 --
 
 CREATE TYPE public."TaskStatus" AS ENUM (
@@ -137,10 +154,10 @@ CREATE TYPE public."TaskStatus" AS ENUM (
 );
 
 
-ALTER TYPE public."TaskStatus" OWNER TO postgres;
+ALTER TYPE public."TaskStatus" OWNER TO maestro;
 
 --
--- Name: TaskType; Type: TYPE; Schema: public; Owner: postgres
+-- Name: TaskType; Type: TYPE; Schema: public; Owner: maestro
 --
 
 CREATE TYPE public."TaskType" AS ENUM (
@@ -150,10 +167,10 @@ CREATE TYPE public."TaskType" AS ENUM (
 );
 
 
-ALTER TYPE public."TaskType" OWNER TO postgres;
+ALTER TYPE public."TaskType" OWNER TO maestro;
 
 --
--- Name: UserRole; Type: TYPE; Schema: public; Owner: postgres
+-- Name: UserRole; Type: TYPE; Schema: public; Owner: maestro
 --
 
 CREATE TYPE public."UserRole" AS ENUM (
@@ -164,14 +181,14 @@ CREATE TYPE public."UserRole" AS ENUM (
 );
 
 
-ALTER TYPE public."UserRole" OWNER TO postgres;
+ALTER TYPE public."UserRole" OWNER TO maestro;
 
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
 --
--- Name: ClientContacts; Type: TABLE; Schema: public; Owner: postgres
+-- Name: ClientContacts; Type: TABLE; Schema: public; Owner: maestro
 --
 
 CREATE TABLE public."ClientContacts" (
@@ -189,10 +206,10 @@ CREATE TABLE public."ClientContacts" (
 );
 
 
-ALTER TABLE public."ClientContacts" OWNER TO postgres;
+ALTER TABLE public."ClientContacts" OWNER TO maestro;
 
 --
--- Name: Clients; Type: TABLE; Schema: public; Owner: postgres
+-- Name: Clients; Type: TABLE; Schema: public; Owner: maestro
 --
 
 CREATE TABLE public."Clients" (
@@ -204,10 +221,10 @@ CREATE TABLE public."Clients" (
 );
 
 
-ALTER TABLE public."Clients" OWNER TO postgres;
+ALTER TABLE public."Clients" OWNER TO maestro;
 
 --
--- Name: Products; Type: TABLE; Schema: public; Owner: postgres
+-- Name: Products; Type: TABLE; Schema: public; Owner: maestro
 --
 
 CREATE TABLE public."Products" (
@@ -218,10 +235,10 @@ CREATE TABLE public."Products" (
 );
 
 
-ALTER TABLE public."Products" OWNER TO postgres;
+ALTER TABLE public."Products" OWNER TO maestro;
 
 --
--- Name: ProjectUsers; Type: TABLE; Schema: public; Owner: postgres
+-- Name: ProjectUsers; Type: TABLE; Schema: public; Owner: maestro
 --
 
 CREATE TABLE public."ProjectUsers" (
@@ -232,10 +249,10 @@ CREATE TABLE public."ProjectUsers" (
 );
 
 
-ALTER TABLE public."ProjectUsers" OWNER TO postgres;
+ALTER TABLE public."ProjectUsers" OWNER TO maestro;
 
 --
--- Name: Projects; Type: TABLE; Schema: public; Owner: postgres
+-- Name: Projects; Type: TABLE; Schema: public; Owner: maestro
 --
 
 CREATE TABLE public."Projects" (
@@ -251,10 +268,10 @@ CREATE TABLE public."Projects" (
 );
 
 
-ALTER TABLE public."Projects" OWNER TO postgres;
+ALTER TABLE public."Projects" OWNER TO maestro;
 
 --
--- Name: Skills; Type: TABLE; Schema: public; Owner: postgres
+-- Name: Skills; Type: TABLE; Schema: public; Owner: maestro
 --
 
 CREATE TABLE public."Skills" (
@@ -263,10 +280,10 @@ CREATE TABLE public."Skills" (
 );
 
 
-ALTER TABLE public."Skills" OWNER TO postgres;
+ALTER TABLE public."Skills" OWNER TO maestro;
 
 --
--- Name: TaskLogStatusHistory; Type: TABLE; Schema: public; Owner: postgres
+-- Name: TaskLogStatusHistory; Type: TABLE; Schema: public; Owner: maestro
 --
 
 CREATE TABLE public."TaskLogStatusHistory" (
@@ -278,10 +295,10 @@ CREATE TABLE public."TaskLogStatusHistory" (
 );
 
 
-ALTER TABLE public."TaskLogStatusHistory" OWNER TO postgres;
+ALTER TABLE public."TaskLogStatusHistory" OWNER TO maestro;
 
 --
--- Name: UserSkills; Type: TABLE; Schema: public; Owner: postgres
+-- Name: UserSkills; Type: TABLE; Schema: public; Owner: maestro
 --
 
 CREATE TABLE public."UserSkills" (
@@ -290,10 +307,10 @@ CREATE TABLE public."UserSkills" (
 );
 
 
-ALTER TABLE public."UserSkills" OWNER TO postgres;
+ALTER TABLE public."UserSkills" OWNER TO maestro;
 
 --
--- Name: UserTokens; Type: TABLE; Schema: public; Owner: postgres
+-- Name: UserTokens; Type: TABLE; Schema: public; Owner: maestro
 --
 
 CREATE TABLE public."UserTokens" (
@@ -304,10 +321,10 @@ CREATE TABLE public."UserTokens" (
 );
 
 
-ALTER TABLE public."UserTokens" OWNER TO postgres;
+ALTER TABLE public."UserTokens" OWNER TO maestro;
 
 --
--- Name: Users; Type: TABLE; Schema: public; Owner: postgres
+-- Name: Users; Type: TABLE; Schema: public; Owner: maestro
 --
 
 CREATE TABLE public."Users" (
@@ -324,10 +341,10 @@ CREATE TABLE public."Users" (
 );
 
 
-ALTER TABLE public."Users" OWNER TO postgres;
+ALTER TABLE public."Users" OWNER TO maestro;
 
 --
--- Name: _prisma_migrations; Type: TABLE; Schema: public; Owner: postgres
+-- Name: _prisma_migrations; Type: TABLE; Schema: public; Owner: maestro
 --
 
 CREATE TABLE public._prisma_migrations (
@@ -342,10 +359,10 @@ CREATE TABLE public._prisma_migrations (
 );
 
 
-ALTER TABLE public._prisma_migrations OWNER TO postgres;
+ALTER TABLE public._prisma_migrations OWNER TO maestro;
 
 --
--- Name: task_logs; Type: TABLE; Schema: public; Owner: postgres
+-- Name: task_logs; Type: TABLE; Schema: public; Owner: maestro
 --
 
 CREATE TABLE public.task_logs (
@@ -359,10 +376,10 @@ CREATE TABLE public.task_logs (
 );
 
 
-ALTER TABLE public.task_logs OWNER TO postgres;
+ALTER TABLE public.task_logs OWNER TO maestro;
 
 --
--- Name: tasks; Type: TABLE; Schema: public; Owner: postgres
+-- Name: tasks; Type: TABLE; Schema: public; Owner: maestro
 --
 
 CREATE TABLE public.tasks (
@@ -374,14 +391,16 @@ CREATE TABLE public.tasks (
     tags text,
     type public."TaskType" DEFAULT 'GENERAL'::public."TaskType" NOT NULL,
     project_id text NOT NULL,
-    status public."TaskStatus" DEFAULT 'NEW'::public."TaskStatus" NOT NULL
+    status public."TaskStatus" DEFAULT 'NEW'::public."TaskStatus" NOT NULL,
+    created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 
-ALTER TABLE public.tasks OWNER TO postgres;
+ALTER TABLE public.tasks OWNER TO maestro;
 
 --
--- Data for Name: ClientContacts; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: ClientContacts; Type: TABLE DATA; Schema: public; Owner: maestro
 --
 
 COPY public."ClientContacts" (id, client_id, name, email, phone, telegram, whatsapp, signal, messenger, instagram, facebook) FROM stdin;
@@ -389,7 +408,7 @@ COPY public."ClientContacts" (id, client_id, name, email, phone, telegram, whats
 
 
 --
--- Data for Name: Clients; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: Clients; Type: TABLE DATA; Schema: public; Owner: maestro
 --
 
 COPY public."Clients" (id, name, description, address, contact_info) FROM stdin;
@@ -398,7 +417,7 @@ COPY public."Clients" (id, name, description, address, contact_info) FROM stdin;
 
 
 --
--- Data for Name: Products; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: Products; Type: TABLE DATA; Schema: public; Owner: maestro
 --
 
 COPY public."Products" (id, code, project_id, created_at) FROM stdin;
@@ -406,7 +425,7 @@ COPY public."Products" (id, code, project_id, created_at) FROM stdin;
 
 
 --
--- Data for Name: ProjectUsers; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: ProjectUsers; Type: TABLE DATA; Schema: public; Owner: maestro
 --
 
 COPY public."ProjectUsers" (user_id, project_id, role, "isActive") FROM stdin;
@@ -420,7 +439,7 @@ d5c43a0c-6249-49e4-8d04-22024aa8193a	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	ENGINE
 
 
 --
--- Data for Name: Projects; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: Projects; Type: TABLE DATA; Schema: public; Owner: maestro
 --
 
 COPY public."Projects" (id, name, client_id, start_date, deadline, actual_end_date, status, quantity, updated_at) FROM stdin;
@@ -429,7 +448,7 @@ f26cc409-bfb4-453f-82fe-9e7fe5fc4847	524 каміки з тепловізійн�
 
 
 --
--- Data for Name: Skills; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: Skills; Type: TABLE DATA; Schema: public; Owner: maestro
 --
 
 COPY public."Skills" (id, name) FROM stdin;
@@ -437,7 +456,7 @@ COPY public."Skills" (id, name) FROM stdin;
 
 
 --
--- Data for Name: TaskLogStatusHistory; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: TaskLogStatusHistory; Type: TABLE DATA; Schema: public; Owner: maestro
 --
 
 COPY public."TaskLogStatusHistory" (id, task_log_id, status, user_id, created_at) FROM stdin;
@@ -445,7 +464,7 @@ COPY public."TaskLogStatusHistory" (id, task_log_id, status, user_id, created_at
 
 
 --
--- Data for Name: UserSkills; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: UserSkills; Type: TABLE DATA; Schema: public; Owner: maestro
 --
 
 COPY public."UserSkills" (user_id, skill_id) FROM stdin;
@@ -453,7 +472,7 @@ COPY public."UserSkills" (user_id, skill_id) FROM stdin;
 
 
 --
--- Data for Name: UserTokens; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: UserTokens; Type: TABLE DATA; Schema: public; Owner: maestro
 --
 
 COPY public."UserTokens" (id, user_id, jwt_token, expires_at) FROM stdin;
@@ -461,7 +480,7 @@ COPY public."UserTokens" (id, user_id, jwt_token, expires_at) FROM stdin;
 
 
 --
--- Data for Name: Users; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: Users; Type: TABLE DATA; Schema: public; Owner: maestro
 --
 
 COPY public."Users" (id, name, email, phone, password_hash, role, "callSign", "createdAt", "lastName", "updatedAt") FROM stdin;
@@ -475,7 +494,7 @@ d5c43a0c-6249-49e4-8d04-22024aa8193a	Максим	guardiamax660@gmail.com	+38097
 
 
 --
--- Data for Name: _prisma_migrations; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: _prisma_migrations; Type: TABLE DATA; Schema: public; Owner: maestro
 --
 
 COPY public._prisma_migrations (id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count) FROM stdin;
@@ -489,7 +508,7 @@ d5a2cc6e-80e9-430d-aa70-6a76c3c2659f	4e8fa8b29b48ff0979db0487bb2357566739d4ad7df
 
 
 --
--- Data for Name: task_logs; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: task_logs; Type: TABLE DATA; Schema: public; Owner: maestro
 --
 
 COPY public.task_logs (id, user_id, task_id, product_id, completed_at, registered_at, time_spent) FROM stdin;
@@ -497,27 +516,27 @@ COPY public.task_logs (id, user_id, task_id, product_id, completed_at, registere
 
 
 --
--- Data for Name: tasks; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: tasks; Type: TABLE DATA; Schema: public; Owner: maestro
 --
 
-COPY public.tasks (id, name, description, estimated_time, complexity, tags, type, project_id, status) FROM stdin;
-b42a1f15-1e3a-4153-80c0-15a5c9fbbdfb	Збірка рами	Результат: \nЗібрана рама, з променями, стійками, болтами на стек, моторами і неусадженою термозбіжкою на промінях	12.000000000000000000000000000000	\N	\N	PRODUCT	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW
-ccc27a15-e2e3-4629-bb95-cef43e631311	Пайка моторів	Напаяні мотори, гребінкою, промиті і пролаковані контакти	12.000000000000000000000000000000	5	\N	PRODUCT	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW
-f1afec29-3685-4132-8230-b7d39ce4d9a3	Фінальна збірка	Установка втх\nустановка ПК\nУстановка камери\nУстановка РХ\nКришка і стяжки	23.000000000000000000000000000000	7	\N	PRODUCT	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW
-1b33a79e-9790-49bc-8bb3-c7efc8d20832	Налаштування		15.000000000000000000000000000000	\N	\N	PRODUCT	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW
-7cf25d99-7da4-4437-86dc-3bb79b7db073	Обліт		10.000000000000000000000000000000	\N	\N	PRODUCT	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW
-b984449d-3e0c-43fb-9209-e3a5fd7f3733	Усадка термозбіжок		3.000000000000000000000000000000	\N	\N	PRODUCT	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW
-0290a525-b422-4a2d-9a9c-48a0ed38de78	Розпаковка рам		0.000000000000000000000000000000	5	\N	GENERAL	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW
-cf2f35ed-f1c6-424e-80b8-04fc1a082a60	Сортування болтів		0.000000000000000000000000000000	\N	\N	GENERAL	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW
-f1ef797a-b1ed-46fa-9341-6b661cd4848a	Порізка термозбіжки		0.000000000000000000000000000000	\N	\N	GENERAL	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW
-406f31ba-96a2-4328-aca2-2ead65149553	Натягання термозбіжок на проміні		0.000000000000000000000000000000	\N	\N	GENERAL	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW
-3e3e8139-1872-429e-a284-014f912d309c	Тонка пайка	ELRS припаяний до ПК. Припаяний дріт ПІ	15.000000000000000000000000000000	4	\N	INTERMEDIATE	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW
-2bd3b08c-5ef4-4da0-b178-1676cd40db25	Пайка силових дротів	ESC з силовими дротами і конденсатором. Промитий. Пролакований	10.000000000000000000000000000000	4	\N	INTERMEDIATE	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW
+COPY public.tasks (id, name, description, estimated_time, complexity, tags, type, project_id, status, created_at, updated_at) FROM stdin;
+b42a1f15-1e3a-4153-80c0-15a5c9fbbdfb	Збірка рами	Результат: \nЗібрана рама, з променями, стійками, болтами на стек, моторами і неусадженою термозбіжкою на промінях	12.000000000000000000000000000000	\N	\N	PRODUCT	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
+ccc27a15-e2e3-4629-bb95-cef43e631311	Пайка моторів	Напаяні мотори, гребінкою, промиті і пролаковані контакти	12.000000000000000000000000000000	5	\N	PRODUCT	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
+f1afec29-3685-4132-8230-b7d39ce4d9a3	Фінальна збірка	Установка втх\nустановка ПК\nУстановка камери\nУстановка РХ\nКришка і стяжки	23.000000000000000000000000000000	7	\N	PRODUCT	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
+1b33a79e-9790-49bc-8bb3-c7efc8d20832	Налаштування		15.000000000000000000000000000000	\N	\N	PRODUCT	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
+7cf25d99-7da4-4437-86dc-3bb79b7db073	Обліт		10.000000000000000000000000000000	\N	\N	PRODUCT	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
+b984449d-3e0c-43fb-9209-e3a5fd7f3733	Усадка термозбіжок		3.000000000000000000000000000000	\N	\N	PRODUCT	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
+0290a525-b422-4a2d-9a9c-48a0ed38de78	Розпаковка рам		0.000000000000000000000000000000	5	\N	GENERAL	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
+cf2f35ed-f1c6-424e-80b8-04fc1a082a60	Сортування болтів		0.000000000000000000000000000000	\N	\N	GENERAL	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
+f1ef797a-b1ed-46fa-9341-6b661cd4848a	Порізка термозбіжки		0.000000000000000000000000000000	\N	\N	GENERAL	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
+406f31ba-96a2-4328-aca2-2ead65149553	Натягання термозбіжок на проміні		0.000000000000000000000000000000	\N	\N	GENERAL	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
+3e3e8139-1872-429e-a284-014f912d309c	Тонка пайка	ELRS припаяний до ПК. Припаяний дріт ПІ	15.000000000000000000000000000000	4	\N	INTERMEDIATE	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
+2bd3b08c-5ef4-4da0-b178-1676cd40db25	Пайка силових дротів	ESC з силовими дротами і конденсатором. Промитий. Пролакований	10.000000000000000000000000000000	4	\N	INTERMEDIATE	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
 \.
 
 
 --
--- Name: ClientContacts ClientContacts_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: ClientContacts ClientContacts_pkey; Type: CONSTRAINT; Schema: public; Owner: maestro
 --
 
 ALTER TABLE ONLY public."ClientContacts"
@@ -525,7 +544,7 @@ ALTER TABLE ONLY public."ClientContacts"
 
 
 --
--- Name: Clients Clients_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: Clients Clients_pkey; Type: CONSTRAINT; Schema: public; Owner: maestro
 --
 
 ALTER TABLE ONLY public."Clients"
@@ -533,7 +552,7 @@ ALTER TABLE ONLY public."Clients"
 
 
 --
--- Name: Products Products_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: Products Products_pkey; Type: CONSTRAINT; Schema: public; Owner: maestro
 --
 
 ALTER TABLE ONLY public."Products"
@@ -541,7 +560,7 @@ ALTER TABLE ONLY public."Products"
 
 
 --
--- Name: ProjectUsers ProjectUsers_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: ProjectUsers ProjectUsers_pkey; Type: CONSTRAINT; Schema: public; Owner: maestro
 --
 
 ALTER TABLE ONLY public."ProjectUsers"
@@ -549,7 +568,7 @@ ALTER TABLE ONLY public."ProjectUsers"
 
 
 --
--- Name: Projects Projects_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: Projects Projects_pkey; Type: CONSTRAINT; Schema: public; Owner: maestro
 --
 
 ALTER TABLE ONLY public."Projects"
@@ -557,7 +576,7 @@ ALTER TABLE ONLY public."Projects"
 
 
 --
--- Name: Skills Skills_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: Skills Skills_pkey; Type: CONSTRAINT; Schema: public; Owner: maestro
 --
 
 ALTER TABLE ONLY public."Skills"
@@ -565,7 +584,7 @@ ALTER TABLE ONLY public."Skills"
 
 
 --
--- Name: TaskLogStatusHistory TaskLogStatusHistory_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: TaskLogStatusHistory TaskLogStatusHistory_pkey; Type: CONSTRAINT; Schema: public; Owner: maestro
 --
 
 ALTER TABLE ONLY public."TaskLogStatusHistory"
@@ -573,7 +592,7 @@ ALTER TABLE ONLY public."TaskLogStatusHistory"
 
 
 --
--- Name: UserSkills UserSkills_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: UserSkills UserSkills_pkey; Type: CONSTRAINT; Schema: public; Owner: maestro
 --
 
 ALTER TABLE ONLY public."UserSkills"
@@ -581,7 +600,7 @@ ALTER TABLE ONLY public."UserSkills"
 
 
 --
--- Name: UserTokens UserTokens_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: UserTokens UserTokens_pkey; Type: CONSTRAINT; Schema: public; Owner: maestro
 --
 
 ALTER TABLE ONLY public."UserTokens"
@@ -589,7 +608,7 @@ ALTER TABLE ONLY public."UserTokens"
 
 
 --
--- Name: Users Users_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: Users Users_pkey; Type: CONSTRAINT; Schema: public; Owner: maestro
 --
 
 ALTER TABLE ONLY public."Users"
@@ -597,7 +616,7 @@ ALTER TABLE ONLY public."Users"
 
 
 --
--- Name: _prisma_migrations _prisma_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: _prisma_migrations _prisma_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: maestro
 --
 
 ALTER TABLE ONLY public._prisma_migrations
@@ -605,7 +624,7 @@ ALTER TABLE ONLY public._prisma_migrations
 
 
 --
--- Name: task_logs task_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: task_logs task_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: maestro
 --
 
 ALTER TABLE ONLY public.task_logs
@@ -613,7 +632,7 @@ ALTER TABLE ONLY public.task_logs
 
 
 --
--- Name: tasks tasks_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: tasks tasks_pkey; Type: CONSTRAINT; Schema: public; Owner: maestro
 --
 
 ALTER TABLE ONLY public.tasks
@@ -621,28 +640,28 @@ ALTER TABLE ONLY public.tasks
 
 
 --
--- Name: Products_code_project_id_key; Type: INDEX; Schema: public; Owner: postgres
+-- Name: Products_code_project_id_key; Type: INDEX; Schema: public; Owner: maestro
 --
 
 CREATE UNIQUE INDEX "Products_code_project_id_key" ON public."Products" USING btree (code, project_id);
 
 
 --
--- Name: Skills_name_key; Type: INDEX; Schema: public; Owner: postgres
+-- Name: Skills_name_key; Type: INDEX; Schema: public; Owner: maestro
 --
 
 CREATE UNIQUE INDEX "Skills_name_key" ON public."Skills" USING btree (name);
 
 
 --
--- Name: Users_email_key; Type: INDEX; Schema: public; Owner: postgres
+-- Name: Users_email_key; Type: INDEX; Schema: public; Owner: maestro
 --
 
 CREATE UNIQUE INDEX "Users_email_key" ON public."Users" USING btree (email);
 
 
 --
--- Name: ClientContacts ClientContacts_client_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: ClientContacts ClientContacts_client_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: maestro
 --
 
 ALTER TABLE ONLY public."ClientContacts"
@@ -650,7 +669,7 @@ ALTER TABLE ONLY public."ClientContacts"
 
 
 --
--- Name: Products Products_project_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: Products Products_project_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: maestro
 --
 
 ALTER TABLE ONLY public."Products"
@@ -658,7 +677,7 @@ ALTER TABLE ONLY public."Products"
 
 
 --
--- Name: ProjectUsers ProjectUsers_project_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: ProjectUsers ProjectUsers_project_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: maestro
 --
 
 ALTER TABLE ONLY public."ProjectUsers"
@@ -666,7 +685,7 @@ ALTER TABLE ONLY public."ProjectUsers"
 
 
 --
--- Name: ProjectUsers ProjectUsers_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: ProjectUsers ProjectUsers_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: maestro
 --
 
 ALTER TABLE ONLY public."ProjectUsers"
@@ -674,7 +693,7 @@ ALTER TABLE ONLY public."ProjectUsers"
 
 
 --
--- Name: Projects Projects_client_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: Projects Projects_client_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: maestro
 --
 
 ALTER TABLE ONLY public."Projects"
@@ -682,7 +701,7 @@ ALTER TABLE ONLY public."Projects"
 
 
 --
--- Name: TaskLogStatusHistory TaskLogStatusHistory_task_log_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: TaskLogStatusHistory TaskLogStatusHistory_task_log_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: maestro
 --
 
 ALTER TABLE ONLY public."TaskLogStatusHistory"
@@ -690,7 +709,7 @@ ALTER TABLE ONLY public."TaskLogStatusHistory"
 
 
 --
--- Name: TaskLogStatusHistory TaskLogStatusHistory_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: TaskLogStatusHistory TaskLogStatusHistory_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: maestro
 --
 
 ALTER TABLE ONLY public."TaskLogStatusHistory"
@@ -698,7 +717,7 @@ ALTER TABLE ONLY public."TaskLogStatusHistory"
 
 
 --
--- Name: UserSkills UserSkills_skill_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: UserSkills UserSkills_skill_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: maestro
 --
 
 ALTER TABLE ONLY public."UserSkills"
@@ -706,7 +725,7 @@ ALTER TABLE ONLY public."UserSkills"
 
 
 --
--- Name: UserSkills UserSkills_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: UserSkills UserSkills_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: maestro
 --
 
 ALTER TABLE ONLY public."UserSkills"
@@ -714,7 +733,7 @@ ALTER TABLE ONLY public."UserSkills"
 
 
 --
--- Name: UserTokens UserTokens_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: UserTokens UserTokens_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: maestro
 --
 
 ALTER TABLE ONLY public."UserTokens"
@@ -722,7 +741,7 @@ ALTER TABLE ONLY public."UserTokens"
 
 
 --
--- Name: task_logs task_logs_product_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: task_logs task_logs_product_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: maestro
 --
 
 ALTER TABLE ONLY public.task_logs
@@ -730,7 +749,7 @@ ALTER TABLE ONLY public.task_logs
 
 
 --
--- Name: task_logs task_logs_task_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: task_logs task_logs_task_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: maestro
 --
 
 ALTER TABLE ONLY public.task_logs
@@ -738,7 +757,7 @@ ALTER TABLE ONLY public.task_logs
 
 
 --
--- Name: task_logs task_logs_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: task_logs task_logs_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: maestro
 --
 
 ALTER TABLE ONLY public.task_logs
@@ -746,11 +765,18 @@ ALTER TABLE ONLY public.task_logs
 
 
 --
--- Name: tasks tasks_project_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: tasks tasks_project_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: maestro
 --
 
 ALTER TABLE ONLY public.tasks
     ADD CONSTRAINT tasks_project_id_fkey FOREIGN KEY (project_id) REFERENCES public."Projects"(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: SCHEMA public; Type: ACL; Schema: -; Owner: maestro
+--
+
+REVOKE USAGE ON SCHEMA public FROM PUBLIC;
 
 
 --
