@@ -159,6 +159,7 @@ model Task {
   complexity    Int?
   tags          String?
   type          TaskType    @default(GENERAL)
+  status        TaskStatus  @default(NEW)
 
   // Relations
   project       Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)

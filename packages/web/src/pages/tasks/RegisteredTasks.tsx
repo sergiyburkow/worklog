@@ -10,9 +10,9 @@ import {
   TabPanel,
   useToast,
 } from '@chakra-ui/react';
-import { DashboardMenu } from '../../components/DashboardMenu';
-import { RegisteredTasksTable } from '../../components/tables/RegisteredTasksTable';
 import { api } from '../../lib/api';
+import { AdminLayout } from '../../components/admin/AdminLayout';
+import { RegisteredTasksTable } from '../../components/tables/RegisteredTasksTable';
 
 interface TaskLog {
   id: string;
@@ -76,8 +76,7 @@ export const RegisteredTasks: React.FC = () => {
   }, [projectId, userId]);
 
   return (
-    <>
-      <DashboardMenu />
+    <AdminLayout>
       <Box p={5}>
         <Heading size="lg" mb={6}>
           {userId 
@@ -102,6 +101,6 @@ export const RegisteredTasks: React.FC = () => {
           </TabPanels>
         </Tabs>
       </Box>
-    </>
+    </AdminLayout>
   );
 }; 

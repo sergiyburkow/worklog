@@ -1,10 +1,9 @@
 import { Box, Heading, Text, Card, CardBody, Alert, AlertIcon, AlertTitle, AlertDescription } from '@chakra-ui/react';
-import { DashboardMenu } from '../../components/DashboardMenu';
+import { AdminLayout } from '../../components/admin/AdminLayout';
 
 export const UnknownRoleDashboard = () => {
   return (
-    <>
-      <DashboardMenu />
+    <AdminLayout>
       <Box p={5}>
         <Heading mb={5}>Помилка доступу</Heading>
         
@@ -42,6 +41,6 @@ export const UnknownRoleDashboard = () => {
           </CardBody>
         </Card>
       </Box>
-    </>
+    </AdminLayout>
   );
 }; 

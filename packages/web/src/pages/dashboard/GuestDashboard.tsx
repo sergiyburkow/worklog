@@ -1,10 +1,9 @@
 import { Box, Heading, Text, Card, CardBody, VStack, Button } from '@chakra-ui/react';
-import { DashboardMenu } from '../../components/DashboardMenu';
+import { AdminLayout } from '../../components/admin/AdminLayout';
 
 export const GuestDashboard = () => {
   return (
-    <>
-      <DashboardMenu />
+    <AdminLayout>
       <Box p={5}>
         <Heading mb={5}>Гостьова панель</Heading>
         
@@ -28,6 +27,6 @@ export const GuestDashboard = () => {
           </CardBody>
         </Card>
       </Box>
-    </>
+    </AdminLayout>
   );
 }; 

@@ -27,7 +27,7 @@ import {
   TableContainer,
 } from '@chakra-ui/react';
 import { api } from '../../lib/api';
-import { DashboardMenu } from '../../components/DashboardMenu';
+import { AdminLayout } from '../../components/admin/AdminLayout';
 
 enum ProjectStatus {
   PLANNED = 'PLANNED',
@@ -138,29 +138,26 @@ export const ProjectDetails = () => {
 
   if (isLoading) {
     return (
-      <>
-        <DashboardMenu />
+      <AdminLayout>
         <Box p={5} display="flex" justifyContent="center" alignItems="center" minH="300px">
           <Spinner size="xl" />
         </Box>
-      </>
+      </AdminLayout>
     );
   }
 
   if (!project) {
     return (
-      <>
-        <DashboardMenu />
+      <AdminLayout>
         <Box p={5}>
           <Text>Проект не знайдено</Text>
         </Box>
-      </>
+      </AdminLayout>
     );
   }
 
   return (
-    <>
-      <DashboardMenu />
+    <AdminLayout>
       <Box p={5}>
         <VStack spacing={6} align="stretch">
           <HStack justify="space-between" align="center">
@@ -299,6 +296,6 @@ export const ProjectDetails = () => {
           </Card>
         </VStack>
       </Box>
-    </>
+    </AdminLayout>
   );
 }; 

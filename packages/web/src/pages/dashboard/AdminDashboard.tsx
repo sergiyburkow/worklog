@@ -1,9 +1,9 @@
 import { Box, Heading, Button, Text, HStack, Flex } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { DashboardMenu } from '../../components/DashboardMenu';
 import { ProjectCard, Project } from '../../components/ProjectCard';
 import { api } from '../../lib/api';
+import { AdminLayout } from '../../components/admin/AdminLayout';
 
 export const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -26,8 +26,7 @@ export const AdminDashboard = () => {
   }, []);
 
   return (
-    <>
-      <DashboardMenu />
+    <AdminLayout>
       <Box p={5}>
         <Heading mb={5}>Адміністративна панель</Heading>
         
@@ -74,6 +73,6 @@ export const AdminDashboard = () => {
           </Flex>
         </Box>
       </Box>
-    </>
+    </AdminLayout>
   );
 }; 

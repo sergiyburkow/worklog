@@ -1,10 +1,9 @@
 import { Box, Heading, SimpleGrid, Stat, StatLabel, StatNumber, Card, CardBody, Table, Thead, Tbody, Tr, Th, Td, Text } from '@chakra-ui/react';
-import { DashboardMenu } from '../../components/DashboardMenu';
+import { AdminLayout } from '../../components/admin/AdminLayout';
 
 export const PMDashboard = () => {
   return (
-    <>
-      <DashboardMenu />
+    <AdminLayout>
       <Box p={5}>
         <Heading mb={5}>Панель менеджера проектів</Heading>
         <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={5} mb={8}>
@@ -65,6 +64,6 @@ export const PMDashboard = () => {
           </CardBody>
         </Card>
       </Box>
-    </>
+    </AdminLayout>
   );
 }; 

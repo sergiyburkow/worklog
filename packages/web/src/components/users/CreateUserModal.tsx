@@ -110,6 +110,8 @@ export const CreateUserModal = ({ isOpen, onClose, onSuccess }: CreateUserModalP
                   onChange={(e) => setUserData({ ...userData, name: e.target.value })}
                   placeholder="Введіть ім'я"
                   autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck="false"
                 />
               </FormControl>
 
@@ -120,6 +122,8 @@ export const CreateUserModal = ({ isOpen, onClose, onSuccess }: CreateUserModalP
                   onChange={(e) => setUserData({ ...userData, lastName: e.target.value })}
                   placeholder="Введіть прізвище"
                   autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck="false"
                 />
               </FormControl>
 
@@ -130,6 +134,8 @@ export const CreateUserModal = ({ isOpen, onClose, onSuccess }: CreateUserModalP
                   onChange={(e) => setUserData({ ...userData, callSign: e.target.value })}
                   placeholder="Введіть позивний"
                   autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck="false"
                 />
               </FormControl>
 
@@ -141,6 +147,8 @@ export const CreateUserModal = ({ isOpen, onClose, onSuccess }: CreateUserModalP
                   onChange={(e) => setUserData({ ...userData, email: e.target.value })}
                   placeholder="Введіть email"
                   autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck="false"
                 />
               </FormControl>
 
@@ -152,6 +160,8 @@ export const CreateUserModal = ({ isOpen, onClose, onSuccess }: CreateUserModalP
                   onChange={(e) => setUserData({ ...userData, password: e.target.value })}
                   placeholder="Введіть пароль"
                   autoComplete="new-password"
+                  autoCorrect="off"
+                  spellCheck="false"
                 />
               </FormControl>
 
@@ -162,6 +172,8 @@ export const CreateUserModal = ({ isOpen, onClose, onSuccess }: CreateUserModalP
                   onChange={(e) => setUserData({ ...userData, phone: e.target.value })}
                   placeholder="Введіть номер телефону"
                   autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck="false"
                 />
               </FormControl>
 

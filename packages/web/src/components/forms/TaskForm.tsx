@@ -36,9 +36,17 @@ interface TaskFormProps {
   onSubmit: (e: FormEvent) => void;
   onChange: (data: Partial<TaskFormData>) => void;
   onCancel: () => void;
+  submitButtonText?: string;
 }
 
-export const TaskForm = ({ formData, isLoading, onSubmit, onChange, onCancel }: TaskFormProps) => {
+export const TaskForm = ({ 
+  formData, 
+  isLoading, 
+  onSubmit, 
+  onChange, 
+  onCancel,
+  submitButtonText = 'Додати завдання'
+}: TaskFormProps) => {
   return (
     <form onSubmit={onSubmit}>
       <ModalBody>
@@ -126,7 +134,7 @@ export const TaskForm = ({ formData, isLoading, onSubmit, onChange, onCancel }: 
           Скасувати
         </Button>
         <Button type="submit" colorScheme="blue" isLoading={isLoading}>
-          Додати завдання
+          {submitButtonText}
         </Button>
       </ModalFooter>
     </form>

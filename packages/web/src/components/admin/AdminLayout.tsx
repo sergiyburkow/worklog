@@ -1,5 +1,4 @@
 import { Box } from '@chakra-ui/react';
-import { DashboardMenu } from '../DashboardMenu';
 import { AdminMenu } from './AdminMenu';
 import { useState, useEffect } from 'react';
 
@@ -24,19 +23,16 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
   }, []);
 
   return (
-    <>
-      <DashboardMenu />
-      <Box width="100%" height="calc(100vh - 70px)" display="flex" pt="70px">
-        <AdminMenu />
-        <Box
-          flex="1"
-          transition="all 0.2s"
-          bg="gray.50"
-          overflow="auto"
-        >
-          {children}
-        </Box>
+    <Box width="100%" height="calc(100vh - 70px)" display="flex" pt="70px">
+      <AdminMenu />
+      <Box
+        flex="1"
+        transition="all 0.2s"
+        bg="gray.50"
+        overflow="auto"
+      >
+        {children}
       </Box>
-    </>
+    </Box>
   );
 }; 

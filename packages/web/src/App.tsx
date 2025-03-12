@@ -39,14 +39,6 @@ export default function App() {
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route 
-                      path="/tasks/register" 
-                      element={
-                        <ProtectedRoute allowedRoles={['WORKER', 'PROJECT_MANAGER', 'ADMIN']}>
-                          <TaskRegister />
-                        </ProtectedRoute>
-                      } 
-                    />
-                    <Route 
                       path="/projects/:id/tasks" 
                       element={
                         <ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER']}>

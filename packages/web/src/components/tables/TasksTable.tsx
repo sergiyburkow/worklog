@@ -9,18 +9,12 @@ import {
   Badge,
   Card,
   CardBody,
+  HStack,
+  IconButton,
 } from '@chakra-ui/react';
+import { DeleteIcon, EditIcon } from '@chakra-ui/icons';
 import { TaskType } from '../forms/TaskForm';
-
-interface Task {
-  id: string;
-  name: string;
-  description: string;
-  estimatedTime: string;
-  projectId: string;
-  type: TaskType;
-  complexity: number;
-}
+import { Task } from '../../types/task';
 
 const getComplexityColor = (complexity: number): string => {
   if (complexity <= 3) return 'green';
@@ -38,9 +32,11 @@ interface TasksTableProps {
   tasks: Task[];
   title: string;
   type: TaskType;
+  onDelete?: (task: Task) => void;
+  onEdit?: (task: Task) => void;
 }
 
-export const TasksTable = ({ tasks, title, type }: TasksTableProps) => {
+export const TasksTable = ({ tasks, title, type, onDelete, onEdit }: TasksTableProps) => {
   const showEstimatedTime = type === TaskType.PRODUCT;
 
   return (
@@ -66,13 +62,26 @@ export const TasksTable = ({ tasks, title, type }: TasksTableProps) => {
                 </Td>
                 {showEstimatedTime && <Td>{task.estimatedTime} хв.</Td>}
                 <Td>
-                  <Button
-                    size="sm"
-                    colorScheme="teal"
-                    mr={2}
-                  >
-                    Деталі
-                  </Button>
+                  <HStack spacing={2}>
+                    {onEdit && (
+                      <IconButton
+                        aria-label="Редагувати задачу"
+                        icon={<EditIcon />}
+                        size="sm"
+                        colorScheme="teal"
+                        onClick={() => onEdit(task)}
+                      />
+                    )}
+                    {onDelete && (
+                      <IconButton
+                        aria-label="Видалити задачу"
+                        icon={<DeleteIcon />}
+                        size="sm"
+                        colorScheme="red"
+                        onClick={() => onDelete(task)}
+                      />
+                    )}
+                  </HStack>
                 </Td>
               </Tr>
             ))}

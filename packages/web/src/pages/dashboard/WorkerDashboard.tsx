@@ -1,13 +1,12 @@
 import { Box, Heading, SimpleGrid, Stat, StatLabel, StatNumber, Card, CardBody, Progress, HStack, Text, Button } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
-import { DashboardMenu } from '../../components/DashboardMenu';
+import { AdminLayout } from '../../components/admin/AdminLayout';
 
 export const WorkerDashboard = () => {
   const navigate = useNavigate();
 
   return (
-    <>
-      <DashboardMenu />
+    <AdminLayout>
       <Box p={5}>
         <Heading mb={5}>Робоча панель</Heading>
         <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={5} mb={8}>
@@ -51,6 +50,6 @@ export const WorkerDashboard = () => {
           </CardBody>
         </Card>
       </Box>
-    </>
+    </AdminLayout>
   );
 }; 

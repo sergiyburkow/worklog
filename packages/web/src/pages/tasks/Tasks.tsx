@@ -12,32 +12,16 @@ import {
   ModalContent,
   ModalHeader,
   ModalBody,
+  ModalFooter,
   ModalCloseButton,
   useDisclosure,
+  Text,
 } from '@chakra-ui/react';
-import { DashboardMenu } from '../../components/DashboardMenu';
 import { api } from '../../lib/api';
+import { AdminLayout } from '../../components/admin/AdminLayout';
 import { TaskForm, TaskType } from '../../components/forms/TaskForm';
 import { TasksTable } from '../../components/tables/TasksTable';
-
-interface Task {
-  id: string;
-  code: string;
-  name: string;
-  description: string;
-  estimatedTime: string;
-  projectId: string;
-  status: TaskStatus;
-  type: TaskType;
-  complexity: number;
-}
-
-enum TaskStatus {
-  NEW = 'NEW',
-  IN_PROGRESS = 'IN_PROGRESS',
-  COMPLETED = 'COMPLETED',
-  ON_HOLD = 'ON_HOLD',
-}
+import { Task, TaskStatus } from '../../types/task';
 
 const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
   [TaskStatus.NEW]: 'Нове',
@@ -67,8 +51,24 @@ export const Tasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projectName, setProjectName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
+  const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
   const toast = useToast();
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { 
+    isOpen: isCreateOpen, 
+    onOpen: onCreateOpen, 
+    onClose: onCreateClose 
+  } = useDisclosure();
+  const {
+    isOpen: isEditOpen,
+    onOpen: onEditOpen,
+    onClose: onEditClose,
+  } = useDisclosure();
+  const {
+    isOpen: isDeleteOpen,
+    onOpen: onDeleteOpen,
+    onClose: onDeleteClose,
+  } = useDisclosure();
 
   const [formData, setFormData] = useState<TaskFormData>({
     name: '',
@@ -80,7 +80,7 @@ export const Tasks = () => {
     try {
       const [projectResponse, tasksResponse] = await Promise.all([
         api.get(`/projects/${projectId}`),
-        api.get(`/projects/${projectId}/tasks`),
+        api.get(`/tasks/project/${projectId}`),
       ]);
       setProjectName(projectResponse.data.name);
       setTasks(tasksResponse.data);
@@ -99,7 +99,7 @@ export const Tasks = () => {
     fetchTasks();
   }, [projectId]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
@@ -126,7 +126,7 @@ export const Tasks = () => {
       });
 
       // Закриваємо модальне вікно
-      onClose();
+      onCreateClose();
 
       // Оновлюємо список завдань
       await fetchTasks();
@@ -143,17 +143,110 @@ export const Tasks = () => {
     }
   };
 
+  const handleEditClick = (task: Task) => {
+    setTaskToEdit(task);
+    setFormData({
+      name: task.name,
+      description: task.description,
+      type: task.type,
+      estimatedTime: task.estimatedTime,
+      complexity: task.complexity,
+      tags: task.tags,
+    });
+    onEditOpen();
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!taskToEdit) return;
+    
+    setIsLoading(true);
+
+    try {
+      await api.put(`/tasks/${taskToEdit.id}`, {
+        ...formData,
+        projectId,
+        estimatedTime: formData.type === TaskType.GENERAL ? '0' : formData.estimatedTime,
+      });
+
+      toast({
+        title: 'Успіх',
+        description: 'Завдання оновлено',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+
+      // Очищаємо форму
+      setFormData({
+        name: '',
+        description: '',
+        type: TaskType.PRODUCT,
+      });
+      setTaskToEdit(null);
+
+      // Закриваємо модальне вікно
+      onEditClose();
+
+      // Оновлюємо список завдань
+      await fetchTasks();
+    } catch (error) {
+      toast({
+        title: 'Помилка',
+        description: 'Не вдалося оновити завдання',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteClick = (task: Task) => {
+    setTaskToDelete(task);
+    onDeleteOpen();
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!taskToDelete) return;
+
+    try {
+      await api.delete(`/tasks/${taskToDelete.id}`);
+      
+      toast({
+        title: 'Успіх',
+        description: 'Завдання видалено',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+
+      await fetchTasks();
+    } catch (error) {
+      toast({
+        title: 'Помилка',
+        description: 'Не вдалося видалити завдання',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    } finally {
+      setTaskToDelete(null);
+      onDeleteClose();
+    }
+  };
+
   const productTasks = tasks.filter(task => task.type === TaskType.PRODUCT);
   const generalTasks = tasks.filter(task => task.type === TaskType.GENERAL);
 
   return (
-    <>
-      <DashboardMenu />
+    <AdminLayout>
       <Box p={5}>
         <VStack spacing={6} align="stretch">
           <HStack justify="space-between">
             <Heading size="lg">Задачі проекту: {projectName}</Heading>
-            <Button colorScheme="blue" size="lg" onClick={onOpen}>
+            <Button colorScheme="blue" size="lg" onClick={onCreateOpen}>
               Додати задачу
             </Button>
           </HStack>
@@ -162,19 +255,23 @@ export const Tasks = () => {
           <TasksTable 
             tasks={productTasks} 
             title="Продуктові задачі" 
-            type={TaskType.PRODUCT} 
+            type={TaskType.PRODUCT}
+            onDelete={handleDeleteClick}
+            onEdit={handleEditClick}
           />
 
           <Heading size="md">Загальні задачі</Heading>
           <TasksTable 
             tasks={generalTasks} 
             title="Загальні задачі" 
-            type={TaskType.GENERAL} 
+            type={TaskType.GENERAL}
+            onDelete={handleDeleteClick}
+            onEdit={handleEditClick}
           />
         </VStack>
       </Box>
 
-      <Modal isOpen={isOpen} onClose={onClose} size="xl">
+      <Modal isOpen={isCreateOpen} onClose={onCreateClose} size="xl">
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>Додати нову задачу</ModalHeader>
@@ -183,13 +280,54 @@ export const Tasks = () => {
             <TaskForm
               formData={formData}
               isLoading={isLoading}
-              onSubmit={handleSubmit}
+              onSubmit={handleCreateSubmit}
               onChange={(data) => setFormData({ ...formData, ...data })}
-              onCancel={onClose}
+              onCancel={onCreateClose}
+              submitButtonText="Додати завдання"
             />
           </ModalBody>
         </ModalContent>
       </Modal>
-    </>
+
+      <Modal isOpen={isEditOpen} onClose={onEditClose} size="xl">
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Редагувати задачу</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <TaskForm
+              formData={formData}
+              isLoading={isLoading}
+              onSubmit={handleEditSubmit}
+              onChange={(data) => setFormData({ ...formData, ...data })}
+              onCancel={onEditClose}
+              submitButtonText="Зберегти зміни"
+            />
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+
+      <Modal isOpen={isDeleteOpen} onClose={onDeleteClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Підтвердження видалення</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Text>
+              Ви впевнені, що хочете видалити задачу "{taskToDelete?.name}"?
+              Ця дія незворотна.
+            </Text>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="ghost" mr={3} onClick={onDeleteClose}>
+              Скасувати
+            </Button>
+            <Button colorScheme="red" onClick={handleDeleteConfirm}>
+              Видалити
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    </AdminLayout>
   );
 }; 
