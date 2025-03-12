@@ -25,9 +25,19 @@ import {
   GridItem,
   Button,
   TableContainer,
+  useDisclosure,
+  Switch,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  Select,
 } from '@chakra-ui/react';
 import { api } from '../../lib/api';
 import { AdminLayout } from '../../components/admin/AdminLayout';
+import { ConfirmModal } from '../../components/ui/ConfirmModal';
 
 enum ProjectStatus {
   PLANNED = 'PLANNED',
@@ -86,6 +96,7 @@ const PROJECT_USER_ROLE_COLORS: Record<ProjectUserRole, string> = {
 interface ProjectUser {
   userId: string;
   role: ProjectUserRole;
+  isActive: boolean;
   user: {
     id: string;
     name: string;
@@ -113,28 +124,136 @@ export const ProjectDetails = () => {
   const navigate = useNavigate();
   const [project, setProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedUser, setSelectedUser] = useState<ProjectUser | null>(null);
+  const [isDeleteLoading, setIsDeleteLoading] = useState(false);
+  const [isToggleLoading, setIsToggleLoading] = useState(false);
+  const [isRoleUpdateLoading, setIsRoleUpdateLoading] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<ProjectUserRole | null>(null);
+  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
+  const { isOpen: isEditRoleOpen, onOpen: onEditRoleOpen, onClose: onEditRoleClose } = useDisclosure();
   const toast = useToast();
 
-  useEffect(() => {
-    const fetchProject = async () => {
-      try {
-        const response = await api.get(`/projects/${id}`);
-        setProject(response.data);
-      } catch (error) {
-        toast({
-          title: 'Помилка',
-          description: 'Не вдалося завантажити дані проекту',
-          status: 'error',
-          duration: 5000,
-          isClosable: true,
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchProject = async () => {
+    try {
+      const response = await api.get(`/projects/${id}`);
+      setProject(response.data);
+    } catch (error) {
+      toast({
+        title: 'Помилка',
+        description: 'Не вдалося завантажити дані проекту',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchProject();
   }, [id]);
+
+  const handleDeleteClick = (user: ProjectUser) => {
+    setSelectedUser(user);
+    onDeleteOpen();
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedUser || !id) return;
+
+    setIsDeleteLoading(true);
+    try {
+      await api.delete(`/projects/${id}/users/${selectedUser.userId}`);
+      await fetchProject();
+      onDeleteClose();
+      
+      toast({
+        title: 'Успіх',
+        description: 'Користувача видалено з проекту',
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Помилка',
+        description: error.response?.data?.message || 'Не вдалося видалити користувача з проекту',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setIsDeleteLoading(false);
+    }
+  };
+
+  const handleToggleActive = async (user: ProjectUser) => {
+    if (!id) return;
+
+    setIsToggleLoading(true);
+    try {
+      await api.put(`/projects/${id}/users/${user.userId}/toggle-active`, {
+        isActive: !user.isActive
+      });
+      await fetchProject();
+      
+      toast({
+        title: 'Успіх',
+        description: `Користувача ${user.isActive ? 'деактивовано' : 'активовано'}`,
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Помилка',
+        description: error.response?.data?.message || 'Не вдалося змінити статус користувача',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setIsToggleLoading(false);
+    }
+  };
+
+  const handleEditRoleClick = (user: ProjectUser) => {
+    setSelectedUser(user);
+    setSelectedRole(user.role);
+    onEditRoleOpen();
+  };
+
+  const handleRoleUpdate = async () => {
+    if (!selectedUser || !selectedRole || !id) return;
+
+    setIsRoleUpdateLoading(true);
+    try {
+      await api.put(`/projects/${id}/users/${selectedUser.userId}/role`, {
+        role: selectedRole
+      });
+      await fetchProject();
+      onEditRoleClose();
+      
+      toast({
+        title: 'Успіх',
+        description: 'Роль користувача оновлено',
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Помилка',
+        description: error.response?.data?.message || 'Не вдалося оновити роль користувача',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setIsRoleUpdateLoading(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -187,6 +306,13 @@ export const ProjectDetails = () => {
                 onClick={() => navigate(`/projects/${id}/tasks/register/general`)}
               >
                 Зареєструвати загальну задачу
+              </Button>
+              <Button
+                colorScheme="cyan"
+                size="lg"
+                onClick={() => navigate(`/projects/${id}/tasks/register/intermediate`)}
+              >
+                Зареєструвати проміжну задачу
               </Button>
               <Button
                 colorScheme="teal"
@@ -263,18 +389,26 @@ export const ProjectDetails = () => {
                       <Th>Ім'я</Th>
                       <Th>Email</Th>
                       <Th>Роль</Th>
+                      <Th>Статус</Th>
                       <Th>Дії</Th>
                     </Tr>
                   </Thead>
                   <Tbody>
-                    {project.users.map((user) => (
-                      <Tr key={user.userId}>
+                    {project?.users.map((user) => (
+                      <Tr key={user.userId} opacity={user.isActive ? 1 : 0.5}>
                         <Td>{user.user.name}</Td>
                         <Td>{user.user.email}</Td>
                         <Td>
                           <Badge colorScheme={PROJECT_USER_ROLE_COLORS[user.role]}>
                             {PROJECT_USER_ROLE_LABELS[user.role]}
                           </Badge>
+                        </Td>
+                        <Td>
+                          <Switch
+                            isChecked={user.isActive}
+                            onChange={() => handleToggleActive(user)}
+                            isDisabled={isToggleLoading}
+                          />
                         </Td>
                         <Td>
                           <HStack spacing={2}>
@@ -284,6 +418,20 @@ export const ProjectDetails = () => {
                               onClick={() => navigate(`/projects/${id}/tasks/registered/user/${user.userId}`)}
                             >
                               Зареєстровані задачі
+                            </Button>
+                            <Button
+                              size="sm"
+                              colorScheme="blue"
+                              onClick={() => handleEditRoleClick(user)}
+                            >
+                              Змінити роль
+                            </Button>
+                            <Button
+                              size="sm"
+                              colorScheme="red"
+                              onClick={() => handleDeleteClick(user)}
+                            >
+                              Видалити
                             </Button>
                           </HStack>
                         </Td>
@@ -295,6 +443,50 @@ export const ProjectDetails = () => {
             </CardBody>
           </Card>
         </VStack>
+
+        <Modal isOpen={isEditRoleOpen} onClose={onEditRoleClose}>
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>Зміна ролі користувача</ModalHeader>
+            <ModalBody>
+              <Text mb={4}>
+                Оберіть нову роль для користувача {selectedUser?.user.name}:
+              </Text>
+              <Select
+                value={selectedRole || ''}
+                onChange={(e) => setSelectedRole(e.target.value as ProjectUserRole)}
+              >
+                {Object.entries(PROJECT_USER_ROLE_LABELS).map(([role, label]) => (
+                  <option key={role} value={role}>
+                    {label}
+                  </option>
+                ))}
+              </Select>
+            </ModalBody>
+            <ModalFooter>
+              <Button variant="ghost" mr={3} onClick={onEditRoleClose}>
+                Скасувати
+              </Button>
+              <Button
+                colorScheme="blue"
+                onClick={handleRoleUpdate}
+                isLoading={isRoleUpdateLoading}
+              >
+                Зберегти
+              </Button>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+
+        <ConfirmModal
+          isOpen={isDeleteOpen}
+          onClose={onDeleteClose}
+          onConfirm={handleDeleteConfirm}
+          title="Видалення учасника"
+          message={`Ви впевнені, що хочете видалити користувача "${selectedUser?.user.name}" з проекту?`}
+          confirmText="Видалити"
+          isLoading={isDeleteLoading}
+        />
       </Box>
     </AdminLayout>
   );

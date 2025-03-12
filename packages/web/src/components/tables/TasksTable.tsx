@@ -10,11 +10,8 @@ import {
   Card,
   CardBody,
   HStack,
-  IconButton,
 } from '@chakra-ui/react';
-import { DeleteIcon, EditIcon } from '@chakra-ui/icons';
-import { TaskType } from '../forms/TaskForm';
-import { Task } from '../../types/task';
+import { Task, TaskType, TASK_TYPE_LABELS, TASK_TYPE_COLORS } from '../../types/task';
 
 const getComplexityColor = (complexity: number): string => {
   if (complexity <= 3) return 'green';
@@ -38,6 +35,7 @@ interface TasksTableProps {
 
 export const TasksTable = ({ tasks, title, type, onDelete, onEdit }: TasksTableProps) => {
   const showEstimatedTime = type === TaskType.PRODUCT;
+  const hasProductTasks = tasks.some(task => task.type === TaskType.PRODUCT);
 
   return (
     <Card>
@@ -46,8 +44,9 @@ export const TasksTable = ({ tasks, title, type, onDelete, onEdit }: TasksTableP
           <Thead>
             <Tr>
               <Th>Назва</Th>
-              <Th>Складність</Th>
-              {showEstimatedTime && <Th>Оч. час</Th>}
+              <Th>Тип</Th>
+              {showEstimatedTime && <Th>Продукт</Th>}
+              <Th>Опис</Th>
               <Th>Дії</Th>
             </Tr>
           </Thead>
@@ -56,30 +55,33 @@ export const TasksTable = ({ tasks, title, type, onDelete, onEdit }: TasksTableP
               <Tr key={task.id}>
                 <Td>{task.name}</Td>
                 <Td>
-                  <Badge colorScheme={getComplexityColor(task.complexity)}>
-                    {getComplexityLabel(task.complexity)} ({task.complexity})
+                  <Badge colorScheme={TASK_TYPE_COLORS[task.type]}>
+                    {TASK_TYPE_LABELS[task.type]}
                   </Badge>
                 </Td>
-                {showEstimatedTime && <Td>{task.estimatedTime} хв.</Td>}
+                {showEstimatedTime && (
+                  <Td>{task.type === TaskType.PRODUCT ? task.product : '-'}</Td>
+                )}
+                <Td>{task.description || '-'}</Td>
                 <Td>
                   <HStack spacing={2}>
                     {onEdit && (
-                      <IconButton
-                        aria-label="Редагувати задачу"
-                        icon={<EditIcon />}
+                      <Button
                         size="sm"
-                        colorScheme="teal"
+                        colorScheme="blue"
                         onClick={() => onEdit(task)}
-                      />
+                      >
+                        Редагувати
+                      </Button>
                     )}
                     {onDelete && (
-                      <IconButton
-                        aria-label="Видалити задачу"
-                        icon={<DeleteIcon />}
+                      <Button
                         size="sm"
                         colorScheme="red"
                         onClick={() => onDelete(task)}
-                      />
+                      >
+                        Видалити
+                      </Button>
                     )}
                   </HStack>
                 </Td>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
   Heading,
@@ -19,9 +19,9 @@ import {
 } from '@chakra-ui/react';
 import { api } from '../../lib/api';
 import { AdminLayout } from '../../components/admin/AdminLayout';
-import { TaskForm, TaskType } from '../../components/forms/TaskForm';
+import { TaskForm } from '../../components/forms/TaskForm';
 import { TasksTable } from '../../components/tables/TasksTable';
-import { Task, TaskStatus } from '../../types/task';
+import { Task, TaskType, TaskStatus } from '../../types/task';
 
 const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
   [TaskStatus.NEW]: 'Нове',
@@ -44,10 +44,13 @@ interface TaskFormData {
   type: TaskType;
   complexity?: number;
   tags?: string;
+  quantity?: number;
+  product?: string;
 }
 
 export const Tasks = () => {
   const { id: projectId } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projectName, setProjectName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -77,10 +80,22 @@ export const Tasks = () => {
   });
 
   const fetchTasks = async () => {
+    if (!projectId) {
+      toast({
+        title: 'Помилка',
+        description: 'ID проекту не знайдено',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+      navigate('/projects');
+      return;
+    }
+
     try {
       const [projectResponse, tasksResponse] = await Promise.all([
         api.get(`/projects/${projectId}`),
-        api.get(`/tasks/project/${projectId}`),
+        api.get(`/projects/${projectId}/tasks`),
       ]);
       setProjectName(projectResponse.data.name);
       setTasks(tasksResponse.data);
@@ -92,6 +107,7 @@ export const Tasks = () => {
         duration: 3000,
         isClosable: true,
       });
+      navigate('/projects');
     }
   };
 
@@ -147,11 +163,13 @@ export const Tasks = () => {
     setTaskToEdit(task);
     setFormData({
       name: task.name,
-      description: task.description,
+      description: task.description || '',
       type: task.type,
       estimatedTime: task.estimatedTime,
       complexity: task.complexity,
       tags: task.tags,
+      product: task.product,
+      quantity: task.quantity
     });
     onEditOpen();
   };
@@ -239,6 +257,7 @@ export const Tasks = () => {
 
   const productTasks = tasks.filter(task => task.type === TaskType.PRODUCT);
   const generalTasks = tasks.filter(task => task.type === TaskType.GENERAL);
+  const intermediateTasks = tasks.filter(task => task.type === TaskType.INTERMEDIATE);
 
   return (
     <AdminLayout>
@@ -256,6 +275,15 @@ export const Tasks = () => {
             tasks={productTasks} 
             title="Продуктові задачі" 
             type={TaskType.PRODUCT}
+            onDelete={handleDeleteClick}
+            onEdit={handleEditClick}
+          />
+
+          <Heading size="md">Проміжні задачі</Heading>
+          <TasksTable 
+            tasks={intermediateTasks} 
+            title="Проміжні задачі" 
+            type={TaskType.INTERMEDIATE}
             onDelete={handleDeleteClick}
             onEdit={handleEditClick}
           />
@@ -310,19 +338,16 @@ export const Tasks = () => {
       <Modal isOpen={isDeleteOpen} onClose={onDeleteClose}>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Підтвердження видалення</ModalHeader>
+          <ModalHeader>Видалити задачу</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            <Text>
-              Ви впевнені, що хочете видалити задачу "{taskToDelete?.name}"?
-              Ця дія незворотна.
-            </Text>
+            <Text>Ви впевнені, що хочете видалити цю задачу?</Text>
           </ModalBody>
           <ModalFooter>
             <Button variant="ghost" mr={3} onClick={onDeleteClose}>
               Скасувати
             </Button>
-            <Button colorScheme="red" onClick={handleDeleteConfirm}>
+            <Button colorScheme="red" onClick={handleDeleteConfirm} isLoading={isLoading}>
               Видалити
             </Button>
           </ModalFooter>

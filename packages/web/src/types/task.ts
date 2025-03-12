@@ -1,5 +1,3 @@
-import { TaskType } from '../components/forms/TaskForm';
-
 export enum TaskStatus {
   NEW = 'NEW',
   IN_PROGRESS = 'IN_PROGRESS',
@@ -7,16 +5,21 @@ export enum TaskStatus {
   ON_HOLD = 'ON_HOLD',
 }
 
+export enum TaskType {
+  PRODUCT = 'PRODUCT',
+  GENERAL = 'GENERAL',
+  INTERMEDIATE = 'INTERMEDIATE'
+}
+
 export interface Task {
   id: string;
-  code: string;
   name: string;
-  description: string;
-  estimatedTime: string;
-  projectId: string;
-  status: TaskStatus;
+  description?: string;
   type: TaskType;
-  complexity: number;
+  status: TaskStatus;
+  code: string;
+  estimatedTime?: string;
+  complexity?: number;
   tags?: string;
 }
 
@@ -32,4 +35,16 @@ export const TASK_STATUS_COLORS: Record<TaskStatus, string> = {
   [TaskStatus.IN_PROGRESS]: 'green',
   [TaskStatus.COMPLETED]: 'gray',
   [TaskStatus.ON_HOLD]: 'yellow',
+};
+
+export const TASK_TYPE_LABELS: Record<TaskType, string> = {
+  [TaskType.PRODUCT]: 'Продукт',
+  [TaskType.GENERAL]: 'Загальна',
+  [TaskType.INTERMEDIATE]: 'Проміжна'
+};
+
+export const TASK_TYPE_COLORS: Record<TaskType, string> = {
+  [TaskType.PRODUCT]: 'blue',
+  [TaskType.GENERAL]: 'orange',
+  [TaskType.INTERMEDIATE]: 'cyan'
 }; 

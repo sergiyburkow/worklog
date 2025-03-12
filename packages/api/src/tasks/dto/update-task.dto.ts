@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNumber, IsOptional, IsUUID, IsEnum, IsDecimal } from 'class-validator';
-import { TaskType } from './create-task.dto';
+import { IsString, IsNumber, IsOptional, IsUUID, IsEnum } from 'class-validator';
+import { TaskType } from '@prisma/client';
 
 export enum TaskStatus {
   NEW = 'NEW',
@@ -19,11 +19,6 @@ export class UpdateTaskDto {
   @IsString()
   @IsOptional()
   description?: string;
-
-  @ApiProperty({ required: false })
-  @IsDecimal()
-  @IsOptional()
-  estimatedTime?: number;
 
   @ApiProperty({ required: false })
   @IsUUID()
@@ -49,4 +44,9 @@ export class UpdateTaskDto {
   @IsEnum(TaskStatus)
   @IsOptional()
   status?: TaskStatus;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  estimatedTime?: string;
 } 

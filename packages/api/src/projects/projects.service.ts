@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectDto, UpdateProjectDto } from './dto';
-import { ProjectStatus, Prisma } from '@prisma/client';
+import { ProjectStatus, Prisma, ProjectUserRole } from '@prisma/client';
+import { ProjectUserDto } from './dto/project-user.dto';
 
 @Injectable()
 export class ProjectsService {
@@ -206,6 +207,104 @@ export class ProjectsService {
       name: pu.user.name,
       email: pu.user.email,
       role: pu.role,
+      isActive: pu.isActive
     }));
+  }
+
+  async removeUserFromProject(projectId: string, userId: string) {
+    // Check if user has any task logs in the project
+    const userLogs = await this.prisma.taskLog.findMany({
+      where: {
+        task: {
+          projectId
+        },
+        userId
+      }
+    });
+
+    if (userLogs.length > 0) {
+      throw new BadRequestException('Неможливо видалити користувача, який має записи логів у проекті');
+    }
+
+    // If no logs found, delete the user from project
+    return this.prisma.projectUser.delete({
+      where: {
+        userId_projectId: {
+          userId,
+          projectId
+        }
+      }
+    });
+  }
+
+  async toggleUserActive(projectId: string, userId: string, isActive: boolean) {
+    const projectUser = await this.prisma.projectUser.findUnique({
+      where: {
+        userId_projectId: {
+          userId,
+          projectId
+        }
+      }
+    });
+
+    if (!projectUser) {
+      throw new NotFoundException('Користувача не знайдено в проекті');
+    }
+
+    return this.prisma.projectUser.update({
+      where: {
+        userId_projectId: {
+          userId,
+          projectId
+        }
+      },
+      data: {
+        isActive
+      },
+      include: {
+        user: true
+      }
+    });
+  }
+
+  async findProjectUsers(projectId: string) {
+    return this.prisma.projectUser.findMany({
+      where: {
+        projectId
+      },
+      include: {
+        user: true
+      }
+    });
+  }
+
+  async updateUserRole(projectId: string, userId: string, role: ProjectUserRole) {
+    const projectUser = await this.prisma.projectUser.findUnique({
+      where: {
+        userId_projectId: {
+          userId,
+          projectId
+        }
+      }
+    });
+
+    if (!projectUser) {
+      throw new NotFoundException('Користувача не знайдено в проекті');
+    }
+
+    return this.prisma.projectUser.update({
+      where: {
+        userId_projectId: {
+          userId,
+          projectId
+        }
+      },
+      data: {
+        role
+      },
+      include: {
+        user: true
+      }
+    });
   }
 } 

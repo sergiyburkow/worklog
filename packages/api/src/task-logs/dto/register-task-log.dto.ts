@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsUUID, IsDateString, IsOptional, IsNumber, IsEnum } from 'class-validator';
-import { TaskType } from '../../tasks/dto/create-task.dto';
+import { TaskType } from '@prisma/client';
 
 export class RegisterTaskLogDto {
   @ApiProperty({ required: false })

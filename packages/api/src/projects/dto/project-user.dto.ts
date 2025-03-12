@@ -1,19 +1,18 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsUUID, IsEnum } from 'class-validator';
-
-export enum ProjectRole {
-  MANAGER = 'MANAGER',
-  QA = 'QA',
-  ENGINEER = 'ENGINEER',
-  PADAWAN = 'PADAWAN',
-}
+import { IsString, IsEnum, IsOptional, IsBoolean } from 'class-validator';
+import { ProjectUserRole } from '@prisma/client';
 
 export class ProjectUserDto {
   @ApiProperty()
-  @IsUUID()
+  @IsString()
   userId: string;
 
-  @ApiProperty({ enum: ProjectRole })
-  @IsEnum(ProjectRole)
-  role: ProjectRole;
+  @ApiProperty({ enum: ProjectUserRole })
+  @IsEnum(ProjectUserRole)
+  role: ProjectUserRole;
+
+  @ApiProperty({ required: false })
+  @IsBoolean()
+  @IsOptional()
+  isActive?: boolean;
 } 

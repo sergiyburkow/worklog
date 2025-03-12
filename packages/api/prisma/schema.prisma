@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,6 +5,171 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String                 @id @default(uuid())
+  name          String
+  email         String                 @unique
+  phone         String?
+  passwordHash  String                 @map("password_hash")
+  role          UserRole               @default(WORKER)
+  callSign      String?
+  createdAt     DateTime               @default(now())
+  lastName      String?
+  updatedAt     DateTime               @updatedAt
+  projects      ProjectUser[]
+  statusHistory TaskLogStatusHistory[]
+  skills        UserSkill[]
+  tokens        UserToken[]
+  taskLogs      TaskLog[]              @relation("CreatedBy")
+
+  @@map("Users")
+}
+
+model UserToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  jwtToken  String   @map("jwt_token")
+  expiresAt DateTime @map("expires_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("UserTokens")
+}
+
+model Client {
+  id          String          @id @default(uuid())
+  name        String
+  description String?
+  address     String?
+  contactInfo String?         @map("contact_info")
+  contacts    ClientContact[]
+  projects    Project[]
+
+  @@map("Clients")
+}
+
+model ClientContact {
+  id        String  @id @default(uuid())
+  clientId  String  @map("client_id")
+  name      String
+  email     String?
+  phone     String?
+  telegram  String?
+  whatsapp  String?
+  signal    String?
+  messenger String?
+  instagram String?
+  facebook  String?
+  client    Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("ClientContacts")
+}
+
+model Project {
+  id            String        @id @default(uuid())
+  name          String
+  clientId      String        @map("client_id")
+  startDate     DateTime      @map("start_date")
+  deadline      DateTime
+  actualEndDate DateTime?     @map("actual_end_date")
+  status        ProjectStatus @default(NEW)
+  quantity      Int?
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+  products      Product[]
+  users         ProjectUser[]
+  client        Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  tasks         Task[]
+
+  @@map("Projects")
+}
+
+model ProjectUser {
+  userId    String          @map("user_id")
+  projectId String          @map("project_id")
+  role      ProjectUserRole @map("role")
+  isActive  Boolean         @default(true)
+  project   Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, projectId])
+  @@map("ProjectUsers")
+}
+
+model Task {
+  id            String      @id @default(uuid())
+  name          String
+  description   String?
+  type          TaskType    @default(GENERAL)
+  status        TaskStatus  @default(NEW)
+  complexity    Int?
+  tags          String?
+  estimatedTime Decimal?    @map("estimated_time")
+  projectId     String      @map("project_id")
+  project       Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  logs          TaskLog[]
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+
+  @@map("tasks")
+}
+
+model Product {
+  id        String    @id @default(uuid())
+  code      String
+  projectId String    @map("project_id")
+  createdAt DateTime  @default(now()) @map("created_at")
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  taskLogs  TaskLog[]
+
+  @@unique([code, projectId])
+  @@map("Products")
+}
+
+model TaskLog {
+  id            String                 @id @default(uuid())
+  userId        String                 @map("user_id")
+  taskId        String                 @map("task_id")
+  productId     String?                @map("product_id")
+  completedAt   DateTime?              @map("completed_at")
+  registeredAt  DateTime               @map("registered_at")
+  timeSpent     Decimal?               @map("time_spent")
+  statusHistory TaskLogStatusHistory[]
+  product       Product?               @relation(fields: [productId], references: [id])
+  task          Task                   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user          User                   @relation("CreatedBy", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("task_logs")
+}
+
+model TaskLogStatusHistory {
+  id        String                @id @default(uuid())
+  taskLogId String                @map("task_log_id")
+  status    TaskLogApprovalStatus
+  userId    String                @map("user_id")
+  createdAt DateTime              @default(now()) @map("created_at")
+  taskLog   TaskLog               @relation(fields: [taskLogId], references: [id], onDelete: Cascade)
+  user      User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("TaskLogStatusHistory")
+}
+
+model Skill {
+  id    String      @id @default(uuid())
+  name  String      @unique
+  users UserSkill[]
+
+  @@map("Skills")
+}
+
+model UserSkill {
+  userId  String @map("user_id")
+  skillId String @map("skill_id")
+  skill   Skill  @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, skillId])
+  @@map("UserSkills")
 }
 
 enum UserRole {
@@ -48,6 +207,7 @@ enum TaskStatus {
 enum TaskType {
   PRODUCT
   GENERAL
+  INTERMEDIATE
 }
 
 enum TaskLogStatus {
@@ -61,169 +221,4 @@ enum TaskLogApprovalStatus {
   APPROVED
   NEEDS_FIXES
   ON_HOLD
-}
-
-model User {
-  id           String          @id @default(uuid())
-  name         String
-  lastName     String?
-  email        String         @unique
-  phone        String?
-  callSign     String?
-  passwordHash String         @map("password_hash")
-  role         UserRole       @default(WORKER)
-  tokens       UserToken[]
-  projects     ProjectUser[]
-  taskLogs     TaskLog[]     @relation("CreatedBy")
-  skills       UserSkill[]
-  statusHistory TaskLogStatusHistory[]
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-
-  @@map("Users")
-}
-
-model UserToken {
-  id        String    @id @default(uuid())
-  userId    String    @map("user_id")
-  jwtToken  String    @map("jwt_token")
-  expiresAt DateTime  @map("expires_at")
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("UserTokens")
-}
-
-model Client {
-  id          String           @id @default(uuid())
-  name        String
-  description String?
-  address     String?
-  contactInfo String?         @map("contact_info")
-  contacts    ClientContact[]
-  projects    Project[]
-
-  @@map("Clients")
-}
-
-model ClientContact {
-  id        String   @id @default(uuid())
-  clientId  String   @map("client_id")
-  name      String
-  email     String?
-  phone     String?
-  telegram  String?
-  whatsapp  String?
-  signal    String?
-  messenger String?
-  instagram String?
-  facebook  String?
-  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
-
-  @@map("ClientContacts")
-}
-
-model Project {
-  id            String         @id @default(uuid())
-  name          String
-  clientId      String        @map("client_id")
-  startDate     DateTime      @map("start_date")
-  deadline      DateTime
-  actualEndDate DateTime?     @map("actual_end_date")
-  status        ProjectStatus @default(NEW)
-  quantity      Int?
-  updatedAt     DateTime      @updatedAt @map("updated_at")
-  client        Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  users         ProjectUser[]
-  tasks         Task[]
-  products      Product[]
-
-  @@map("Projects")
-}
-
-model ProjectUser {
-  userId    String         @map("user_id")
-  projectId String         @map("project_id")
-  role      ProjectUserRole @map("role")
-  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  project   Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@id([userId, projectId])
-  @@map("ProjectUsers")
-}
-
-model Task {
-  id            String      @id @default(uuid())
-  name          String
-  description   String?
-  estimatedTime Decimal     @map("estimated_time")
-  complexity    Int?
-  tags          String?
-  type          TaskType    @default(GENERAL)
-  status        TaskStatus  @default(NEW)
-
-  // Relations
-  project       Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId     String      @map("project_id")
-  
-  logs          TaskLog[]
-
-  @@map("tasks")
-}
-
-model Product {
-  id        String    @id @default(uuid())
-  code      String
-  projectId String    @map("project_id")
-  createdAt DateTime  @default(now()) @map("created_at")
-  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  taskLogs  TaskLog[]
-
-  @@unique([code, projectId])
-  @@map("Products")
-}
-
-model TaskLog {
-  id              String                  @id @default(uuid())
-  userId          String                 @map("user_id")
-  taskId          String                 @map("task_id")
-  productId       String?                @map("product_id")
-  completedAt     DateTime?              @map("completed_at")
-  registeredAt    DateTime               @map("registered_at")
-  timeSpent       Decimal?               @map("time_spent")
-  user            User                   @relation("CreatedBy", fields: [userId], references: [id], onDelete: Cascade)
-  task            Task                   @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  product         Product?               @relation(fields: [productId], references: [id])
-  statusHistory   TaskLogStatusHistory[]
-
-  @@map("task_logs")
-}
-
-model TaskLogStatusHistory {
-  id         String                @id @default(uuid())
-  taskLogId  String               @map("task_log_id")
-  status     TaskLogApprovalStatus
-  userId     String               @map("user_id")
-  createdAt  DateTime             @default(now()) @map("created_at")
-  taskLog    TaskLog              @relation(fields: [taskLogId], references: [id], onDelete: Cascade)
-  user       User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("TaskLogStatusHistory")
-}
-
-model Skill {
-  id    String       @id @default(uuid())
-  name  String       @unique
-  users UserSkill[]
-
-  @@map("Skills")
-}
-
-model UserSkill {
-  userId   String  @map("user_id")
-  skillId  String  @map("skill_id")
-  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  skill    Skill   @relation(fields: [skillId], references: [id], onDelete: Cascade)
-
-  @@id([userId, skillId])
-  @@map("UserSkills")
 }

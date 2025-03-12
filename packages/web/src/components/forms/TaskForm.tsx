@@ -10,16 +10,7 @@ import {
   ModalFooter,
   ModalBody,
 } from '@chakra-ui/react';
-
-export enum TaskType {
-  PRODUCT = 'PRODUCT',
-  GENERAL = 'GENERAL'
-}
-
-export const TASK_TYPE_LABELS: Record<TaskType, string> = {
-  [TaskType.PRODUCT]: 'Продуктове',
-  [TaskType.GENERAL]: 'Загальне'
-};
+import { TaskType, TASK_TYPE_LABELS } from '../../types/task';
 
 export interface TaskFormData {
   name: string;
@@ -47,6 +38,8 @@ export const TaskForm = ({
   onCancel,
   submitButtonText = 'Додати завдання'
 }: TaskFormProps) => {
+  const showEstimatedTime = formData.type === TaskType.PRODUCT || formData.type === TaskType.INTERMEDIATE;
+
   return (
     <form onSubmit={onSubmit}>
       <ModalBody>
@@ -77,8 +70,10 @@ export const TaskForm = ({
                 const newType = e.target.value as TaskType;
                 onChange({ 
                   type: newType,
-                  // Очищаємо estimatedTime якщо тип змінено на GENERAL
-                  ...(newType === TaskType.GENERAL && { estimatedTime: undefined })
+                  // Очищаємо поля в залежності від типу
+                  ...(newType === TaskType.GENERAL && { 
+                    estimatedTime: undefined
+                  })
                 });
               }}
             >
@@ -113,7 +108,7 @@ export const TaskForm = ({
             />
           </FormControl>
 
-          {formData.type === TaskType.PRODUCT && (
+          {showEstimatedTime && (
             <FormControl isRequired>
               <FormLabel>Очікуваний час виконання (хвилин)</FormLabel>
               <Input

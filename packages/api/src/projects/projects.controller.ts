@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagg
 import { ProjectsService } from './projects.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ProjectResponseDto, CreateProjectDto, UpdateProjectDto, TaskResponseDto, ProjectUserResponseDto } from './dto';
+import { ProjectUserRole } from '@prisma/client';
 
 @ApiTags('projects')
 @Controller('projects')
@@ -65,5 +66,44 @@ export class ProjectsController {
   @ApiResponse({ status: 200, description: 'Return users by project id', type: [ProjectUserResponseDto] })
   async findUsersByProject(@Param('id') id: string) {
     return this.projectsService.findUsersByProject(id);
+  }
+
+  @Delete(':projectId/users/:userId')
+  @ApiOperation({ summary: 'Remove user from project' })
+  @ApiResponse({ status: 200, description: 'User has been removed from project' })
+  async removeUser(
+    @Param('projectId') projectId: string,
+    @Param('userId') userId: string,
+  ) {
+    return this.projectsService.removeUserFromProject(projectId, userId);
+  }
+
+  @Put(':projectId/users/:userId/toggle-active')
+  @ApiOperation({ summary: 'Toggle user active status in project' })
+  @ApiResponse({ status: 200, description: 'User status has been updated' })
+  async toggleUserActive(
+    @Param('projectId') projectId: string,
+    @Param('userId') userId: string,
+    @Body('isActive') isActive: boolean,
+  ) {
+    return this.projectsService.toggleUserActive(projectId, userId, isActive);
+  }
+
+  @Get(':projectId/users')
+  @ApiOperation({ summary: 'Get project users' })
+  @ApiResponse({ status: 200, description: 'Return project users' })
+  async getProjectUsers(@Param('projectId') projectId: string) {
+    return this.projectsService.findUsersByProject(projectId);
+  }
+
+  @Put(':projectId/users/:userId/role')
+  @ApiOperation({ summary: 'Update user role in project' })
+  @ApiResponse({ status: 200, description: 'User role has been updated' })
+  async updateUserRole(
+    @Param('projectId') projectId: string,
+    @Param('userId') userId: string,
+    @Body('role') role: ProjectUserRole,
+  ) {
+    return this.projectsService.updateUserRole(projectId, userId, role);
   }
 } 

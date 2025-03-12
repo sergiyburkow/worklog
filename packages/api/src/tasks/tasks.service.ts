@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateTaskDto } from './dto';
+import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
+import { TaskType } from '@prisma/client';
+import { TaskStatus } from './dto/update-task.dto';
+import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class TasksService {
@@ -12,9 +15,10 @@ export class TasksService {
       data: {
         name: createTaskDto.name,
         description: createTaskDto.description,
-        estimatedTime: createTaskDto.estimatedTime,
         type: createTaskDto.type,
         complexity: createTaskDto.complexity,
+        tags: createTaskDto.tags,
+        estimatedTime: createTaskDto.estimatedTime ? new Prisma.Decimal(createTaskDto.estimatedTime) : new Prisma.Decimal(0),
         project: {
           connect: {
             id: createTaskDto.projectId,
@@ -40,20 +44,6 @@ export class TasksService {
       where: { id },
       include: {
         project: true,
-        logs: {
-          include: {
-            user: true,
-            product: true,
-            statusHistory: {
-              include: {
-                user: true,
-              },
-              orderBy: {
-                createdAt: 'desc',
-              },
-            },
-          },
-        },
       },
     });
 
@@ -64,48 +54,45 @@ export class TasksService {
     return task;
   }
 
-  async findByProject(projectId: string) {
-    return this.prisma.task.findMany({
-      where: {
-        projectId,
-      },
-      include: {
-        project: true,
-      },
-    });
-  }
-
   async update(id: string, updateTaskDto: UpdateTaskDto) {
     const task = await this.prisma.task.findUnique({
       where: { id },
       include: {
-        logs: true
-      }
+        logs: true,
+      },
     });
 
     if (!task) {
       throw new NotFoundException(`Task with ID ${id} not found`);
     }
 
-    const { projectId, status, ...updateData } = updateTaskDto;
-
-    if (status && task.logs.length > 0) {
+    // Якщо є логи і намагаємось змінити статус
+    if (task.logs.length > 0 && updateTaskDto.status) {
       throw new BadRequestException('Неможливо змінити статус задачі, яка має записи логів');
     }
 
+    const updateData: Prisma.TaskUpdateInput = {
+      ...(updateTaskDto.name && { name: updateTaskDto.name }),
+      ...(updateTaskDto.description && { description: updateTaskDto.description }),
+      ...(updateTaskDto.type && { type: updateTaskDto.type }),
+      ...(updateTaskDto.complexity && { complexity: updateTaskDto.complexity }),
+      ...(updateTaskDto.tags && { tags: updateTaskDto.tags }),
+      ...(updateTaskDto.status && { status: updateTaskDto.status }),
+      ...(updateTaskDto.estimatedTime && { 
+        estimatedTime: new Prisma.Decimal(updateTaskDto.estimatedTime) 
+      }),
+      ...(updateTaskDto.projectId && {
+        project: {
+          connect: {
+            id: updateTaskDto.projectId,
+          },
+        },
+      }),
+    };
+
     return this.prisma.task.update({
       where: { id },
-      data: {
-        ...updateData,
-        ...(status && { status }),
-        ...(projectId && {
-          project: {
-            connect: {
-              id: projectId,
-            },
-          },
-        }),
-      },
+      data: updateData,
       include: {
         project: true,
       },
@@ -116,8 +103,8 @@ export class TasksService {
     const task = await this.prisma.task.findUnique({
       where: { id },
       include: {
-        logs: true
-      }
+        logs: true,
+      },
     });
 
     if (!task) {
@@ -132,4 +119,15 @@ export class TasksService {
       where: { id },
     });
   }
-} 
+
+  async findByProject(projectId: string) {
+    return this.prisma.task.findMany({
+      where: {
+        projectId,
+      },
+      include: {
+        project: true,
+      },
+    });
+  }
+}
