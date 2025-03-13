@@ -147,12 +147,12 @@ export const ProjectDetails = () => {
     try {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const response = await api.get(`/task-logs/project/${id}`, {
-        params: {
-          startDate: today.toISOString(),
-          endDate: new Date().toISOString(),
-        },
+      const params = new URLSearchParams({
+        registeredFrom: today.toISOString(),
+        registeredTo: new Date().toISOString()
       });
+      
+      const response = await api.get(`/task-logs/project/${id}?${params.toString()}`);
       setTodayTasks(response.data);
     } catch (error) {
       toast({

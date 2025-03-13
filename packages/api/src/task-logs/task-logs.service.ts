@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterTaskLogDto } from './dto/register-task-log.dto';
 import { UpdateTaskLogDto } from './dto/update-task-log.dto';
+import { FindTaskLogsDto } from './dto/find-task-logs.dto';
 import { TaskLogApprovalStatus, TaskType } from '@prisma/client';
 
 @Injectable()
@@ -38,9 +39,7 @@ export class TaskLogsService {
     }
 
     // Створюємо запис про виконання задачі
-    console.log('Received registeredAt:', registerTaskLogDto.registeredAt);
     const registeredDate = new Date(registerTaskLogDto.registeredAt);
-    console.log('Parsed date:', registeredDate);
 
     const taskLog = await this.prisma.taskLog.create({
       data: {
@@ -65,13 +64,29 @@ export class TaskLogsService {
     return taskLog;
   }
 
-  async findByProject(projectId: string) {
-    return this.prisma.taskLog.findMany({
-      where: {
-        task: {
-          projectId,
+  async findByProject(projectId: string, filters?: FindTaskLogsDto) {
+    const where = {
+      AND: [
+        {
+          task: {
+            projectId
+          }
         },
-      },
+        ...(filters?.registeredFrom ? [{
+          registeredAt: {
+            gte: new Date(filters.registeredFrom)
+          }
+        }] : []),
+        ...(filters?.registeredTo ? [{
+          registeredAt: {
+            lte: new Date(filters.registeredTo)
+          }
+        }] : [])
+      ]
+    };
+
+    return this.prisma.taskLog.findMany({
+      where,
       include: {
         user: true,
         task: true,
@@ -86,7 +101,7 @@ export class TaskLogsService {
         },
       },
       orderBy: {
-        completedAt: 'desc',
+        registeredAt: 'desc',
       },
     });
   }

@@ -1,8 +1,9 @@
-import { Controller, Post, Body, UseGuards, Get, Param, Delete, Put } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get, Param, Delete, Put, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { TaskLogsService } from './task-logs.service';
 import { RegisterTaskLogDto } from './dto/register-task-log.dto';
 import { UpdateTaskLogDto } from './dto/update-task-log.dto';
+import { FindTaskLogsDto } from './dto/find-task-logs.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AdminGuard } from '../auth/admin.guard';
 
@@ -23,8 +24,11 @@ export class TaskLogsController {
   @Get('project/:projectId')
   @ApiOperation({ summary: 'Get all registered tasks for project' })
   @ApiResponse({ status: 200, description: 'Return all registered tasks for project' })
-  async findByProject(@Param('projectId') projectId: string) {
-    return this.taskLogsService.findByProject(projectId);
+  async findByProject(
+    @Param('projectId') projectId: string,
+    @Query() filters: FindTaskLogsDto
+  ) {
+    return this.taskLogsService.findByProject(projectId, filters);
   }
 
   @Get('project/:projectId/user/:userId')

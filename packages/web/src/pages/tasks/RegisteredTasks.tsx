@@ -94,6 +94,7 @@ export const RegisteredTasks: React.FC = () => {
     const today = new Date();
     let fromDate = new Date();
     let toDate = new Date();
+    toDate.setHours(23, 59, 59, 999); // Встановлюємо кінець дня для кінцевої дати
 
     switch (range) {
       case 'TODAY':
@@ -111,18 +112,24 @@ export const RegisteredTasks: React.FC = () => {
         fromDate = new Date(today.setDate(firstDay));
         fromDate.setHours(0, 0, 0, 0);
         toDate = new Date();
+        toDate.setHours(23, 59, 59, 999);
         break;
       case 'THIS_MONTH':
         fromDate = new Date(today.getFullYear(), today.getMonth(), 1);
         toDate = new Date();
+        toDate.setHours(23, 59, 59, 999);
         break;
       case 'LAST_MONTH':
         fromDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
         toDate = new Date(today.getFullYear(), today.getMonth(), 0);
+        toDate.setHours(23, 59, 59, 999);
         break;
       default:
         fromDate = new Date(filters.dateFrom || '');
         toDate = new Date(filters.dateTo || '');
+        if (!isNaN(toDate.getTime())) {
+          toDate.setHours(23, 59, 59, 999);
+        }
     }
 
     const formatDate = (date: Date) => {
@@ -200,7 +207,22 @@ export const RegisteredTasks: React.FC = () => {
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const response = await api.get(`/task-logs/project/${projectId}`);
+        const params = new URLSearchParams();
+        
+        if (filters.type) {
+          params.append('type', filters.type);
+        }
+        if (filters.userId) {
+          params.append('userId', filters.userId);
+        }
+        if (filters.dateFrom) {
+          params.append('registeredFrom', new Date(filters.dateFrom).toISOString());
+        }
+        if (filters.dateTo) {
+          params.append('registeredTo', new Date(filters.dateTo).toISOString());
+        }
+
+        const response = await api.get(`/task-logs/project/${projectId}?${params.toString()}`);
         setTasks(response.data);
       } catch (error) {
         console.error('Помилка при завантаженні задач:', error);
@@ -215,7 +237,7 @@ export const RegisteredTasks: React.FC = () => {
     };
 
     fetchTasks();
-  }, [projectId]);
+  }, [projectId, filters]);
 
   // Завантаження користувачів проекту
   useEffect(() => {
@@ -350,7 +372,7 @@ export const RegisteredTasks: React.FC = () => {
           </CardBody>
         </Card>
 
-        <RegisteredTasksTable tasks={filteredTasks} type={filters.type as any || 'PRODUCT'} />
+        <RegisteredTasksTable tasks={tasks} type={filters.type as any || 'PRODUCT'} />
       </Box>
     </AdminLayout>
   );
