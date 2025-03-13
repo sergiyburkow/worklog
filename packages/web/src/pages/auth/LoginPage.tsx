@@ -10,34 +10,42 @@ import {
 import { FiMail, FiLock } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../../services/auth.service';
-import { Formik, Form } from 'formik';
-import * as Yup from 'yup';
+import { useForm, FormProvider } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import type { LoginCredentials } from '../../types/auth';
 import { FormInput, Button } from '../../components/ui';
 import { useAuth } from '../../contexts/AuthContext';
 
-const validationSchema = Yup.object({
-  email: Yup.string()
+const validationSchema = z.object({
+  email: z.string()
     .email('Невірний формат email')
-    .required('Email обов\'язковий'),
-  password: Yup.string()
+    .min(1, 'Email обов\'язковий'),
+  password: z.string()
     .min(6, 'Пароль має бути не менше 6 символів')
-    .required('Пароль обов\'язковий'),
+    .min(1, 'Пароль обов\'язковий'),
 });
 
-const initialValues: LoginCredentials = {
-  email: '',
-  password: '',
-};
+type FormData = z.infer<typeof validationSchema>;
 
 export const LoginPage = () => {
   const toast = useToast();
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const handleSubmit = async (values: LoginCredentials, { setSubmitting }: { setSubmitting: (isSubmitting: boolean) => void }) => {
+  const methods = useForm<FormData>({
+    resolver: zodResolver(validationSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
+
+  const { handleSubmit, formState: { isSubmitting } } = methods;
+
+  const onSubmit = async (data: FormData) => {
     try {
-      const response = await authService.login(values);
+      const response = await authService.login(data);
       
       login(response.user);
       
@@ -60,8 +68,6 @@ export const LoginPage = () => {
         isClosable: true,
         position: 'top-right',
       });
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -116,44 +122,38 @@ export const LoginPage = () => {
             </Text>
           </VStack>
 
-          <Formik
-            initialValues={initialValues}
-            validationSchema={validationSchema}
-            onSubmit={handleSubmit}
-          >
-            {({ isSubmitting }) => (
-              <Form style={{ width: '100%' }}>
-                <Stack spacing={6} w="full">
-                  <FormInput
-                    name="email"
-                    label="Email"
-                    type="email"
-                    placeholder="Введіть ваш email"
-                    icon={<FiMail color="gray.300" />}
-                    isRequired
-                  />
+          <FormProvider {...methods}>
+            <form onSubmit={handleSubmit(onSubmit)} style={{ width: '100%' }}>
+              <Stack spacing={6} w="full">
+                <FormInput
+                  name="email"
+                  label="Email"
+                  type="email"
+                  placeholder="Введіть ваш email"
+                  icon={<FiMail color="gray.300" />}
+                  isRequired
+                />
 
-                  <FormInput
-                    name="password"
-                    label="Пароль"
-                    type="password"
-                    placeholder="Введіть ваш пароль"
-                    icon={<FiLock color="gray.300" />}
-                    isRequired
-                  />
+                <FormInput
+                  name="password"
+                  label="Пароль"
+                  type="password"
+                  placeholder="Введіть ваш пароль"
+                  icon={<FiLock color="gray.300" />}
+                  isRequired
+                />
 
-                  <Button
-                    type="submit"
-                    isLoading={isSubmitting}
-                    loadingText="Вхід..."
-                    isFullWidth
-                  >
-                    Увійти
-                  </Button>
-                </Stack>
-              </Form>
-            )}
-          </Formik>
+                <Button
+                  type="submit"
+                  isLoading={isSubmitting}
+                  loadingText="Вхід..."
+                  isFullWidth
+                >
+                  Увійти
+                </Button>
+              </Stack>
+            </form>
+          </FormProvider>
         </VStack>
       </Container>
     </Flex>
