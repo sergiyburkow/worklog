@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterTaskLogDto } from './dto/register-task-log.dto';
+import { UpdateTaskLogDto } from './dto/update-task-log.dto';
 import { TaskLogApprovalStatus, TaskType } from '@prisma/client';
 
 @Injectable()
@@ -113,6 +114,75 @@ export class TaskLogsService {
       },
       orderBy: {
         completedAt: 'desc',
+      },
+    });
+  }
+
+  async remove(id: string) {
+    const taskLog = await this.prisma.taskLog.findUnique({
+      where: { id },
+    });
+
+    if (!taskLog) {
+      throw new NotFoundException(`Task log with ID ${id} not found`);
+    }
+
+    await this.prisma.taskLog.delete({
+      where: { id },
+    });
+  }
+
+  async update(id: string, updateTaskLogDto: UpdateTaskLogDto) {
+    const taskLog = await this.prisma.taskLog.findUnique({
+      where: { id },
+      include: {
+        task: true,
+      },
+    });
+
+    if (!taskLog) {
+      throw new NotFoundException(`Task log with ID ${id} not found`);
+    }
+
+    let productId: string | undefined;
+
+    if (updateTaskLogDto.productCode && taskLog.task.type === TaskType.PRODUCT) {
+      const product = await this.prisma.product.findFirst({
+        where: {
+          code: updateTaskLogDto.productCode,
+          projectId: taskLog.task.projectId,
+        },
+      });
+
+      if (!product) {
+        const newProduct = await this.prisma.product.create({
+          data: {
+            code: updateTaskLogDto.productCode,
+            projectId: taskLog.task.projectId,
+          },
+        });
+        productId = newProduct.id;
+      } else {
+        productId = product.id;
+      }
+    }
+
+    return this.prisma.taskLog.update({
+      where: { id },
+      data: {
+        ...(productId && { productId }),
+        ...(updateTaskLogDto.registeredAt && { registeredAt: new Date(updateTaskLogDto.registeredAt) }),
+        ...(updateTaskLogDto.timeSpent && { timeSpent: updateTaskLogDto.timeSpent }),
+      },
+      include: {
+        user: true,
+        task: true,
+        product: true,
+        statusHistory: {
+          include: {
+            user: true,
+          },
+        },
       },
     });
   }

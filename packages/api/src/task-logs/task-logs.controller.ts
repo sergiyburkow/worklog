@@ -1,8 +1,10 @@
-import { Controller, Post, Body, UseGuards, Get, Param } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get, Param, Delete, Put } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { TaskLogsService } from './task-logs.service';
 import { RegisterTaskLogDto } from './dto/register-task-log.dto';
+import { UpdateTaskLogDto } from './dto/update-task-log.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { AdminGuard } from '../auth/admin.guard';
 
 @ApiTags('task-logs')
 @Controller('task-logs')
@@ -33,5 +35,21 @@ export class TaskLogsController {
     @Param('userId') userId: string,
   ) {
     return this.taskLogsService.findByProjectAndUser(projectId, userId);
+  }
+
+  @Delete(':id')
+  @UseGuards(AdminGuard)
+  @ApiOperation({ summary: 'Delete task log' })
+  @ApiResponse({ status: 200, description: 'Task log has been deleted' })
+  async remove(@Param('id') id: string) {
+    return this.taskLogsService.remove(id);
+  }
+
+  @Put(':id')
+  @UseGuards(AdminGuard)
+  @ApiOperation({ summary: 'Update task log' })
+  @ApiResponse({ status: 200, description: 'Task log has been updated' })
+  async update(@Param('id') id: string, @Body() updateTaskLogDto: UpdateTaskLogDto) {
+    return this.taskLogsService.update(id, updateTaskLogDto);
   }
 } 

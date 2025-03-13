@@ -27,9 +27,8 @@ export const AdminMenu = () => {
 
   return (
     <Box 
-      position="fixed"
+      position="relative"
       left={0}
-      top="70px"
       height="calc(100vh - 70px)"
       width={isCollapsed ? "60px" : "250px"}
       bg="white"

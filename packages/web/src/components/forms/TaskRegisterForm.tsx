@@ -23,7 +23,7 @@ interface Task {
   id: string;
   name: string;
   estimatedTime: string;
-  type: 'PRODUCT' | 'GENERAL';
+  type: 'PRODUCT' | 'INTERMEDIATE' | 'GENERAL';
 }
 
 interface ProjectUser {
@@ -40,6 +40,7 @@ interface TaskLogFormData {
   timeSpent?: string;
   hours?: string;
   minutes?: string;
+  quantity?: string;
 }
 
 interface TaskRegisterFormProps {
@@ -51,6 +52,7 @@ interface TaskRegisterFormProps {
     role: 'ADMIN' | 'PROJECT_MANAGER' | 'WORKER' | 'GUEST';
   };
   isProductTask: boolean;
+  taskType: 'PRODUCT' | 'INTERMEDIATE' | 'GENERAL';
 }
 
 export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
@@ -59,6 +61,7 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
   projectId,
   currentUser,
   isProductTask,
+  taskType,
 }) => {
   const toast = useToast();
   const [showScanner, setShowScanner] = useState(false);
@@ -77,6 +80,14 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
+  const parseInputDate = (dateString: string) => {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      throw new Error('Invalid date');
+    }
+    return formatDateForInput(date);
+  };
+
   const [formData, setFormData] = useState<TaskLogFormData>({
     productCode: '',
     taskId: '',
@@ -85,6 +96,7 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
     timeSpent: '',
     hours: '',
     minutes: '',
+    quantity: '',
   });
 
   // Завантаження задач при ініціалізації
@@ -92,9 +104,7 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
     const fetchTasks = async () => {
       try {
         const response = await api.get(`/projects/${projectId}/tasks`);
-        const filteredTasks = response.data.filter((task: Task) => 
-          isProductTask ? task.type === 'PRODUCT' : task.type === 'GENERAL'
-        );
+        const filteredTasks = response.data.filter((task: Task) => task.type === taskType);
         setTasks(filteredTasks);
       } catch (error) {
         console.error('Помилка при завантаженні задач:', error);
@@ -109,7 +119,7 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
     };
 
     fetchTasks();
-  }, [projectId, isProductTask]);
+  }, [projectId, taskType]);
 
   // Завантаження користувачів проекту
   useEffect(() => {
@@ -218,19 +228,12 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
       return;
     }
     try {
-      // Перевіряємо вхідну дату
-      console.log('Original date:', formData.registeredAt);
       const date = new Date(formData.registeredAt);
-      console.log('Date object:', date);
-      const isoString = date.toISOString();
-      console.log('ISO string:', isoString);
-
       const formattedData = {
         ...formData,
-        registeredAt: isoString,
+        registeredAt: date.toISOString(),
       };
       
-      console.log('Sending data:', formattedData);
       await onSubmit(formattedData);
     } catch (error) {
       console.error('Помилка при відправці форми:', error);
@@ -278,6 +281,14 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
     });
   };
 
+  const handleQuantityChange = (value: string) => {
+    const numValue = parseInt(value) || 0;
+    setFormData(prev => ({
+      ...prev,
+      quantity: numValue.toString(),
+    }));
+  };
+
   const canSelectUser = ['ADMIN', 'PROJECT_MANAGER'].includes(currentUser.role);
 
   const toggleScanner = () => {
@@ -286,8 +297,19 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    console.log('New date value:', value);
-    setFormData(prev => ({ ...prev, registeredAt: value }));
+    try {
+      const formattedDate = parseInputDate(value);
+      setFormData(prev => ({ ...prev, registeredAt: formattedDate }));
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      toast({
+        title: 'Помилка',
+        description: 'Невірний формат дати',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
   };
 
   return (
@@ -342,12 +364,28 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
           </Select>
           {tasks.length === 0 && (
             <Text color="gray.500" mt={2} fontSize="sm">
-              {isProductTask ? 'Немає доступних продуктових задач' : 'Немає доступних загальних задач'}
+              {taskType === 'PRODUCT' 
+                ? 'Немає доступних продуктових задач' 
+                : taskType === 'INTERMEDIATE'
+                ? 'Немає доступних проміжних задач'
+                : 'Немає доступних загальних задач'
+              }
             </Text>
           )}
         </FormControl>
 
-        {!isProductTask && (
+        {taskType === 'INTERMEDIATE' ? (
+          <FormControl isRequired>
+            <FormLabel>Кількість</FormLabel>
+            <Input
+              type="number"
+              min="0"
+              value={formData.quantity}
+              onChange={(e) => handleQuantityChange(e.target.value)}
+              placeholder="Введіть кількість"
+            />
+          </FormControl>
+        ) : !isProductTask && (
           <FormControl isRequired>
             <FormLabel>Витрачений час</FormLabel>
             <HStack spacing={4}>

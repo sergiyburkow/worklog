@@ -12,7 +12,14 @@ export const TaskRegister: React.FC = () => {
   const toast = useToast();
   const { user } = useAuth();
 
-  const isProductTask = location.pathname.includes('/register/product');
+  const getTaskType = () => {
+    if (location.pathname.includes('/register/product')) return 'PRODUCT';
+    if (location.pathname.includes('/register/intermediate')) return 'INTERMEDIATE';
+    return 'GENERAL';
+  };
+
+  const taskType = getTaskType();
+  const isProductTask = taskType === 'PRODUCT';
 
   if (!projectId || !user) {
     return null;
@@ -21,22 +28,26 @@ export const TaskRegister: React.FC = () => {
   const handleSubmit = async (formData: {
     productCode: string;
     taskId: string;
-    completedAt: string;
+    registeredAt: string;
     userId?: string;
     timeSpent?: string;
     hours?: string;
     minutes?: string;
+    quantity?: string;
   }) => {
     try {
       const payload = {
         projectId,
         taskId: formData.taskId,
-        completedAt: formData.completedAt,
+        registeredAt: formData.registeredAt,
         userId: formData.userId,
-        type: isProductTask ? 'PRODUCT' : 'GENERAL',
-        ...(isProductTask 
+        type: taskType,
+        ...(taskType === 'PRODUCT' 
           ? { productCode: formData.productCode }
-          : { timeSpent: parseFloat(formData.timeSpent || '0') }
+          : { timeSpent: taskType === 'INTERMEDIATE' 
+              ? parseInt(formData.quantity || '0')
+              : parseFloat(formData.timeSpent || '0') 
+            }
         )
       };
 
@@ -61,11 +72,20 @@ export const TaskRegister: React.FC = () => {
     }
   };
 
+  const getHeading = () => {
+    switch (taskType) {
+      case 'PRODUCT':
+        return 'Реєстрація виконаної продуктової задачі';
+      case 'INTERMEDIATE':
+        return 'Реєстрація виконаної проміжної задачі';
+      default:
+        return 'Реєстрація виконаної загальної задачі';
+    }
+  };
+
   return (
     <Container maxW="container.md" py={8}>
-      <Heading mb={6}>
-        {isProductTask ? 'Реєстрація виконаної продуктової задачі' : 'Реєстрація виконаної загальної задачі'}
-      </Heading>
+      <Heading mb={6}>{getHeading()}</Heading>
       <TaskRegisterForm
         projectId={projectId}
         currentUser={{
@@ -74,6 +94,7 @@ export const TaskRegister: React.FC = () => {
         }}
         onSubmit={handleSubmit}
         isProductTask={isProductTask}
+        taskType={taskType}
       />
     </Container>
   );

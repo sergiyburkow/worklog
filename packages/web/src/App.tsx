@@ -62,10 +62,18 @@ function App() {
               }
             />
             <Route
+              path="/projects/:projectId/tasks/register/intermediate"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER', 'WORKER']}>
+                  <TaskRegister />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/projects/:projectId/tasks/register/general"
               element={
                 <ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER']}>
-                  <RegisteredTasks />
+                  <TaskRegister />
                 </ProtectedRoute>
               }
             />

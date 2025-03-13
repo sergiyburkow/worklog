@@ -38,6 +38,7 @@ import {
 import { api } from '../../lib/api';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
+import { RegisteredTasksTable } from '../../components/tables/RegisteredTasksTable';
 
 enum ProjectStatus {
   PLANNED = 'PLANNED',
@@ -123,6 +124,7 @@ export const ProjectDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [project, setProject] = useState<Project | null>(null);
+  const [todayTasks, setTodayTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<ProjectUser | null>(null);
   const [isDeleteLoading, setIsDeleteLoading] = useState(false);
@@ -132,6 +134,29 @@ export const ProjectDetails = () => {
   const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
   const { isOpen: isEditRoleOpen, onOpen: onEditRoleOpen, onClose: onEditRoleClose } = useDisclosure();
   const toast = useToast();
+
+  const fetchTodayTasks = async () => {
+    if (!id) return;
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const response = await api.get(`/task-logs/project/${id}`, {
+        params: {
+          startDate: today.toISOString(),
+          endDate: new Date().toISOString(),
+        },
+      });
+      setTodayTasks(response.data);
+    } catch (error) {
+      toast({
+        title: 'Помилка',
+        description: 'Не вдалося завантажити задачі за сьогодні',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
 
   const fetchProject = async () => {
     try {
@@ -151,7 +176,7 @@ export const ProjectDetails = () => {
   };
 
   useEffect(() => {
-    fetchProject();
+    Promise.all([fetchProject(), fetchTodayTasks()]);
   }, [id]);
 
   const handleDeleteClick = (user: ProjectUser) => {
@@ -258,7 +283,7 @@ export const ProjectDetails = () => {
   if (isLoading) {
     return (
       <AdminLayout>
-        <Box p={5} display="flex" justifyContent="center" alignItems="center" minH="300px">
+        <Box p={8} display="flex" justifyContent="center">
           <Spinner size="xl" />
         </Box>
       </AdminLayout>
@@ -268,7 +293,7 @@ export const ProjectDetails = () => {
   if (!project) {
     return (
       <AdminLayout>
-        <Box p={5}>
+        <Box p={8}>
           <Text>Проект не знайдено</Text>
         </Box>
       </AdminLayout>
@@ -314,23 +339,13 @@ export const ProjectDetails = () => {
               >
                 Зареєструвати проміжну задачу
               </Button>
-              <Button
-                colorScheme="teal"
-                size="lg"
-                onClick={() => navigate(`/projects/${id}/tasks/registered`)}
-              >
-                Зареєстровані задачі
-              </Button>
           </HStack>
 
           <Grid templateColumns="repeat(2, 1fr)" gap={6}>
             <GridItem>
               <Card>
-                <CardHeader>
-                  <Heading size="md">Основна інформація</Heading>
-                </CardHeader>
                 <CardBody>
-                  <VStack align="stretch" spacing={4}>
+                  <VStack align="stretch" spacing={1}>
                     <Stat>
                       <StatLabel>Клієнт</StatLabel>
                       <StatNumber fontSize="lg">{project.client.name}</StatNumber>
@@ -346,11 +361,8 @@ export const ProjectDetails = () => {
 
             <GridItem>
               <Card>
-                <CardHeader>
-                  <Heading size="md">Терміни</Heading>
-                </CardHeader>
                 <CardBody>
-                  <VStack align="stretch" spacing={4}>
+                  <VStack align="stretch" spacing={1}>
                     <Stat>
                       <StatLabel>Дата початку</StatLabel>
                       <StatNumber fontSize="lg">
@@ -379,6 +391,24 @@ export const ProjectDetails = () => {
 
           <Card>
             <CardHeader>
+              <HStack justify="space-between" align="center">
+              <Heading size="md">Сьогоднішні задачі</Heading>
+              <Button 
+                colorScheme="blue" 
+                variant="outline"
+                onClick={() => navigate(`/projects/${id}/task-logs`)}
+              >
+                Всі зареєстровані задачі
+                </Button>
+              </HStack>
+            </CardHeader>
+            <CardBody>
+              <RegisteredTasksTable tasks={todayTasks} type="PRODUCT" />
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <Heading size="md">Учасники проекту</Heading>
             </CardHeader>
             <CardBody>
@@ -394,12 +424,16 @@ export const ProjectDetails = () => {
                     </Tr>
                   </Thead>
                   <Tbody>
-                    {project?.users.map((user) => (
-                      <Tr key={user.userId} opacity={user.isActive ? 1 : 0.5}>
+                    {project.users.map((user) => (
+                      <Tr key={user.userId}>
                         <Td>{user.user.name}</Td>
                         <Td>{user.user.email}</Td>
                         <Td>
-                          <Badge colorScheme={PROJECT_USER_ROLE_COLORS[user.role]}>
+                          <Badge
+                            colorScheme={PROJECT_USER_ROLE_COLORS[user.role]}
+                            cursor="pointer"
+                            onClick={() => handleEditRoleClick(user)}
+                          >
                             {PROJECT_USER_ROLE_LABELS[user.role]}
                           </Badge>
                         </Td>
@@ -411,29 +445,14 @@ export const ProjectDetails = () => {
                           />
                         </Td>
                         <Td>
-                          <HStack spacing={2}>
-                            <Button
-                              size="sm"
-                              colorScheme="teal"
-                              onClick={() => navigate(`/projects/${id}/tasks/registered/user/${user.userId}`)}
-                            >
-                              Зареєстровані задачі
-                            </Button>
-                            <Button
-                              size="sm"
-                              colorScheme="blue"
-                              onClick={() => handleEditRoleClick(user)}
-                            >
-                              Змінити роль
-                            </Button>
-                            <Button
-                              size="sm"
-                              colorScheme="red"
-                              onClick={() => handleDeleteClick(user)}
-                            >
-                              Видалити
-                            </Button>
-                          </HStack>
+                          <Button
+                            size="sm"
+                            colorScheme="red"
+                            variant="ghost"
+                            onClick={() => handleDeleteClick(user)}
+                          >
+                            Видалити
+                          </Button>
                         </Td>
                       </Tr>
                     ))}
@@ -444,14 +463,20 @@ export const ProjectDetails = () => {
           </Card>
         </VStack>
 
+        <ConfirmModal
+          isOpen={isDeleteOpen}
+          onClose={onDeleteClose}
+          onConfirm={handleDeleteConfirm}
+          isLoading={isDeleteLoading}
+          title="Видалення учасника"
+          message={`Ви впевнені, що хочете видалити користувача ${selectedUser?.user.name} з проекту?`}
+        />
+
         <Modal isOpen={isEditRoleOpen} onClose={onEditRoleClose}>
           <ModalOverlay />
           <ModalContent>
-            <ModalHeader>Зміна ролі користувача</ModalHeader>
+            <ModalHeader>Зміна ролі</ModalHeader>
             <ModalBody>
-              <Text mb={4}>
-                Оберіть нову роль для користувача {selectedUser?.user.name}:
-              </Text>
               <Select
                 value={selectedRole || ''}
                 onChange={(e) => setSelectedRole(e.target.value as ProjectUserRole)}
@@ -477,16 +502,6 @@ export const ProjectDetails = () => {
             </ModalFooter>
           </ModalContent>
         </Modal>
-
-        <ConfirmModal
-          isOpen={isDeleteOpen}
-          onClose={onDeleteClose}
-          onConfirm={handleDeleteConfirm}
-          title="Видалення учасника"
-          message={`Ви впевнені, що хочете видалити користувача "${selectedUser?.user.name}" з проекту?`}
-          confirmText="Видалити"
-          isLoading={isDeleteLoading}
-        />
       </Box>
     </AdminLayout>
   );
