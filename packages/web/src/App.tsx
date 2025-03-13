@@ -13,6 +13,7 @@ import { ClientsList } from './pages/clients/ClientsList';
 import { EditClient } from './pages/clients/EditClient';
 import { UsersList } from './pages/users/UsersList';
 import { ProjectDetails } from './pages/projects/ProjectDetails';
+import { EditProject } from './pages/projects/EditProject';
 
 function App() {
   return (
@@ -42,6 +43,14 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER']}>
                   <ProjectDetails />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/projects/:id/edit"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER']}>
+                  <EditProject />
                 </ProtectedRoute>
               }
             />

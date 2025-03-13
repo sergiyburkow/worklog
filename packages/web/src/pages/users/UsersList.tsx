@@ -14,12 +14,14 @@ import {
   Badge,
   useDisclosure,
 } from '@chakra-ui/react';
+import { EditIcon, DeleteIcon } from '@chakra-ui/icons';
 import { api } from '../../lib/api';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { CreateUserModal } from '../../components/users/CreateUserModal';
 import { User, UserRole } from '../../types/auth';
 import { EditUserForm } from '../../components/users/EditUserForm';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
+import { TableActions } from '../../components/ui/TableActions';
 import { useNavigate } from 'react-router-dom';
 
 const USER_ROLE_LABELS: Record<UserRole, string> = {
@@ -180,21 +182,22 @@ export const UsersList = () => {
                       </Badge>
                     </Td>
                     <Td>
-                      <Button
-                        size="sm"
-                        colorScheme="blue"
-                        mr={2}
-                        onClick={() => handleEditClick(user)}
-                      >
-                        Редагувати
-                      </Button>
-                      <Button
-                        size="sm"
-                        colorScheme="red"
-                        onClick={() => handleDeleteClick(user)}
-                      >
-                        Видалити
-                      </Button>
+                      <TableActions
+                        actions={[
+                          {
+                            label: 'Редагувати',
+                            icon: <EditIcon boxSize={4} />,
+                            colorScheme: 'blue',
+                            onClick: () => handleEditClick(user),
+                          },
+                          {
+                            label: 'Видалити',
+                            icon: <DeleteIcon boxSize={4} />,
+                            colorScheme: 'red',
+                            onClick: () => handleDeleteClick(user),
+                          },
+                        ]}
+                      />
                     </Td>
                   </Tr>
                 ))}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   FormControl,
   FormLabel,
@@ -8,15 +8,14 @@ import {
   Button,
   HStack,
   Text,
-  Box,
   useToast,
   InputGroup,
   InputRightElement,
   FormErrorMessage,
   Icon,
 } from '@chakra-ui/react';
-import { FaQrcode, FaTimes } from 'react-icons/fa';
 import { api } from '../../lib/api';
+import { FaQrcode } from 'react-icons/fa';
 import { QRScanner } from '../QRScanner';
 
 interface Task {
@@ -69,7 +68,6 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
   const [projectUsers, setProjectUsers] = useState<ProjectUser[]>([]);
   const [productExists, setProductExists] = useState<boolean | null>(null);
   const [isCheckingProduct, setIsCheckingProduct] = useState(false);
-  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
 
   const formatDateForInput = (date: Date) => {
     const year = date.getFullYear();
@@ -152,69 +150,42 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
 
     setIsCheckingProduct(true);
     try {
-      // Розділяємо коди продуктів та видаляємо дублікати
-      const productCodes = [...new Set(
-        code
-          .split(/[\s,]+/)
-          .map(code => code.trim())
-          .filter(code => code.length > 0)
-      )];
-
-      // Перевіряємо кожен код
-      const checkPromises = productCodes.map(code =>
-        api.get(`/projects/${projectId}/products/${code}`)
-          .then(() => true)
-          .catch((error: any) => {
-            if (error.response?.status === 404) {
-              return false;
-            }
-            throw error;
-          })
-      );
-
-      const results = await Promise.all(checkPromises);
-      setProductExists(results.every(result => result));
-    } catch (error) {
-      console.error('Помилка при перевірці продукту:', error);
-      toast({
-        title: 'Помилка',
-        description: 'Не вдалося перевірити наявність продукту',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
-      setProductExists(null);
+      await api.get(`/projects/${projectId}/products/${code}`);
+      setProductExists(true);
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        setProductExists(false);
+      } else {
+        console.error('Помилка при перевірці продукту:', error);
+        toast({
+          title: 'Помилка',
+          description: 'Не вдалося перевірити наявність продукту',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+        setProductExists(null);
+      }
     } finally {
       setIsCheckingProduct(false);
     }
   };
 
-  const handleScan = async (decodedText: string) => {
-    // Додаємо новий код до існуючих
-    const currentCodes = formData.productCode.trim();
-    const newProductCode = currentCodes
-      ? `${currentCodes}, ${decodedText}`
-      : decodedText;
-
-    setFormData(prev => ({ ...prev, productCode: newProductCode }));
-    await checkProduct(newProductCode);
-    console.log('newProductCode', newProductCode);
-  };
-
-  const handleScanError = (error: any) => {
-    // Ігноруємо помилку, якщо це просто не знайдено код
-    if (error?.includes('NotFoundException')) {
-      return;
-    }
-    
-    console.error('Помилка сканування:', error);
+  const handleScan = async (result: string) => {
+    setFormData(prev => ({ ...prev, productCode: result }));
+    setShowScanner(false);
+    await checkProduct(result);
     toast({
-      title: 'Помилка',
-      description: error,
-      status: 'error',
+      title: 'Успіх',
+      description: 'Код продукту відскановано',
+      status: 'success',
       duration: 3000,
       isClosable: true,
     });
+  };
+
+  const handleScanError = (error: any) => {
+    console.error('Помилка сканування:', error);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -248,11 +219,6 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
     if (!value) {
       setProductExists(null);
     }
-  };
-
-  const handleClearProductCodes = () => {
-    setFormData(prev => ({ ...prev, productCode: '' }));
-    setProductExists(null);
   };
 
   const handleProductCodeBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
@@ -325,34 +291,34 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
               <Input
                 value={formData.productCode}
                 onChange={handleProductCodeChange}
-                placeholder="Введіть код продукту (можна ввести декілька через кому)"
-                onBlur={() => checkProduct(formData.productCode)}
-                disabled={isCheckingProduct}
+                placeholder="Введіть код продукту"
+                isDisabled={isLoading}
               />
-              <InputRightElement width="4.5rem">
-                <HStack spacing="1">
-                  {formData.productCode && (
-                    <Icon
-                      as={FaTimes}
-                      cursor="pointer"
-                      onClick={handleClearProductCodes}
-                      color="gray.400"
-                    />
-                  )}
-                  <Icon
-                    as={FaQrcode}
-                    cursor="pointer"
-                    onClick={() => setShowScanner(true)}
-                    color="gray.400"
-                  />
-                </HStack>
+              <InputRightElement>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setShowScanner(true)}
+                  isDisabled={isLoading}
+                >
+                  <Icon as={FaQrcode} />
+                </Button>
               </InputRightElement>
             </InputGroup>
-            <FormErrorMessage>
-              {productExists === false ? 'Один або декілька кодів продуктів не існують' : ''}
-            </FormErrorMessage>
+            {productExists === false && (
+              <FormErrorMessage>
+                Продукт з таким кодом не знайдено
+              </FormErrorMessage>
+            )}
           </FormControl>
         )}
+
+        <QRScanner
+          onScan={handleScan}
+          onError={handleScanError}
+          isOpen={showScanner}
+          onClose={() => setShowScanner(false)}
+        />
 
         <FormControl isRequired>
           <FormLabel>Виконана задача</FormLabel>
@@ -467,13 +433,6 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
           Зареєструвати виконання
         </Button>
       </VStack>
-
-      <QRScanner
-        isOpen={showScanner}
-        onClose={() => setShowScanner(false)}
-        onScan={handleScan}
-        onError={handleScanError}
-      />
     </form>
   );
 }; 

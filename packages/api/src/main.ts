@@ -24,7 +24,7 @@ async function bootstrap() {
   
   // Дозволяємо CORS для локальної мережі
   app.enableCors({
-    origin: ['https://localhost:5173', 'http://localhost:5173'], // Дозволяємо обидва протоколи для локального розробки
+    origin: true, // Дозволяємо всі origin в режимі розробки
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });

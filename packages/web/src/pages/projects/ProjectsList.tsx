@@ -15,9 +15,11 @@ import {
   useDisclosure,
 } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
+import { EditIcon, DeleteIcon, ViewIcon } from '@chakra-ui/icons';
 import { api } from '../../lib/api';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { AdminLayout } from '../../components/admin/AdminLayout';
+import { TableActions } from '../../components/ui/TableActions';
 
 enum ProjectStatus {
   PLANNED = 'PLANNED',
@@ -172,29 +174,28 @@ export const ProjectsList = () => {
                     </Badge>
                   </Td>
                   <Td>
-                    <Button
-                      colorScheme="blue"
-                      size="sm"
-                      mr={2}
-                      onClick={() => handleEditClick(project)}
-                    >
-                      Редагувати
-                    </Button>
-                    <Button
-                      colorScheme="red"
-                      size="sm"
-                      mr={2}
-                      onClick={() => handleDeleteClick(project)}
-                    >
-                      Видалити
-                    </Button>
-                    <Button
-                      colorScheme="teal"
-                      size="sm"
-                      onClick={() => navigate(`/projects/${project.id}`)}
-                    >
-                      Деталі
-                    </Button>
+                    <TableActions
+                      actions={[
+                        {
+                          label: 'Деталі',
+                          icon: <ViewIcon boxSize={4} />,
+                          colorScheme: 'teal',
+                          onClick: () => navigate(`/projects/${project.id}`),
+                        },
+                        {
+                          label: 'Редагувати',
+                          icon: <EditIcon boxSize={4} />,
+                          colorScheme: 'blue',
+                          onClick: () => handleEditClick(project),
+                        },
+                        {
+                          label: 'Видалити',
+                          icon: <DeleteIcon boxSize={4} />,
+                          colorScheme: 'red',
+                          onClick: () => handleDeleteClick(project),
+                        },
+                      ]}
+                    />
                   </Td>
                 </Tr>
               ))}

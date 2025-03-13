@@ -34,11 +34,18 @@ import {
   ModalBody,
   ModalFooter,
   Select,
+  Flex,
+  Wrap,
+  WrapItem,
+  Tooltip,
+  IconButton,
 } from '@chakra-ui/react';
 import { api } from '../../lib/api';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
 import { RegisteredTasksTable } from '../../components/tables/RegisteredTasksTable';
+import { DeleteIcon, EditIcon, ViewIcon, AddIcon, TimeIcon, SettingsIcon } from '@chakra-ui/icons';
+import { TableActions } from '../../components/ui/TableActions';
 
 enum ProjectStatus {
   PLANNED = 'PLANNED',
@@ -302,91 +309,128 @@ export const ProjectDetails = () => {
 
   return (
     <AdminLayout>
-      <Box p={5}>
-        <VStack spacing={6} align="stretch">
-          <HStack justify="space-between" align="center">
-            <Heading size="lg">{project.name}</Heading>
-              <Badge colorScheme={PROJECT_STATUS_COLORS[project.status]} fontSize="md" px={3} py={1}>
-                {PROJECT_STATUS_LABELS[project.status]}
-              </Badge>
-          </HStack>
-          <HStack spacing={4}>
-              <Button
-                colorScheme="purple"
-                size="lg"
-                onClick={() => navigate(`/projects/${id}/tasks`)}
-              >
-                Задачі проекту
-              </Button>
-              <Button
-                colorScheme="blue"
-                size="lg"
-                onClick={() => navigate(`/projects/${id}/tasks/register/product`)}
-              >
-                Зареєструвати виконання
-              </Button>
-              <Button
-                colorScheme="orange"
-                size="lg"
-                onClick={() => navigate(`/projects/${id}/tasks/register/general`)}
-              >
-                Зареєструвати загальну задачу
-              </Button>
-              <Button
-                colorScheme="cyan"
-                size="lg"
-                onClick={() => navigate(`/projects/${id}/tasks/register/intermediate`)}
-              >
-                Зареєструвати проміжну задачу
-              </Button>
-          </HStack>
+      <Box p={[3, 4, 5]} width="100%">
+        <VStack spacing={6} align="stretch" width="100%">
+          <Flex 
+            direction={['column', 'row']} 
+            justify="space-between" 
+            align={['start', 'center']}
+            gap={4}
+          >
+            <Heading size={['md', 'lg']}>{project.name}</Heading>
+            <Wrap spacing={2}>
+              <WrapItem>
+                <Badge colorScheme={PROJECT_STATUS_COLORS[project.status]} p={2}>
+                  {PROJECT_STATUS_LABELS[project.status]}
+                </Badge>
+              </WrapItem>
+              <WrapItem>
+                <Tooltip label="Задачі проекту">
+                  <IconButton
+                    aria-label="Задачі проекту"
+                    icon={<ViewIcon />}
+                    colorScheme="purple"
+                    size="sm"
+                    onClick={() => navigate(`/projects/${id}/tasks`)}
+                  />
+                </Tooltip>
+              </WrapItem>
+              <WrapItem>
+                <Tooltip label="Редагувати проект">
+                  <IconButton
+                    aria-label="Редагувати проект"
+                    icon={<EditIcon />}
+                    colorScheme="blue"
+                    size="sm"
+                    onClick={() => navigate(`/projects/${id}/edit`)}
+                  />
+                </Tooltip>
+              </WrapItem>
+            </Wrap>
+          </Flex>
 
-          <Grid templateColumns="repeat(2, 1fr)" gap={6}>
-            <GridItem>
-              <Card>
-                <CardBody>
-                  <VStack align="stretch" spacing={1}>
-                    <Stat>
-                      <StatLabel>Клієнт</StatLabel>
-                      <StatNumber fontSize="lg">{project.client.name}</StatNumber>
-                    </Stat>
-                    <Stat>
-                      <StatLabel>Кількість</StatLabel>
-                      <StatNumber fontSize="lg">{project.quantity || '-'}</StatNumber>
-                    </Stat>
-                  </VStack>
-                </CardBody>
-              </Card>
-            </GridItem>
+          <Card boxShadow="xl">
+            <CardHeader py={2} bg="gray.300" textAlign="center">
+              <Heading size="xs">Зареєструвати задачу</Heading>
+            </CardHeader>
+            <CardBody py={3}>
+              <Wrap spacing={2} justify="center">
+                <WrapItem>
+                  <Button
+                    leftIcon={<AddIcon boxSize={4} />}
+                    colorScheme="blue"
+                    size="sm"
+                    onClick={() => navigate(`/projects/${id}/tasks/register/product`)}
+                  >
+                    Основна{' '}
+                    <Text as="span" ml={1} display={['none', 'none', 'inline-block']}>
+                      задача
+                    </Text>
+                  </Button>
+                </WrapItem>
+                <WrapItem>
+                  <Button
+                    leftIcon={<TimeIcon boxSize={4} />}
+                    colorScheme="orange"
+                    size="sm"
+                    onClick={() => navigate(`/projects/${id}/tasks/register/general`)}
+                  >
+                    Загальна{' '}
+                    <Text as="span" ml={1} display={['none', 'none', 'inline-block']}>
+                      задача
+                    </Text>
+                  </Button>
+                </WrapItem>
+                <WrapItem>
+                  <Button
+                    leftIcon={<SettingsIcon boxSize={4} />}
+                    colorScheme="cyan"
+                    size="sm"
+                    onClick={() => navigate(`/projects/${id}/tasks/register/intermediate`)}
+                  >
+                    Проміжна{' '}
+                    <Text as="span" ml={1} display={['none', 'none', 'inline-block']}>
+                      задача
+                    </Text>
+                  </Button>
+                </WrapItem>
+              </Wrap>
+            </CardBody>
+          </Card>
 
-            <GridItem>
-              <Card>
-                <CardBody>
-                  <VStack align="stretch" spacing={1}>
-                    <Stat>
-                      <StatLabel>Дата початку</StatLabel>
-                      <StatNumber fontSize="lg">
-                        {new Date(project.startDate).toLocaleDateString()}
-                      </StatNumber>
-                    </Stat>
-                    <Stat>
-                      <StatLabel>Дедлайн</StatLabel>
-                      <StatNumber fontSize="lg">
-                        {new Date(project.deadline).toLocaleDateString()}
-                      </StatNumber>
-                    </Stat>
-                    {project.actualEndDate && (
-                      <Stat>
-                        <StatLabel>Фактична дата завершення</StatLabel>
-                        <StatNumber fontSize="lg">
-                          {new Date(project.actualEndDate).toLocaleDateString()}
-                        </StatNumber>
-                      </Stat>
-                    )}
-                  </VStack>
-                </CardBody>
-              </Card>
-            </GridItem>
+          <Grid
+            templateColumns={['1fr', 'repeat(2, 1fr)', 'repeat(3, 1fr)']}
+            gap={6}
+          >
+            <Card>
+              <CardHeader py={2} bg="gray.300" textAlign="center">
+                <Heading size="xs">Клієнт</Heading>
+              </CardHeader>
+              <CardBody py={3}>
+                <Text textAlign="center">{project.client.name}</Text>
+              </CardBody>
+            </Card>
+
+            <Card>
+              <CardHeader py={2} bg="gray.300" textAlign="center">
+                <Heading size="xs">Дати</Heading>
+              </CardHeader>
+              <CardBody py={3}>
+                <Text fontSize="sm" textAlign="center">
+                  {new Date(project.startDate).toLocaleDateString()} — {new Date(project.deadline).toLocaleDateString()}
+                  {project.actualEndDate && ` (завершено: ${new Date(project.actualEndDate).toLocaleDateString()})`}
+                </Text>
+              </CardBody>
+            </Card>
+
+            <Card>
+              <CardHeader py={2} bg="gray.300" textAlign="center">
+                <Heading size="xs">Кількість</Heading>
+              </CardHeader>
+              <CardBody py={3}>
+                <Text textAlign="center">{project.quantity || '-'}</Text>
+              </CardBody>
+            </Card>
           </Grid>
 
           <Card>
@@ -413,56 +457,72 @@ export const ProjectDetails = () => {
 
           <Card>
             <CardHeader>
-              <Heading size="md">Учасники проекту</Heading>
+              <Flex 
+                direction={['column', 'row']} 
+                justify="space-between" 
+                align={['start', 'center']}
+                gap={4}
+              >
+                <Heading size="md">Учасники проекту</Heading>
+                <Button
+                  size={['sm', 'md']}
+                  colorScheme="blue"
+                  onClick={() => navigate(`/projects/${id}/users/add`)}
+                >
+                  Додати учасника
+                </Button>
+              </Flex>
             </CardHeader>
-            <CardBody>
-              <TableContainer>
-                <Table variant="simple">
-                  <Thead>
-                    <Tr>
-                      <Th>Ім'я</Th>
-                      <Th>Email</Th>
-                      <Th>Роль</Th>
-                      <Th>Статус</Th>
-                      <Th>Дії</Th>
+            <CardBody overflowX="auto">
+              <Table variant="simple" size={['sm', 'md']}>
+                <Thead>
+                  <Tr>
+                    <Th>Ім'я</Th>
+                    <Th display={['none', 'table-cell']}>Email</Th>
+                    <Th>Роль</Th>
+                    <Th>Статус</Th>
+                    <Th>Дії</Th>
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  {project.users.map((user) => (
+                    <Tr key={user.userId}>
+                      <Td>{user.user.name}</Td>
+                      <Td display={['none', 'table-cell']}>{user.user.email}</Td>
+                      <Td>
+                        <Badge
+                          colorScheme={PROJECT_USER_ROLE_COLORS[user.role]}
+                          cursor="pointer"
+                          onClick={() => handleEditRoleClick(user)}
+                        >
+                          {PROJECT_USER_ROLE_LABELS[user.role]}
+                        </Badge>
+                      </Td>
+                      <Td>
+                        <Switch
+                          size={['sm', 'md']}
+                          isChecked={user.isActive}
+                          onChange={() => handleToggleActive(user)}
+                          isDisabled={isToggleLoading}
+                        />
+                      </Td>
+                      <Td>
+                        <TableActions
+                          actions={[
+                            {
+                              label: 'Видалити',
+                              icon: <DeleteIcon boxSize={3} />,
+                              colorScheme: 'red',
+                              onClick: () => handleDeleteClick(user),
+                            }
+                          ]}
+                          size="xs"
+                        />
+                      </Td>
                     </Tr>
-                  </Thead>
-                  <Tbody>
-                    {project.users.map((user) => (
-                      <Tr key={user.userId}>
-                        <Td>{user.user.name}</Td>
-                        <Td>{user.user.email}</Td>
-                        <Td>
-                          <Badge
-                            colorScheme={PROJECT_USER_ROLE_COLORS[user.role]}
-                            cursor="pointer"
-                            onClick={() => handleEditRoleClick(user)}
-                          >
-                            {PROJECT_USER_ROLE_LABELS[user.role]}
-                          </Badge>
-                        </Td>
-                        <Td>
-                          <Switch
-                            isChecked={user.isActive}
-                            onChange={() => handleToggleActive(user)}
-                            isDisabled={isToggleLoading}
-                          />
-                        </Td>
-                        <Td>
-                          <Button
-                            size="sm"
-                            colorScheme="red"
-                            variant="ghost"
-                            onClick={() => handleDeleteClick(user)}
-                          >
-                            Видалити
-                          </Button>
-                        </Td>
-                      </Tr>
-                    ))}
-                  </Tbody>
-                </Table>
-              </TableContainer>
+                  ))}
+                </Tbody>
+              </Table>
             </CardBody>
           </Card>
         </VStack>
@@ -476,9 +536,9 @@ export const ProjectDetails = () => {
           message={`Ви впевнені, що хочете видалити користувача ${selectedUser?.user.name} з проекту?`}
         />
 
-        <Modal isOpen={isEditRoleOpen} onClose={onEditRoleClose}>
+        <Modal isOpen={isEditRoleOpen} onClose={onEditRoleClose} size={['full', 'md']}>
           <ModalOverlay />
-          <ModalContent>
+          <ModalContent margin={[0, 'auto']}>
             <ModalHeader>Зміна ролі</ModalHeader>
             <ModalBody>
               <Select

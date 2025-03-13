@@ -9,7 +9,8 @@
     "api:dev": "npm run start:dev --workspace=packages/api",
     "web:dev": "npm run dev --workspace=packages/web",
     "mobile:dev": "npm run start --workspace=packages/mobile",
-    "test": "npm run test --workspaces"
+    "test": "npm run test --workspaces",
+    "generate-certs": "chmod +x scripts/generate-certs.sh && ./scripts/generate-certs.sh"
   },
   "keywords": [
     "project-management",

@@ -43,4 +43,11 @@ Thumbs.db
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
-.pnp.* 
+.pnp.*
+
+# Certificates
+packages/web/certs/
+packages/api/certs/
+*.pem
+*.key
+*.crt 

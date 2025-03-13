@@ -17,6 +17,8 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../../lib/api';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
+import { EditIcon, DeleteIcon } from '@chakra-ui/icons';
+import { TableActions, Action } from '../../components/ui/TableActions';
 
 interface Client {
   id: string;
@@ -121,21 +123,22 @@ export const ClientsList = () => {
                     <Td>{client.address || '-'}</Td>
                     <Td>{client.contactInfo || '-'}</Td>
                     <Td>
-                      <Button
-                        colorScheme="blue"
-                        size="sm"
-                        mr={2}
-                        onClick={() => handleEditClick(client)}
-                      >
-                        Редагувати
-                      </Button>
-                      <Button
-                        colorScheme="red"
-                        size="sm"
-                        onClick={() => handleDeleteClick(client)}
-                      >
-                        Видалити
-                      </Button>
+                      <TableActions
+                        actions={[
+                          {
+                            label: 'Редагувати',
+                            icon: <EditIcon boxSize={4} />,
+                            colorScheme: 'blue',
+                            onClick: () => handleEditClick(client),
+                          },
+                          {
+                            label: 'Видалити',
+                            icon: <DeleteIcon boxSize={4} />,
+                            colorScheme: 'red',
+                            onClick: () => handleDeleteClick(client),
+                          },
+                        ]}
+                      />
                     </Td>
                   </Tr>
                 ))}
