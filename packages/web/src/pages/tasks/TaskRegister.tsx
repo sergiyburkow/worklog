@@ -36,29 +36,58 @@ export const TaskRegister: React.FC = () => {
     quantity?: string;
   }) => {
     try {
-      const payload = {
-        projectId,
-        taskId: formData.taskId,
-        registeredAt: formData.registeredAt,
-        userId: formData.userId,
-        type: taskType,
-        ...(taskType === 'PRODUCT' 
-          ? { productCode: formData.productCode }
-          : { timeSpent: taskType === 'INTERMEDIATE' 
-              ? parseInt(formData.quantity || '0')
-              : parseFloat(formData.timeSpent || '0') 
-            }
-        )
-      };
+      if (isProductTask) {
+        // Розділяємо коди продуктів та видаляємо дублікати
+        const productCodes = [...new Set(
+          formData.productCode
+            .split(/[\s,]+/)
+            .map(code => code.trim())
+            .filter(code => code.length > 0)
+        )];
 
-      await api.post('/task-logs/register', payload);
-      toast({
-        title: 'Успіх',
-        description: 'Задачу успішно зареєстровано',
-        status: 'success',
-        duration: 3000,
-        isClosable: true,
-      });
+        // Створюємо окремий запис для кожного коду
+        const promises = productCodes.map(code => 
+          api.post('/task-logs/register', {
+            projectId,
+            taskId: formData.taskId,
+            registeredAt: formData.registeredAt,
+            userId: formData.userId,
+            type: taskType,
+            productCode: code
+          })
+        );
+
+        await Promise.all(promises);
+
+        toast({
+          title: 'Успіх',
+          description: `Успішно зареєстровано ${productCodes.length} унікальних задач`,
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
+      } else {
+        const payload = {
+          projectId,
+          taskId: formData.taskId,
+          registeredAt: formData.registeredAt,
+          userId: formData.userId,
+          type: taskType,
+          timeSpent: taskType === 'INTERMEDIATE' 
+            ? parseInt(formData.quantity || '0')
+            : parseFloat(formData.timeSpent || '0')
+        };
+
+        await api.post('/task-logs/register', payload);
+
+        toast({
+          title: 'Успіх',
+          description: 'Задачу успішно зареєстровано',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
+      }
       navigate(`/projects/${projectId}`);
     } catch (error: any) {
       console.error('Помилка при реєстрації задачі:', error);
@@ -75,7 +104,7 @@ export const TaskRegister: React.FC = () => {
   const getHeading = () => {
     switch (taskType) {
       case 'PRODUCT':
-        return 'Реєстрація виконаної продуктової задачі';
+        return 'Реєстрація виконаних продуктових задач';
       case 'INTERMEDIATE':
         return 'Реєстрація виконаної проміжної задачі';
       default:

@@ -152,22 +152,38 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
 
     setIsCheckingProduct(true);
     try {
-      await api.get(`/projects/${projectId}/products/${code}`);
-      setProductExists(true);
-    } catch (error: any) {
-      if (error.response?.status === 404) {
-        setProductExists(false);
-      } else {
-        console.error('Помилка при перевірці продукту:', error);
-        toast({
-          title: 'Помилка',
-          description: 'Не вдалося перевірити наявність продукту',
-          status: 'error',
-          duration: 3000,
-          isClosable: true,
-        });
-        setProductExists(null);
-      }
+      // Розділяємо коди продуктів та видаляємо дублікати
+      const productCodes = [...new Set(
+        code
+          .split(/[\s,]+/)
+          .map(code => code.trim())
+          .filter(code => code.length > 0)
+      )];
+
+      // Перевіряємо кожен код
+      const checkPromises = productCodes.map(code =>
+        api.get(`/projects/${projectId}/products/${code}`)
+          .then(() => true)
+          .catch((error: any) => {
+            if (error.response?.status === 404) {
+              return false;
+            }
+            throw error;
+          })
+      );
+
+      const results = await Promise.all(checkPromises);
+      setProductExists(results.every(result => result));
+    } catch (error) {
+      console.error('Помилка при перевірці продукту:', error);
+      toast({
+        title: 'Помилка',
+        description: 'Не вдалося перевірити наявність продукту',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+      setProductExists(null);
     } finally {
       setIsCheckingProduct(false);
     }
@@ -316,36 +332,28 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
     <form onSubmit={handleSubmit}>
       <VStack spacing={6}>
         {isProductTask && (
-          <FormControl isRequired>
+          <FormControl isInvalid={productExists === false}>
             <FormLabel>Код продукту</FormLabel>
             <InputGroup>
               <Input
                 value={formData.productCode}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setFormData(prev => ({ ...prev, productCode: value }));
-                  checkProduct(value);
-                }}
-                onBlur={handleProductCodeBlur}
-                placeholder="Введіть або відскануйте код продукту"
-                isInvalid={productExists === false}
+                onChange={handleProductCodeChange}
+                placeholder="Введіть код продукту (можна ввести декілька через пробіл або кому)"
+                onBlur={() => checkProduct(formData.productCode)}
+                disabled={isCheckingProduct}
               />
-              <InputRightElement width="4.5rem">
-                <Button h="1.75rem" size="sm" onClick={toggleScanner}>
-                  <Icon as={FaQrcode} />
-                </Button>
+              <InputRightElement>
+                <Icon
+                  as={FaQrcode}
+                  cursor="pointer"
+                  onClick={() => setShowScanner(!showScanner)}
+                  color={showScanner ? 'blue.500' : 'gray.400'}
+                />
               </InputRightElement>
             </InputGroup>
-            {productExists === false && (
-              <FormErrorMessage>
-                Продукт з таким кодом не знайдено
-              </FormErrorMessage>
-            )}
-            {showScanner && (
-              <Box mt={4} p={4} borderWidth={1} borderRadius="md">
-                <div id="qr-reader" style={{ width: '100%' }}></div>
-              </Box>
-            )}
+            <FormErrorMessage>
+              {productExists === false ? 'Один або декілька кодів продуктів не існують' : ''}
+            </FormErrorMessage>
           </FormControl>
         )}
 
