@@ -19,6 +19,7 @@ import { FaEdit, FaTrash } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../lib/api';
 import { EditTaskLogModal } from '../modals/EditTaskLogModal';
+import { ConfirmModal } from '../ui/ConfirmModal';
 
 interface RegisteredTask {
   id: string;
@@ -65,11 +66,14 @@ const STATUS_LABELS = {
 export const RegisteredTasksTable: React.FC<RegisteredTasksTableProps> = ({ tasks, type, onTaskDeleted }) => {
   const { user } = useAuth() || {};
   const toast = useToast();
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen: isEditOpen, onOpen: onEditOpen, onClose: onEditClose } = useDisclosure();
+  const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
   const [selectedTask, setSelectedTask] = useState<RegisteredTask | null>(null);
+  const [isDeleteLoading, setIsDeleteLoading] = useState(false);
   const isAdmin = user?.role === 'ADMIN';
 
   const handleDelete = async (taskId: string) => {
+    setIsDeleteLoading(true);
     try {
       await api.delete(`/task-logs/${taskId}`);
       toast({
@@ -79,6 +83,7 @@ export const RegisteredTasksTable: React.FC<RegisteredTasksTableProps> = ({ task
         isClosable: true,
       });
       onTaskDeleted?.();
+      onDeleteClose();
     } catch (error) {
       toast({
         title: 'Помилка при видаленні',
@@ -87,18 +92,23 @@ export const RegisteredTasksTable: React.FC<RegisteredTasksTableProps> = ({ task
         duration: 3000,
         isClosable: true,
       });
+    } finally {
+      setIsDeleteLoading(false);
     }
+  };
+
+  const handleDeleteClick = (task: RegisteredTask) => {
+    setSelectedTask(task);
+    onDeleteOpen();
   };
 
   const handleEdit = (task: RegisteredTask) => {
     setSelectedTask(task);
-    onOpen();
+    onEditOpen();
   };
 
   const handleSuccess = () => {
-    if (onTaskDeleted) {
-      onTaskDeleted();
-    }
+    onTaskDeleted?.();
   };
 
   return (
@@ -169,7 +179,7 @@ export const RegisteredTasksTable: React.FC<RegisteredTasksTableProps> = ({ task
                           size="sm"
                           colorScheme="red"
                           variant="ghost"
-                          onClick={() => handleDelete(task.id)}
+                          onClick={() => handleDeleteClick(task)}
                         />
                       </Tooltip>
                     </HStack>
@@ -192,15 +202,24 @@ export const RegisteredTasksTable: React.FC<RegisteredTasksTableProps> = ({ task
 
       {selectedTask && (
         <EditTaskLogModal
-          isOpen={isOpen}
+          isOpen={isEditOpen}
           onClose={() => {
-            onClose();
+            onEditClose();
             setSelectedTask(null);
           }}
           taskLog={selectedTask}
           onSuccess={handleSuccess}
         />
       )}
+
+      <ConfirmModal
+        isOpen={isDeleteOpen}
+        onClose={onDeleteClose}
+        onConfirm={() => selectedTask && handleDelete(selectedTask.id)}
+        isLoading={isDeleteLoading}
+        title="Видалення задачі"
+        message={`Ви впевнені, що хочете видалити задачу "${selectedTask?.task.name}"?`}
+      />
     </>
   );
 }; 

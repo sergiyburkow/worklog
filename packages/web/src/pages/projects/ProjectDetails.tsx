@@ -396,14 +396,18 @@ export const ProjectDetails = () => {
               <Button 
                 colorScheme="blue" 
                 variant="outline"
-                onClick={() => navigate(`/projects/${id}/task-logs`)}
+                onClick={() => navigate(`/projects/${id}/tasks/registered`)}
               >
                 Всі зареєстровані задачі
-                </Button>
+              </Button>
               </HStack>
             </CardHeader>
             <CardBody>
-              <RegisteredTasksTable tasks={todayTasks} type="PRODUCT" />
+              <RegisteredTasksTable 
+                tasks={todayTasks} 
+                type="PRODUCT" 
+                onTaskDeleted={fetchTodayTasks}
+              />
             </CardBody>
           </Card>
 
