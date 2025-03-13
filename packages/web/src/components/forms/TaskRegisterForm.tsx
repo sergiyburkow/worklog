@@ -15,9 +15,9 @@ import {
   FormErrorMessage,
   Icon,
 } from '@chakra-ui/react';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { FaQrcode, FaTimes } from 'react-icons/fa';
 import { api } from '../../lib/api';
-import { FaQrcode } from 'react-icons/fa';
+import { QRScanner } from '../QRScanner';
 
 interface Task {
   id: string;
@@ -189,47 +189,33 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
     }
   };
 
-  useEffect(() => {
-    if (showScanner) {
-      scannerRef.current = new Html5QrcodeScanner(
-        'qr-reader',
-        { fps: 10, qrbox: 250 },
-        /* verbose= */ false
-      );
+  const handleScan = async (decodedText: string) => {
+    // Додаємо новий код до існуючих
+    const currentCodes = formData.productCode.trim();
+    const newProductCode = currentCodes
+      ? `${currentCodes}, ${decodedText}`
+      : decodedText;
 
-      scannerRef.current.render(async (decodedText) => {
-        setFormData(prev => ({ ...prev, productCode: decodedText }));
-        setShowScanner(false);
-        await checkProduct(decodedText);
-        toast({
-          title: 'Успіх',
-          description: 'Код продукту відскановано',
-          status: 'success',
-          duration: 3000,
-          isClosable: true,
-        });
-      }, (error) => {
-        console.error(error);
-        toast({
-          title: 'Помилка',
-          description: 'Помилка при скануванні коду',
-          status: 'error',
-          duration: 3000,
-          isClosable: true,
-        });
-      });
-    } else {
-      if (scannerRef.current) {
-        scannerRef.current.clear();
-      }
+    setFormData(prev => ({ ...prev, productCode: newProductCode }));
+    await checkProduct(newProductCode);
+    console.log('newProductCode', newProductCode);
+  };
+
+  const handleScanError = (error: any) => {
+    // Ігноруємо помилку, якщо це просто не знайдено код
+    if (error?.includes('NotFoundException')) {
+      return;
     }
-
-    return () => {
-      if (scannerRef.current) {
-        scannerRef.current.clear();
-      }
-    };
-  }, [showScanner, toast]);
+    
+    console.error('Помилка сканування:', error);
+    toast({
+      title: 'Помилка',
+      description: error,
+      status: 'error',
+      duration: 3000,
+      isClosable: true,
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -262,6 +248,11 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
     if (!value) {
       setProductExists(null);
     }
+  };
+
+  const handleClearProductCodes = () => {
+    setFormData(prev => ({ ...prev, productCode: '' }));
+    setProductExists(null);
   };
 
   const handleProductCodeBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
@@ -307,10 +298,6 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
 
   const canSelectUser = ['ADMIN', 'PROJECT_MANAGER'].includes(currentUser.role);
 
-  const toggleScanner = () => {
-    setShowScanner(!showScanner);
-  };
-
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     try {
@@ -338,17 +325,27 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
               <Input
                 value={formData.productCode}
                 onChange={handleProductCodeChange}
-                placeholder="Введіть код продукту (можна ввести декілька через пробіл або кому)"
+                placeholder="Введіть код продукту (можна ввести декілька через кому)"
                 onBlur={() => checkProduct(formData.productCode)}
                 disabled={isCheckingProduct}
               />
-              <InputRightElement>
-                <Icon
-                  as={FaQrcode}
-                  cursor="pointer"
-                  onClick={() => setShowScanner(!showScanner)}
-                  color={showScanner ? 'blue.500' : 'gray.400'}
-                />
+              <InputRightElement width="4.5rem">
+                <HStack spacing="1">
+                  {formData.productCode && (
+                    <Icon
+                      as={FaTimes}
+                      cursor="pointer"
+                      onClick={handleClearProductCodes}
+                      color="gray.400"
+                    />
+                  )}
+                  <Icon
+                    as={FaQrcode}
+                    cursor="pointer"
+                    onClick={() => setShowScanner(true)}
+                    color="gray.400"
+                  />
+                </HStack>
               </InputRightElement>
             </InputGroup>
             <FormErrorMessage>
@@ -470,6 +467,13 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
           Зареєструвати виконання
         </Button>
       </VStack>
+
+      <QRScanner
+        isOpen={showScanner}
+        onClose={() => setShowScanner(false)}
+        onScan={handleScan}
+        onError={handleScanError}
+      />
     </form>
   );
 }; 

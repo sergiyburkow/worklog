@@ -48,5 +48,5 @@ export interface LoginData {
 
 export interface AuthResponse {
   user: User;
-  token: string;
+  access_token: string;
 } 
