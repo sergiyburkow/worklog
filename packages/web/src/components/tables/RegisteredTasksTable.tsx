@@ -18,12 +18,14 @@ import {
   Box,
   Spinner,
   Link as ChakraLink,
+  Icon,
 } from '@chakra-ui/react';
-import { FaEdit, FaTrash } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaCheckCircle } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../lib/api';
 import { EditTaskLogModal } from '../modals/EditTaskLogModal';
 import { ConfirmModal } from '../ui/ConfirmModal';
+import { QaCheck } from '../modals/QaCheck';
 
 interface RegisteredTask {
   id: string;
@@ -82,6 +84,7 @@ export const RegisteredTasksTable: React.FC<RegisteredTasksTableProps> = ({
   const toast = useToast();
   const { isOpen: isEditOpen, onOpen: onEditOpen, onClose: onEditClose } = useDisclosure();
   const { isOpen: isDeleteOpen, onOpen: onDeleteOpen, onClose: onDeleteClose } = useDisclosure();
+  const { isOpen: isQaOpen, onOpen: onQaOpen, onClose: onQaClose } = useDisclosure();
   const [selectedTask, setSelectedTask] = useState<RegisteredTask | null>(null);
   const [isDeleteLoading, setIsDeleteLoading] = useState(false);
   const isAdmin = user?.role === 'ADMIN';
@@ -188,7 +191,10 @@ export const RegisteredTasksTable: React.FC<RegisteredTasksTableProps> = ({
                   </Td>
                 )}
                 {!hiddenColumns.includes('status') && (
-                  <Td>
+                  <Td onClick={() => {
+                    setSelectedTask(task);
+                    onQaOpen();
+                  }} style={{ cursor: 'pointer' }}>
                     {task.completedAt ? (
                       <Badge colorScheme="green">
                         {STATUS_LABELS.APPROVED}
@@ -248,15 +254,27 @@ export const RegisteredTasksTable: React.FC<RegisteredTasksTableProps> = ({
       </TableContainer>
 
       {selectedTask && (
-        <EditTaskLogModal
-          isOpen={isEditOpen}
-          onClose={() => {
-            onEditClose();
-            setSelectedTask(null);
-          }}
-          taskLog={selectedTask}
-          onSuccess={handleSuccess}
-        />
+        <>
+          <EditTaskLogModal
+            isOpen={isEditOpen}
+            onClose={() => {
+              onEditClose();
+              setSelectedTask(null);
+            }}
+            taskLog={selectedTask}
+            onSuccess={handleSuccess}
+          />
+
+          <QaCheck
+            isOpen={isQaOpen}
+            onClose={() => {
+              onQaClose();
+              setSelectedTask(null);
+            }}
+            taskName={selectedTask.task.name}
+            assigneeName={selectedTask.user.name}
+          />
+        </>
       )}
 
       <ConfirmModal
