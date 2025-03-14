@@ -4,6 +4,7 @@ import { ProjectsService } from './projects.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ProjectResponseDto, CreateProjectDto, UpdateProjectDto, TaskResponseDto, ProjectUserResponseDto } from './dto';
 import { ProjectUserRole } from '@prisma/client';
+import { ProjectAccessGuard } from './guards/project-access.guard';
 
 @ApiTags('projects')
 @Controller('projects')
@@ -20,6 +21,7 @@ export class ProjectsController {
   }
 
   @Get(':id')
+  @UseGuards(ProjectAccessGuard)
   @ApiOperation({ summary: 'Get project by id' })
   @ApiResponse({ status: 200, description: 'Return project by id', type: ProjectResponseDto })
   async findOne(@Param('id') id: string) {

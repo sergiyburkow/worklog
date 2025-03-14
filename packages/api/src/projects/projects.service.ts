@@ -162,7 +162,23 @@ export class ProjectsService {
         },
       },
       include: {
-        users: true,
+        users: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
+        client: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
 
