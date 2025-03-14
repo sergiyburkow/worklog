@@ -7,6 +7,7 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import * as fs from 'fs';
 import * as https from 'https';
 import * as path from 'path';
+import { config } from './config';
 
 async function bootstrap() {
   const httpsOptions = {
@@ -39,17 +40,17 @@ async function bootstrap() {
   }));
   
   // Swagger configuration
-  const config = new DocumentBuilder()
+  const swaggerConfig = new DocumentBuilder()
     .setTitle('Worklog API')
     .setDescription('The Worklog API description')
     .setVersion('1.0')
     .addBearerAuth()
     .build();
-  const document = SwaggerModule.createDocument(app, config);
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api', app, document);
   
   // Налаштовуємо сервер для прослуховування всіх мережевих інтерфейсів
-  await app.listen(4096, '0.0.0.0');
+  await app.listen(config.server.port, '0.0.0.0');
   
   console.log(`Application is running on: ${await app.getUrl()}`);
 }

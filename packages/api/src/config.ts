@@ -1,4 +1,4 @@
-import dotenv from 'dotenv';
+import * as dotenv from 'dotenv';
 
 dotenv.config();
 
@@ -10,6 +10,7 @@ export const config = {
     secret: process.env.JWT_SECRET || 'your-super-secret-key-change-in-production'
   },
   server: {
+    host: process.env.HOST || 'localhost',
     port: parseInt(process.env.PORT || '3001'),
     protocol: process.env.PROTOCOL || 'http'
   },
