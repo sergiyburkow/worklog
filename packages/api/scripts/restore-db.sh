@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# Додаємо шлях до PostgreSQL 14 в PATH
-export PATH="/opt/homebrew/opt/postgresql@14/bin:$PATH"
+# Додаємо шлях до PostgreSQL 15 в PATH
+export PATH="/opt/homebrew/opt/postgresql@15/bin:$PATH"
 
 # Перевіряємо версію psql
 PG_VERSION=$(psql --version | grep -oE '[0-9]+' | head -1)
-if [ "$PG_VERSION" != "14" ]; then
-    echo "Error: Wrong psql version. Expected 14, got $PG_VERSION"
+if [ "$PG_VERSION" != "15" ]; then
+    echo "Error: Wrong psql version. Expected 15, got $PG_VERSION"
     exit 1
 fi
 
