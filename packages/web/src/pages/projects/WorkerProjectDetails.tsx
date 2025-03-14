@@ -52,7 +52,15 @@ export const WorkerProjectDetails = ({ project }: WorkerProjectDetailsProps) => 
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const response = await api.get(`/projects/${project.id}/tasks/user/${user?.id}`);
+        const today = new Date();
+        const params = new URLSearchParams({
+          registeredFrom: startOfDay(today).toISOString(),
+          registeredTo: endOfDay(today).toISOString(),
+          userId: user?.id || ''
+        });
+
+        console.log('WorkerProjectDetails - Fetching tasks with params:', params.toString());
+        const response = await api.get(`/task-logs/project/${project.id}?${params.toString()}`);
         setTasks(response.data);
         
         // Розрахунок прогресу
@@ -116,10 +124,42 @@ export const WorkerProjectDetails = ({ project }: WorkerProjectDetailsProps) => 
   };
 
   const todayTasks = tasks.filter(task => {
+    if (!task.registeredAt) return false;
     const taskDate = parseISO(task.registeredAt);
     const today = new Date();
     return taskDate >= startOfDay(today) && taskDate <= endOfDay(today);
   });
+
+  const handleTaskDeleted = () => {
+    const fetchTasks = async () => {
+      try {
+        const today = new Date();
+        const params = new URLSearchParams({
+          registeredFrom: startOfDay(today).toISOString(),
+          registeredTo: endOfDay(today).toISOString(),
+          userId: user?.id || ''
+        });
+
+        console.log('WorkerProjectDetails (onTaskDeleted) - Fetching tasks with params:', params.toString());
+        const response = await api.get(`/task-logs/project/${project.id}?${params.toString()}`);
+        setTasks(response.data);
+        
+        const completed = response.data.filter((task: Task) => task.status === 'COMPLETED').length;
+        const total = response.data.length;
+        setProjectProgress({
+          totalTasks: total,
+          completedTasks: completed,
+          progress: total > 0 ? (completed / total) * 100 : 0
+        });
+      } catch (error) {
+        console.error('Error fetching tasks:', error);
+      }
+    };
+
+    if (project.id && user?.id) {
+      fetchTasks();
+    }
+  };
 
   return (
     <Box>
@@ -190,29 +230,7 @@ export const WorkerProjectDetails = ({ project }: WorkerProjectDetailsProps) => 
                 <RegisteredTasksTable 
                   tasks={todayTasks} 
                   type="PRODUCT"
-                  onTaskDeleted={() => {
-                    // Оновлюємо список задач після видалення
-                    const fetchTasks = async () => {
-                      try {
-                        const response = await api.get(`/projects/${project.id}/tasks/user/${user?.id}`);
-                        setTasks(response.data);
-                        
-                        const completed = response.data.filter((task: Task) => task.status === 'COMPLETED').length;
-                        const total = response.data.length;
-                        setProjectProgress({
-                          totalTasks: total,
-                          completedTasks: completed,
-                          progress: total > 0 ? (completed / total) * 100 : 0
-                        });
-                      } catch (error) {
-                        console.error('Error fetching tasks:', error);
-                      }
-                    };
-
-                    if (project.id && user?.id) {
-                      fetchTasks();
-                    }
-                  }}
+                  onTaskDeleted={handleTaskDeleted}
                 />
               )}
             </CardBody>

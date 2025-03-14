@@ -11,6 +11,11 @@ import { useAuth } from '../../hooks/useAuth';
 
 interface Task {
   id: string;
+  name: string;
+  status: string;
+  completedAt: string;
+  timeSpent: number;
+  createdAt: string;
   task: {
     name: string;
     estimatedTime: number;
@@ -19,9 +24,7 @@ interface Task {
   user: {
     name: string;
   };
-  completedAt: string | null;
   registeredAt: string;
-  timeSpent?: number;
   product?: {
     code: string;
   };
@@ -44,7 +47,14 @@ export const AdminProjectDetails = ({ project }: AdminProjectDetailsProps) => {
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const response = await api.get(`/projects/${project.id}/tasks`);
+        const today = new Date();
+        const params = new URLSearchParams({
+          registeredFrom: startOfDay(today).toISOString(),
+          registeredTo: endOfDay(today).toISOString()
+        });
+
+        console.log('AdminProjectDetails - Fetching tasks with params:', params.toString());
+        const response = await api.get(`/task-logs/project/${project.id}?${params.toString()}`);
         setTasks(response.data);
       } catch (error) {
         console.error('Error fetching tasks:', error);
@@ -59,6 +69,7 @@ export const AdminProjectDetails = ({ project }: AdminProjectDetailsProps) => {
   }, [project.id]);
 
   const todayTasks = tasks.filter(task => {
+    if (!task.registeredAt) return false;
     const taskDate = parseISO(task.registeredAt);
     const today = new Date();
     return taskDate >= startOfDay(today) && taskDate <= endOfDay(today);
