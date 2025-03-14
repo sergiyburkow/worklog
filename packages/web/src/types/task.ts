@@ -47,4 +47,27 @@ export const TASK_TYPE_COLORS: Record<TaskType, string> = {
   [TaskType.PRODUCT]: 'blue',
   [TaskType.GENERAL]: 'orange',
   [TaskType.INTERMEDIATE]: 'cyan'
-}; 
+};
+
+export interface RegisteredTask {
+  id: string;
+  name: string;
+  type: 'PRODUCT' | 'INTERMEDIATE' | 'GENERAL';
+  productCode?: string;
+  assignee?: {
+    name: string;
+  };
+  completionDate: string;
+  duration: number;
+  quantity?: number;
+  status: 'COMPLETED' | 'IN_PROGRESS' | 'NOT_COMPLETED';
+  projectId: string;
+  registeredAt: string;
+  timeSpent?: number;
+  product?: {
+    code: string;
+  };
+  task: {
+    type: 'PRODUCT' | 'INTERMEDIATE' | 'GENERAL';
+  };
+} 

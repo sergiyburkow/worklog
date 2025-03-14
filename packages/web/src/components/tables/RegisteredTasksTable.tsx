@@ -14,6 +14,8 @@ import {
   Tooltip,
   useToast,
   useDisclosure,
+  Box,
+  Spinner,
 } from '@chakra-ui/react';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
@@ -34,6 +36,7 @@ interface RegisteredTask {
   completedAt: string | null;
   registeredAt: string;
   timeSpent?: number;
+  quantity?: number;
   product?: {
     code: string;
   };
@@ -47,6 +50,7 @@ interface RegisteredTasksTableProps {
   tasks: RegisteredTask[];
   type: 'PRODUCT' | 'INTERMEDIATE' | 'GENERAL';
   onTaskDeleted?: () => void;
+  isLoading?: boolean;
 }
 
 const STATUS_COLORS = {
@@ -63,7 +67,7 @@ const STATUS_LABELS = {
   PENDING: 'Потребує перевірки',
 };
 
-export const RegisteredTasksTable: React.FC<RegisteredTasksTableProps> = ({ tasks, type, onTaskDeleted }) => {
+export const RegisteredTasksTable: React.FC<RegisteredTasksTableProps> = ({ tasks, type, onTaskDeleted, isLoading }) => {
   const { user } = useAuth() || {};
   const toast = useToast();
   const { isOpen: isEditOpen, onOpen: onEditOpen, onClose: onEditClose } = useDisclosure();
@@ -111,6 +115,14 @@ export const RegisteredTasksTable: React.FC<RegisteredTasksTableProps> = ({ task
     onTaskDeleted?.();
   };
 
+  if (isLoading) {
+    return (
+      <Box textAlign="center" py={8}>
+        <Spinner size="xl" />
+      </Box>
+    );
+  }
+
   return (
     <>
       <TableContainer>
@@ -122,6 +134,7 @@ export const RegisteredTasksTable: React.FC<RegisteredTasksTableProps> = ({ task
               {type === 'PRODUCT' && <Th>Код продукту</Th>}
               <Th>Виконавець</Th>
               <Th>Дата виконання</Th>
+              <Th>Кількість</Th>
               <Th>Статус</Th>
               {isAdmin && <Th>Дії</Th>}
             </Tr>
@@ -142,6 +155,10 @@ export const RegisteredTasksTable: React.FC<RegisteredTasksTableProps> = ({ task
                 {type === 'PRODUCT' && <Td>{task.product?.code || '-'}</Td>}
                 <Td>{task.user.name}</Td>
                 <Td>{new Date(task.registeredAt).toLocaleString()}</Td>
+                <Td>
+                  {task.task.type === 'INTERMEDIATE' ? `${task.quantity} шт` || '-' : 
+                   task.task.type === 'GENERAL' ? `${Number(task.timeSpent || 0).toFixed(2)} год` : '-'}
+                </Td>
                 <Td>
                   {task.completedAt ? (
                     <Badge colorScheme="green">

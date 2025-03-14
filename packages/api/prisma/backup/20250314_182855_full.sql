@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 15.12 (Homebrew)
+-- Dumped from database version 14.17 (Homebrew)
 -- Dumped by pg_dump version 15.12 (Homebrew)
 
 SET statement_timeout = 0;
@@ -372,7 +372,8 @@ CREATE TABLE public.task_logs (
     product_id text,
     completed_at timestamp(3) without time zone,
     registered_at timestamp(3) without time zone NOT NULL,
-    time_spent numeric(65,30)
+    time_spent numeric(65,30),
+    quantity integer
 );
 
 
@@ -386,14 +387,14 @@ CREATE TABLE public.tasks (
     id text NOT NULL,
     name text NOT NULL,
     description text,
-    estimated_time numeric(65,30) NOT NULL,
+    type public."TaskType" DEFAULT 'GENERAL'::public."TaskType" NOT NULL,
+    status public."TaskStatus" DEFAULT 'NEW'::public."TaskStatus" NOT NULL,
     complexity integer,
     tags text,
-    type public."TaskType" DEFAULT 'GENERAL'::public."TaskType" NOT NULL,
+    estimated_time numeric(65,30),
     project_id text NOT NULL,
-    status public."TaskStatus" DEFAULT 'NEW'::public."TaskStatus" NOT NULL,
     created_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at timestamp(3) without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+    updated_at timestamp(3) without time zone NOT NULL
 );
 
 
@@ -436,6 +437,7 @@ COPY public."ProjectUsers" (user_id, project_id, role, "isActive") FROM stdin;
 54b4ceec-7c75-4aff-8b08-6333b1849cf8	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	ENGINEER	t
 d5c43a0c-6249-49e4-8d04-22024aa8193a	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	ENGINEER	t
 4ac2b819-a667-4371-9396-d42cb622a0ea	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	ENGINEER	t
+f5eeadc7-c8f8-4ff1-b205-945afd554a96	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	ENGINEER	t
 \.
 
 
@@ -444,7 +446,7 @@ d5c43a0c-6249-49e4-8d04-22024aa8193a	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	ENGINE
 --
 
 COPY public."Projects" (id, name, client_id, start_date, deadline, actual_end_date, status, quantity, updated_at) FROM stdin;
-f26cc409-bfb4-453f-82fe-9e7fe5fc4847	524 каміки з тепловізійною камерою	44090811-4903-469d-8a14-40c07c817c1c	2025-03-07 00:00:00	2025-04-07 00:00:00	\N	IN_PROGRESS	524	2025-03-12 19:17:30.677
+f26cc409-bfb4-453f-82fe-9e7fe5fc4847	524 каміки з тепловізійною камерою	44090811-4903-469d-8a14-40c07c817c1c	2025-03-07 00:00:00	2025-04-07 00:00:00	\N	IN_PROGRESS	524	2025-03-14 15:58:01.233
 \.
 
 
@@ -485,12 +487,13 @@ COPY public."UserTokens" (id, user_id, jwt_token, expires_at) FROM stdin;
 --
 
 COPY public."Users" (id, name, email, phone, password_hash, role, "callSign", "createdAt", "lastName", "updatedAt") FROM stdin;
-38e25bbe-008e-48d7-bdea-d8b04e7ffbb6	Сергій	cray@sscgroup.net	\N	$2b$10$X7H2FrU5viqsA72NKAAB.OYjkTJAkC2ZUz2aCn2D9j1yA9xk5rskq	ADMIN	\N	2025-03-11 22:29:13.458	\N	2025-03-11 22:29:13.458
 5d759a32-b650-4801-9bdd-f5565943dc01	Саня	sasha.kozlov2010@gmail.com	+380939923942	$2b$10$.U.uGd/Y8SNLwxVTXPYTE.Y806KPAs7dL0GA3QsZ/1F3TEve0rJVW	WORKER	\N	2025-03-11 20:35:02.865	\N	2025-03-11 20:35:02.865
 d5c43a0c-6249-49e4-8d04-22024aa8193a	Максим	guardiamax660@gmail.com	+380972461180	$2b$10$Xtg86ymOytfnR9sBL3xHwO.hFzEq8euTAGEUoC20i1d59iocTtGVC	WORKER	\N	2025-03-12 17:30:42.285	\N	2025-03-12 17:30:42.285
 1554f0d4-f870-4c35-805e-90cd37b2e47f	Олексій	alex59.kovalenko@gmail.com	+380671053855	$2b$10$PuerEQ4q8smo.9sv8HRGAeW2Cr7bMn7dFoYro68A24xX3CqCLuE/W	WORKER	\N	2025-03-12 17:43:36.474	\N	2025-03-12 17:43:36.474
 54b4ceec-7c75-4aff-8b08-6333b1849cf8	Артем	artemsaliychuk88@gmail.com	+380930334823	$2b$10$F9u80sXxUfm/XSuooA.Isef5qK8AHwu5v7ZXUyREYziormsxfOf6K	WORKER	\N	2025-03-12 17:47:36.911	\N	2025-03-12 17:47:36.911
 4ac2b819-a667-4371-9396-d42cb622a0ea	Богдан	Garrik2000@ukr.net	+380677803740	$2b$10$GUzCLCVXpHhVSfedrokYrOvJtG2J6l6TWnYerURD86tcAYBfo3rsW	WORKER	\N	2025-03-12 18:29:31.83	\N	2025-03-12 18:29:31.83
+38e25bbe-008e-48d7-bdea-d8b04e7ffbb6	Сергій	cray@sscgroup.net	\N	$2b$10$X7H2FrU5viqsA72NKAAB.OYjkTJAkC2ZUz2aCn2D9j1yA9xk5rskq	ADMIN	\N	2025-03-11 22:29:13.458	\N	2025-03-14 15:04:45.567
+f5eeadc7-c8f8-4ff1-b205-945afd554a96	Ігор	wellman3033@gmail.com	+380934927212	$2b$10$t7ydu2tHpRV2cUuSPoycROq/mzRTVq5jYfDpnXZ.J8zM1oBoUII9.	WORKER	\N	2025-03-14 15:56:56.798	\N	2025-03-14 15:56:56.798
 \.
 
 
@@ -499,12 +502,8 @@ d5c43a0c-6249-49e4-8d04-22024aa8193a	Максим	guardiamax660@gmail.com	+38097
 --
 
 COPY public._prisma_migrations (id, checksum, finished_at, migration_name, logs, rolled_back_at, started_at, applied_steps_count) FROM stdin;
-cdf4f293-29bc-420c-98e9-e1f0b63f8bc0	181e574e741b083046d130a04f3546e9437a6271715c8038b217c32faba831a0	2025-03-11 21:00:26.551056+02	20250311185548_init	\N	\N	2025-03-11 21:00:26.527354+02	1
-27678790-6062-4457-b690-420e1a08a8eb	1c1b130ec8dc442d4aecbb9ced2ce08f358664dea2cf9f64cba0c33510dc1e4d	2025-03-11 21:00:40.602124+02	20250311190040_init	\N	\N	2025-03-11 21:00:40.598352+02	1
-d8f9eb37-912f-41ee-9302-637f08bfbeda	b3a9f3ad98d50adf6a5a10c416ba838fbfab35191e94592da371b28d1f26b798	2025-03-11 22:29:13.461293+02	20250311202841_add_lastname_and_callsign_to_user	\N	\N	2025-03-11 22:29:13.456924+02	1
-0b1a20b2-0f89-45db-a702-4dd2403d34e1	ca61ff661612b158e33b46574b1a327d1a3a73012e672588cedff622f8f5bca6	2025-03-11 22:30:58.576343+02	20250311203058_	\N	\N	2025-03-11 22:30:58.574308+02	1
-f9dc2125-26c6-4a68-8b36-ab3bf9478bfa	c43bdefcee5bf8082f7f84ae0d93c3a4c334a92cdb92efbc655a5db01b010af8	2025-03-12 20:26:26.724616+02	20250312182626_add_status_to_task	\N	\N	2025-03-12 20:26:26.719914+02	1
-d5a2cc6e-80e9-430d-aa70-6a76c3c2659f	4e8fa8b29b48ff0979db0487bb2357566739d4ad7df47867b8c6952d80b44074	2025-03-12 21:07:00.648005+02	20250312190700_add_is_active_to_project_user	\N	\N	2025-03-12 21:07:00.643689+02	1
+05356402-7e3f-41bc-9a97-912a6ffc7a07	ccd84632c4bd60e464f4954517c6f91a4645b5f868bc36247b2514e54b048fbc	2025-03-14 18:27:15.738047+02	20250313101033_init	\N	\N	2025-03-14 18:27:15.70119+02	1
+7fa24f8b-5034-4cde-ad70-f5babcd3e6b9	94da2df308c6c11884c1771e674f3258c85d4f0a57b1697dfdb48dbf10fe31bc	2025-03-14 18:27:15.740117+02	20250314162524_add_quantity_to_task_logs	\N	\N	2025-03-14 18:27:15.738524+02	1
 \.
 
 
@@ -512,7 +511,14 @@ d5a2cc6e-80e9-430d-aa70-6a76c3c2659f	4e8fa8b29b48ff0979db0487bb2357566739d4ad7df
 -- Data for Name: task_logs; Type: TABLE DATA; Schema: public; Owner: maestro
 --
 
-COPY public.task_logs (id, user_id, task_id, product_id, completed_at, registered_at, time_spent) FROM stdin;
+COPY public.task_logs (id, user_id, task_id, product_id, completed_at, registered_at, time_spent, quantity) FROM stdin;
+00ff1a08-a318-47ef-8d53-bfa133c84206	d5c43a0c-6249-49e4-8d04-22024aa8193a	3e3e8139-1872-429e-a284-014f912d309c	\N	\N	2025-03-11 15:37:00	21.000000000000000000000000000000	\N
+9a954dc4-71af-4a8c-90a6-0f92b4b3ec15	d5c43a0c-6249-49e4-8d04-22024aa8193a	3e3e8139-1872-429e-a284-014f912d309c	\N	\N	2025-03-12 15:38:00	32.000000000000000000000000000000	\N
+b7eca10b-1bbe-4b9f-954b-16764c0b25c6	d5c43a0c-6249-49e4-8d04-22024aa8193a	3e3e8139-1872-429e-a284-014f912d309c	\N	\N	2025-03-13 15:38:00	16.000000000000000000000000000000	\N
+bb14e3fa-dbcb-431a-a28f-d4fbf330fd2c	f5eeadc7-c8f8-4ff1-b205-945afd554a96	2bd3b08c-5ef4-4da0-b178-1676cd40db25	\N	\N	2025-03-07 15:58:00	41.000000000000000000000000000000	\N
+9eca3365-6b2c-486f-b9dc-b3c5d8123284	f5eeadc7-c8f8-4ff1-b205-945afd554a96	2bd3b08c-5ef4-4da0-b178-1676cd40db25	\N	\N	2025-03-10 15:58:00	60.000000000000000000000000000000	\N
+28144bbc-7509-4e44-9ad5-102edbeacda5	f5eeadc7-c8f8-4ff1-b205-945afd554a96	2bd3b08c-5ef4-4da0-b178-1676cd40db25	\N	\N	2025-03-11 15:58:00	80.000000000000000000000000000000	\N
+6359f91c-8dae-4df1-86ff-d57c186ed23d	f5eeadc7-c8f8-4ff1-b205-945afd554a96	3e3e8139-1872-429e-a284-014f912d309c	\N	\N	2025-03-11 16:00:00	3.000000000000000000000000000000	\N
 \.
 
 
@@ -520,19 +526,19 @@ COPY public.task_logs (id, user_id, task_id, product_id, completed_at, registere
 -- Data for Name: tasks; Type: TABLE DATA; Schema: public; Owner: maestro
 --
 
-COPY public.tasks (id, name, description, estimated_time, complexity, tags, type, project_id, status, created_at, updated_at) FROM stdin;
-b42a1f15-1e3a-4153-80c0-15a5c9fbbdfb	Збірка рами	Результат: \nЗібрана рама, з променями, стійками, болтами на стек, моторами і неусадженою термозбіжкою на промінях	12.000000000000000000000000000000	\N	\N	PRODUCT	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
-ccc27a15-e2e3-4629-bb95-cef43e631311	Пайка моторів	Напаяні мотори, гребінкою, промиті і пролаковані контакти	12.000000000000000000000000000000	5	\N	PRODUCT	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
-f1afec29-3685-4132-8230-b7d39ce4d9a3	Фінальна збірка	Установка втх\nустановка ПК\nУстановка камери\nУстановка РХ\nКришка і стяжки	23.000000000000000000000000000000	7	\N	PRODUCT	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
-1b33a79e-9790-49bc-8bb3-c7efc8d20832	Налаштування		15.000000000000000000000000000000	\N	\N	PRODUCT	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
-7cf25d99-7da4-4437-86dc-3bb79b7db073	Обліт		10.000000000000000000000000000000	\N	\N	PRODUCT	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
-b984449d-3e0c-43fb-9209-e3a5fd7f3733	Усадка термозбіжок		3.000000000000000000000000000000	\N	\N	PRODUCT	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
-0290a525-b422-4a2d-9a9c-48a0ed38de78	Розпаковка рам		0.000000000000000000000000000000	5	\N	GENERAL	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
-cf2f35ed-f1c6-424e-80b8-04fc1a082a60	Сортування болтів		0.000000000000000000000000000000	\N	\N	GENERAL	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
-f1ef797a-b1ed-46fa-9341-6b661cd4848a	Порізка термозбіжки		0.000000000000000000000000000000	\N	\N	GENERAL	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
-406f31ba-96a2-4328-aca2-2ead65149553	Натягання термозбіжок на проміні		0.000000000000000000000000000000	\N	\N	GENERAL	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
-3e3e8139-1872-429e-a284-014f912d309c	Тонка пайка	ELRS припаяний до ПК. Припаяний дріт ПІ	15.000000000000000000000000000000	4	\N	INTERMEDIATE	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
-2bd3b08c-5ef4-4da0-b178-1676cd40db25	Пайка силових дротів	ESC з силовими дротами і конденсатором. Промитий. Пролакований	10.000000000000000000000000000000	4	\N	INTERMEDIATE	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	NEW	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
+COPY public.tasks (id, name, description, type, status, complexity, tags, estimated_time, project_id, created_at, updated_at) FROM stdin;
+b42a1f15-1e3a-4153-80c0-15a5c9fbbdfb	Збірка рами	Результат: \nЗібрана рама, з променями, стійками, болтами на стек, моторами і неусадженою термозбіжкою на промінях	PRODUCT	NEW	\N	\N	12.000000000000000000000000000000	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
+ccc27a15-e2e3-4629-bb95-cef43e631311	Пайка моторів	Напаяні мотори, гребінкою, промиті і пролаковані контакти	PRODUCT	NEW	5	\N	12.000000000000000000000000000000	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
+f1afec29-3685-4132-8230-b7d39ce4d9a3	Фінальна збірка	Установка втх\nустановка ПК\nУстановка камери\nУстановка РХ\nКришка і стяжки	PRODUCT	NEW	7	\N	23.000000000000000000000000000000	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
+1b33a79e-9790-49bc-8bb3-c7efc8d20832	Налаштування		PRODUCT	NEW	\N	\N	15.000000000000000000000000000000	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
+7cf25d99-7da4-4437-86dc-3bb79b7db073	Обліт		PRODUCT	NEW	\N	\N	10.000000000000000000000000000000	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
+b984449d-3e0c-43fb-9209-e3a5fd7f3733	Усадка термозбіжок		PRODUCT	NEW	\N	\N	3.000000000000000000000000000000	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
+0290a525-b422-4a2d-9a9c-48a0ed38de78	Розпаковка рам		GENERAL	NEW	5	\N	0.000000000000000000000000000000	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
+cf2f35ed-f1c6-424e-80b8-04fc1a082a60	Сортування болтів		GENERAL	NEW	\N	\N	0.000000000000000000000000000000	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
+f1ef797a-b1ed-46fa-9341-6b661cd4848a	Порізка термозбіжки		GENERAL	NEW	\N	\N	0.000000000000000000000000000000	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
+406f31ba-96a2-4328-aca2-2ead65149553	Натягання термозбіжок на проміні		GENERAL	NEW	\N	\N	0.000000000000000000000000000000	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
+3e3e8139-1872-429e-a284-014f912d309c	Тонка пайка	ELRS припаяний до ПК. Припаяний дріт ПІ	INTERMEDIATE	NEW	4	\N	15.000000000000000000000000000000	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
+2bd3b08c-5ef4-4da0-b178-1676cd40db25	Пайка силових дротів	ESC з силовими дротами і конденсатором. Промитий. Пролакований	INTERMEDIATE	NEW	4	\N	10.000000000000000000000000000000	f26cc409-bfb4-453f-82fe-9e7fe5fc4847	2025-03-13 00:33:45.533	2025-03-13 00:33:45.533
 \.
 
 

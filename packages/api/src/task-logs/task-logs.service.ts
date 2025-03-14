@@ -47,6 +47,7 @@ export class TaskLogsService {
         taskId: registerTaskLogDto.taskId,
         productId: productId,
         timeSpent: registerTaskLogDto.timeSpent,
+        quantity: registerTaskLogDto.quantity,
         registeredAt: registeredDate,
       },
       include: {

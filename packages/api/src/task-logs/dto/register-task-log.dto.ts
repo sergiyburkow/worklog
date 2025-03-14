@@ -29,6 +29,11 @@ export class RegisterTaskLogDto {
   @IsNumber()
   timeSpent?: number;
 
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsNumber()
+  quantity?: number;
+
   @ApiProperty({ enum: TaskType })
   @IsEnum(TaskType)
   type: TaskType;

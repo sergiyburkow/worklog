@@ -1,6 +1,6 @@
 import { Button, HStack, Box } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
-import { AddIcon, SettingsIcon, InfoIcon } from '@chakra-ui/icons';
+import { AddIcon, SettingsIcon, InfoIcon, ViewIcon } from '@chakra-ui/icons';
 
 interface TaskRegistrationButtonsProps {
   projectId: string;
@@ -14,7 +14,7 @@ export const TaskRegistrationButtons = ({ projectId }: TaskRegistrationButtonsPr
       <Button
         leftIcon={<AddIcon />}
         colorScheme="blue"
-        onClick={() => navigate(`/projects/${projectId}/tasks/product/register`)}
+        onClick={() => navigate(`/projects/${projectId}/tasks/register/product`)}
       >
         <Box as="span">
           Основна
@@ -24,7 +24,7 @@ export const TaskRegistrationButtons = ({ projectId }: TaskRegistrationButtonsPr
       <Button
         leftIcon={<SettingsIcon />}
         colorScheme="purple"
-        onClick={() => navigate(`/projects/${projectId}/tasks/intermediate/register`)}
+        onClick={() => navigate(`/projects/${projectId}/tasks/register/intermediate`)}
       >
         <Box as="span">
           Проміжна
@@ -34,7 +34,7 @@ export const TaskRegistrationButtons = ({ projectId }: TaskRegistrationButtonsPr
       <Button
         leftIcon={<InfoIcon />}
         colorScheme="green"
-        onClick={() => navigate(`/projects/${projectId}/tasks/general/register`)}
+        onClick={() => navigate(`/projects/${projectId}/tasks/register/general`)}
       >
         <Box as="span">
           Загальна

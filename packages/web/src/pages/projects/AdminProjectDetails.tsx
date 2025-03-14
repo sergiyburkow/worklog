@@ -122,7 +122,14 @@ export const AdminProjectDetails = ({ project }: AdminProjectDetailsProps) => {
 
         <Card>
           <CardBody>
-            <Heading size="md" mb={4}>Сьогоднішні роботи</Heading>
+              <HStack justify="space-between">
+                <Heading size="md">Зареєстровані задачі</Heading>
+                <Button 
+                colorScheme="blue"
+                onClick={() => navigate(`/projects/${project.id}/tasks/registered`)}
+                >Всі задачі</Button>
+
+              </HStack>
             {isLoading ? (
               <Text color="gray.500">Завантаження...</Text>
             ) : (
