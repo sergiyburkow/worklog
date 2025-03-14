@@ -12,6 +12,7 @@ import { ClientsModule } from './clients/clients.module';
 import { ProjectsModule } from './projects/projects.module';
 import { TasksModule } from './tasks/tasks.module';
 import { TaskLogsModule } from './task-logs/task-logs.module';
+import { ProductsModule } from './products/products.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { TaskLogsModule } from './task-logs/task-logs.module';
     ProjectsModule,
     TasksModule,
     TaskLogsModule,
+    ProductsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

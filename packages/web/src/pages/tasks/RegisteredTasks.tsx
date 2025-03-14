@@ -142,12 +142,13 @@ export const RegisteredTasks: React.FC = () => {
         toDate = endOfDay(toDate);
     }
 
-    setFilters(prev => ({
-      ...prev,
+    const newFilters = {
+      ...filters,
       predefinedRange: range,
       dateFrom: format(fromDate, 'yyyy-MM-dd'),
       dateTo: format(toDate, 'yyyy-MM-dd'),
-    }));
+    };
+    setFilters(newFilters);
   };
 
   const handleDateChange = (date: string, isStart: boolean) => {
@@ -190,10 +191,11 @@ export const RegisteredTasks: React.FC = () => {
       }
     }
 
-    setFilters({
+    const finalFilters = {
       ...newFilters,
       predefinedRange: matchingRange,
-    });
+    };
+    setFilters(finalFilters);
   };
 
   const handleClearFilters = () => {
@@ -265,35 +267,6 @@ export const RegisteredTasks: React.FC = () => {
     fetchProjectUsers();
   }, [projectId]);
 
-  const filteredTasks = tasks.filter(task => {
-    // Фільтр по типу (показуємо всі, якщо не вибрано конкретний тип)
-    if (filters.type && task.task.type !== filters.type) {
-      return false;
-    }
-
-    // Фільтр по користувачу (показуємо всіх, якщо не вибрано конкретного користувача)
-    if (filters.userId && task.user.id !== filters.userId) {
-      return false;
-    }
-
-    // Фільтр по даті
-    const taskDate = new Date(task.registeredAt);
-    if (filters.dateFrom) {
-      const fromDate = new Date(filters.dateFrom);
-      if (taskDate < fromDate) {
-        return false;
-      }
-    }
-    if (filters.dateTo) {
-      const toDate = new Date(filters.dateTo);
-      if (taskDate > toDate) {
-        return false;
-      }
-    }
-
-    return true;
-  });
-
   const isFiltersApplied = filters.type || filters.userId || filters.dateFrom || filters.dateTo;
 
   const hasActiveFilters = filters.type !== '' || 
@@ -314,7 +287,10 @@ export const RegisteredTasks: React.FC = () => {
                 <Icon as={FaFilter} />
                 <Select
                   value={filters.type}
-                  onChange={(e) => setFilters({ ...filters, type: e.target.value })}
+                  onChange={(e) => {
+                    const newFilters = { ...filters, type: e.target.value };
+                    setFilters(newFilters);
+                  }}
                   placeholder="всі задачі"
                   w="200px"
                 >
@@ -325,7 +301,10 @@ export const RegisteredTasks: React.FC = () => {
 
                 <Select
                   value={filters.userId}
-                  onChange={(e) => setFilters({ ...filters, userId: e.target.value })}
+                  onChange={(e) => {
+                    const newFilters = { ...filters, userId: e.target.value };
+                    setFilters(newFilters);
+                  }}
                   placeholder="всі виконавці"
                   w="200px"
                 >

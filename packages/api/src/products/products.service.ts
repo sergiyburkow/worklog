@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { CreateTaskLogDto } from './dto/create-task-log.dto';
 import { TaskLogApprovalStatus } from '@prisma/client';
+import { CheckProductResponseDto } from './dto/check-product.dto';
 
 @Injectable()
 export class ProductsService {
@@ -74,4 +75,48 @@ export class ProductsService {
     });
   }
 
+  async checkProductInProject(productCode: string, projectId: string, taskId?: string): Promise<CheckProductResponseDto> {
+    // Перевіряємо чи існує продукт за кодом
+    const product = await this.prisma.product.findFirst({
+      where: {
+        code: productCode,
+        projectId: projectId,
+      },
+    });
+
+    if (!product) {
+      return {
+        status: 'NOT_EXISTS'
+      };
+    }
+
+    // Якщо вказано taskId, перевіряємо чи немає вже такої комбінації продукт-задача
+    if (taskId) {
+      const existingTaskLog = await this.prisma.taskLog.findFirst({
+        where: {
+          productId: product.id,
+          taskId: taskId,
+        },
+      });
+
+      if (existingTaskLog) {
+        return {
+          status: 'ERROR'
+        };
+      }
+    }
+
+    return {
+      status: 'EXISTS'
+    };
+  }
+
+  async findByCode(projectId: string, code: string) {
+    return this.prisma.product.findFirst({
+      where: {
+        projectId,
+        code,
+      },
+    });
+  }
 } 

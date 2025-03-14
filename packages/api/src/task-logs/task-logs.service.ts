@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterTaskLogDto } from './dto/register-task-log.dto';
 import { UpdateTaskLogDto } from './dto/update-task-log.dto';
@@ -35,6 +35,24 @@ export class TaskLogsService {
         productId = newProduct.id;
       } else {
         productId = product.id;
+
+        // Перевіряємо чи існує вже реєстрація для цього продукту і задачі
+        const existingTaskLog = await this.prisma.taskLog.findFirst({
+          where: {
+            taskId: registerTaskLogDto.taskId,
+            productId: product.id,
+          },
+          include: {
+            task: true,
+            product: true,
+          },
+        });
+
+        if (existingTaskLog) {
+          throw new BadRequestException(
+            `Задача "${existingTaskLog.task.name}" вже зареєстрована для продукту з кодом ${existingTaskLog.product?.code || 'невідомий'}`
+          );
+        }
       }
     }
 

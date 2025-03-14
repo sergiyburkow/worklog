@@ -1,13 +1,15 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { ProductsService } from './products.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { ProjectMemberGuard } from './guards/project-member.guard';
 
 import {
   ProductResponseDto,
   TaskLogResponseDto,
   CreateProductDto,
   CreateTaskLogDto,
+  CheckProductResponseDto,
 } from './dto';
 
 @ApiTags('products')
@@ -24,18 +26,31 @@ export class ProductsController {
     return this.productsService.findAll();
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: 'Get product by id' })
-  @ApiResponse({ status: 200, description: 'Return product by id', type: ProductResponseDto })
-  async findOne(@Param('id') id: string) {
-    return this.productsService.findOne(id);
-  }
-
   @Get('project/:projectId')
   @ApiOperation({ summary: 'Get products by project id' })
   @ApiResponse({ status: 200, description: 'Return products by project id', type: [ProductResponseDto] })
   async findByProject(@Param('projectId') projectId: string) {
     return this.productsService.findByProject(projectId);
+  }
+
+  @Get('check/:productCode/project/:projectId')
+  @UseGuards(ProjectMemberGuard)
+  @ApiOperation({ summary: 'Перевірити продукт в проекті' })
+  @ApiResponse({ status: 200, description: 'Результат перевірки продукту', type: CheckProductResponseDto })
+  @ApiQuery({ name: 'taskId', required: false, description: 'ID задачі для перевірки' })
+  async checkProductInProject(
+    @Param('productCode') productCode: string,
+    @Param('projectId') projectId: string,
+    @Query('taskId') taskId?: string,
+  ) {
+    return this.productsService.checkProductInProject(productCode, projectId, taskId);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get product by id' })
+  @ApiResponse({ status: 200, description: 'Return product by id', type: ProductResponseDto })
+  async findOne(@Param('id') id: string) {
+    return this.productsService.findOne(id);
   }
 
   @Post()
@@ -52,4 +67,14 @@ export class ProductsController {
     return this.productsService.remove(id);
   }
 
+  @Get('project/:projectId/products/by-code/:code')
+  @UseGuards(ProjectMemberGuard)
+  @ApiOperation({ summary: 'Знайти продукт за кодом в проекті' })
+  @ApiResponse({ status: 200, description: 'Знайдений продукт', type: ProductResponseDto })
+  async findByCode(
+    @Param('projectId') projectId: string,
+    @Param('code') code: string,
+  ) {
+    return this.productsService.findByCode(projectId, code);
+  }
 }

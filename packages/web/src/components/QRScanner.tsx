@@ -42,7 +42,7 @@ export const QRScanner: React.FC<QRScannerProps> = ({ onScan, onError, isOpen, o
         "reader",
         { 
           fps: 10,
-          qrbox: 250
+          qrbox: 180
         },
         false // verbose mode
       );

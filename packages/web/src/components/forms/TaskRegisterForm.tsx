@@ -13,6 +13,11 @@ import {
   InputRightElement,
   FormErrorMessage,
   Icon,
+  Box,
+  Wrap,
+  WrapItem,
+  Tag,
+  TagCloseButton,
 } from '@chakra-ui/react';
 import { api } from '../../lib/api';
 import { FaQrcode } from 'react-icons/fa';
@@ -66,8 +71,9 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
   const [showScanner, setShowScanner] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projectUsers, setProjectUsers] = useState<ProjectUser[]>([]);
-  const [productExists, setProductExists] = useState<boolean | null>(null);
   const [isCheckingProduct, setIsCheckingProduct] = useState(false);
+  const [productCodes, setProductCodes] = useState<string[]>([]);
+  const [productStatuses, setProductStatuses] = useState<Record<string, boolean>>({});
 
   const formatDateForInput = (date: Date) => {
     const year = date.getFullYear();
@@ -142,29 +148,68 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
     fetchProjectUsers();
   }, [projectId, currentUser.role]);
 
+  const removeProductCode = (codeToRemove: string) => {
+    // Видаляємо код зі списку
+    const updatedCodes = productCodes.filter(code => code.trim() !== codeToRemove.trim());
+    setProductCodes(updatedCodes);
+
+    // Оновлюємо значення в інпуті
+    const updatedInputValue = updatedCodes.length > 0 ? updatedCodes.join(', ') : '';
+    setFormData(prev => ({
+      ...prev,
+      productCode: updatedInputValue
+    }));
+
+    // Видаляємо статус
+    setProductStatuses(prev => {
+      const newStatuses = { ...prev };
+      delete newStatuses[codeToRemove];
+      return newStatuses;
+    });
+  };
+
   const checkProduct = async (code: string) => {
-    if (!code.trim()) {
-      setProductExists(null);
-      return;
-    }
+    if (!code.trim()) return;
 
     setIsCheckingProduct(true);
     try {
-      await api.get(`/projects/${projectId}/products/${code}`);
-      setProductExists(true);
-    } catch (error: any) {
-      if (error.response?.status === 404) {
-        setProductExists(false);
-      } else {
-        console.error('Помилка при перевірці продукту:', error);
+      const response = await api.get(`/products/check/${code}/project/${projectId}`, {
+        params: {
+          taskId: formData.taskId || undefined
+        }
+      });
+      
+      if (response.data.status === 'ERROR') {
+        removeProductCode(code);
+
         toast({
           title: 'Помилка',
-          description: 'Не вдалося перевірити наявність продукту',
+          description: 'Цей продукт вже зареєстрований для цієї задачі',
           status: 'error',
           duration: 3000,
           isClosable: true,
         });
-        setProductExists(null);
+        return;
+      }
+
+      setProductStatuses(prev => ({
+        ...prev,
+        [code]: response.data.status === 'EXISTS'
+      }));
+    } catch (error: any) {
+      setProductStatuses(prev => ({
+        ...prev,
+        [code]: false
+      }));
+      
+      if (error.response?.status === 403) {
+        toast({
+          title: 'Помилка',
+          description: 'У вас немає доступу до цього проекту',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
       }
     } finally {
       setIsCheckingProduct(false);
@@ -172,12 +217,29 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
   };
 
   const handleScan = async (result: string) => {
-    setFormData(prev => ({ ...prev, productCode: result }));
-    setShowScanner(false);
+    // Перевіряємо чи код вже є в списку
+    if (productCodes.includes(result)) {
+      toast({
+        title: 'Увага',
+        description: 'Цей код вже додано',
+        status: 'warning',
+        duration: 3000,
+        isClosable: true,
+      });
+      setShowScanner(false);
+      return;
+    }
+
     await checkProduct(result);
+    setProductCodes(prev => [...prev, result]);
+    setFormData(prev => ({ 
+      ...prev, 
+      productCode: [...productCodes, result].join(', ') 
+    }));
+    setShowScanner(false);
     toast({
       title: 'Успіх',
-      description: 'Код продукту відскановано',
+      description: 'Код продукту додано',
       status: 'success',
       duration: 3000,
       isClosable: true,
@@ -215,16 +277,37 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
 
   const handleProductCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    
+    // Оновлюємо значення в інпуті
     setFormData(prev => ({ ...prev, productCode: value }));
-    if (!value) {
-      setProductExists(null);
-    }
+    
+    // Розбиваємо введений текст на окремі коди
+    const newCodes = value
+      .split(/[,\s]+/) // Розділяємо по комі або пробілу
+      .map(code => code.trim()) // Прибираємо пробіли
+      .filter(code => code.length > 0); // Видаляємо пусті значення
+    
+    // Оновлюємо список кодів
+    setProductCodes(newCodes);
+    
+    // Перевіряємо нові коди
+    newCodes.forEach(code => {
+      if (!productStatuses.hasOwnProperty(code)) {
+        checkProduct(code);
+      }
+    });
   };
 
-  const handleProductCodeBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (value.trim()) {
-      await checkProduct(value);
+  const handleRemoveCode = (codeToRemove: string) => {
+    removeProductCode(codeToRemove);
+  };
+
+  const handleProductCodeBlur = async () => {
+    // Перевіряємо всі коди при втраті фокусу
+    for (const code of productCodes) {
+      if (!productStatuses.hasOwnProperty(code)) {
+        await checkProduct(code);
+      }
     }
   };
 
@@ -281,34 +364,55 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
     }
   };
 
+  const handleTaskChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const taskId = e.target.value;
+    setFormData(prev => ({ ...prev, taskId }));
+    
+    // Перевіряємо всі продукти заново при зміні задачі
+    if (productCodes.length > 0) {
+      productCodes.forEach(code => checkProduct(code));
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit}>
       <VStack spacing={6}>
         {isProductTask && (
-          <FormControl isInvalid={productExists === false}>
+          <FormControl>
             <FormLabel>Код продукту</FormLabel>
             <InputGroup>
               <Input
                 value={formData.productCode}
                 onChange={handleProductCodeChange}
-                placeholder="Введіть код продукту"
-                isDisabled={isLoading}
+                onBlur={handleProductCodeBlur}
+                placeholder="Введіть коди продуктів через кому або пробіл"
               />
               <InputRightElement>
-                <Button
-                  type="button"
-                  variant="ghost"
+                <Icon
+                  as={FaQrcode}
+                  cursor="pointer"
                   onClick={() => setShowScanner(true)}
-                  isDisabled={isLoading}
-                >
-                  <Icon as={FaQrcode} />
-                </Button>
+                />
               </InputRightElement>
             </InputGroup>
-            {productExists === false && (
-              <FormErrorMessage>
-                Продукт з таким кодом не знайдено
-              </FormErrorMessage>
+            {productCodes.length > 0 && (
+              <Box mt={2}>
+                <Text fontSize="sm" mb={2}>Додані коди:</Text>
+                <Wrap spacing={2}>
+                  {productCodes.map(code => (
+                    <WrapItem key={code}>
+                      <Tag 
+                        size="md" 
+                        variant="subtle" 
+                        colorScheme={productStatuses[code] === false ? "orange" : "blue"}
+                      >
+                        {code}
+                        <TagCloseButton onClick={() => handleRemoveCode(code)} />
+                      </Tag>
+                    </WrapItem>
+                  ))}
+                </Wrap>
+              </Box>
             )}
           </FormControl>
         )}
@@ -321,15 +425,15 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
         />
 
         <FormControl isRequired>
-          <FormLabel>Виконана задача</FormLabel>
+          <FormLabel>Задача</FormLabel>
           <Select
             value={formData.taskId}
-            onChange={(e) => setFormData(prev => ({ ...prev, taskId: e.target.value }))}
-            placeholder="Виберіть задачу"
+            onChange={handleTaskChange}
+            placeholder="Оберіть задачу"
           >
             {tasks.map(task => (
               <option key={task.id} value={task.id}>
-                {task.name} (Оч. час: {task.estimatedTime}г)
+                {task.name}
               </option>
             ))}
           </Select>
