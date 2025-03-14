@@ -43,6 +43,7 @@ export const AdminProjectDetails = ({ project }: AdminProjectDetailsProps) => {
   const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [productsCount, setProductsCount] = useState(0);
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -63,8 +64,18 @@ export const AdminProjectDetails = ({ project }: AdminProjectDetailsProps) => {
       }
     };
 
+    const fetchProducts = async () => {
+      try {
+        const response = await api.get(`/products/project/${project.id}`);
+        setProductsCount(response.data.length);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      }
+    };
+
     if (project.id) {
       fetchTasks();
+      fetchProducts();
     }
   }, [project.id]);
 
@@ -128,7 +139,7 @@ export const AdminProjectDetails = ({ project }: AdminProjectDetailsProps) => {
               {project.quantity && (
                 <HStack justify="space-between">
                   <Text fontWeight="bold">Кількість:</Text>
-                  <Text>{project.quantity}</Text>
+                  <Text>{project.quantity} / {productsCount}</Text>
                 </HStack>
               )}
             </VStack>
