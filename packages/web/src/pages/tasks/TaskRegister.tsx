@@ -73,9 +73,9 @@ export const TaskRegister: React.FC = () => {
           registeredAt: formData.registeredAt,
           userId: formData.userId,
           type: taskType,
-          timeSpent: taskType === 'INTERMEDIATE' 
-            ? parseInt(formData.quantity || '0')
-            : parseFloat(formData.timeSpent || '0')
+          ...(taskType === 'INTERMEDIATE' 
+            ? { quantity: parseInt(formData.quantity || '0') }
+            : { timeSpent: parseFloat(formData.timeSpent || '0') })
         };
 
         await api.post('/task-logs/register', payload);

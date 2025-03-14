@@ -22,6 +22,23 @@ import { MdClear } from 'react-icons/md';
 import { api } from '../../lib/api';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { RegisteredTasksTable } from '../../components/tables/RegisteredTasksTable';
+import { 
+  startOfDay, 
+  endOfDay, 
+  startOfWeek, 
+  endOfWeek, 
+  startOfMonth, 
+  endOfMonth, 
+  subMonths,
+  format,
+  parseISO,
+  isEqual,
+  setHours,
+  setMinutes,
+  setSeconds,
+  setMilliseconds
+} from 'date-fns';
+import { uk } from 'date-fns/locale';
 
 interface TaskLog {
   id: string;
@@ -79,68 +96,57 @@ export const RegisteredTasks: React.FC = () => {
   
   // Встановлюємо початкові значення для фільтрів
   const today = new Date();
-  const todayStart = new Date(today.setHours(0, 0, 0, 0));
-  const todayEnd = new Date(today.setHours(23, 59, 59, 999));
+  const todayStart = startOfDay(today);
+  const todayEnd = endOfDay(today);
   
   const [filters, setFilters] = useState<Filters>({
     type: '',
     userId: '',
-    dateFrom: todayStart.toISOString().split('T')[0],
-    dateTo: todayEnd.toISOString().split('T')[0],
+    dateFrom: format(todayStart, 'yyyy-MM-dd'),
+    dateTo: format(todayEnd, 'yyyy-MM-dd'),
     predefinedRange: 'TODAY',
   });
 
   const handleRangeChange = (range: PredefinedRange | '') => {
     const today = new Date();
-    let fromDate = new Date();
-    let toDate = new Date();
-    toDate.setHours(23, 59, 59, 999); // Встановлюємо кінець дня для кінцевої дати
+    let fromDate: Date;
+    let toDate: Date;
 
     switch (range) {
       case 'TODAY':
-        fromDate = new Date(today.setHours(0, 0, 0, 0));
-        toDate = new Date(today.setHours(23, 59, 59, 999));
+        fromDate = startOfDay(today);
+        toDate = endOfDay(today);
         break;
       case 'YESTERDAY':
-        fromDate = new Date(today.setDate(today.getDate() - 1));
-        fromDate.setHours(0, 0, 0, 0);
-        toDate = new Date(today);
-        toDate.setHours(23, 59, 59, 999);
+        const yesterday = subMonths(today, 0);
+        yesterday.setDate(yesterday.getDate() - 1);
+        fromDate = startOfDay(yesterday);
+        toDate = endOfDay(yesterday);
         break;
       case 'THIS_WEEK':
-        const firstDay = today.getDate() - today.getDay() + (today.getDay() === 0 ? -6 : 1);
-        fromDate = new Date(today.setDate(firstDay));
-        fromDate.setHours(0, 0, 0, 0);
-        toDate = new Date();
-        toDate.setHours(23, 59, 59, 999);
+        fromDate = startOfWeek(today, { locale: uk });
+        toDate = endOfDay(today);
         break;
       case 'THIS_MONTH':
-        fromDate = new Date(today.getFullYear(), today.getMonth(), 1);
-        toDate = new Date();
-        toDate.setHours(23, 59, 59, 999);
+        fromDate = startOfMonth(today);
+        toDate = endOfDay(today);
         break;
       case 'LAST_MONTH':
-        fromDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-        toDate = new Date(today.getFullYear(), today.getMonth(), 0);
-        toDate.setHours(23, 59, 59, 999);
+        const lastMonth = subMonths(today, 1);
+        fromDate = startOfMonth(lastMonth);
+        toDate = endOfMonth(lastMonth);
         break;
       default:
-        fromDate = new Date(filters.dateFrom || '');
-        toDate = new Date(filters.dateTo || '');
-        if (!isNaN(toDate.getTime())) {
-          toDate.setHours(23, 59, 59, 999);
-        }
+        fromDate = parseISO(filters.dateFrom || format(today, 'yyyy-MM-dd'));
+        toDate = parseISO(filters.dateTo || format(today, 'yyyy-MM-dd'));
+        toDate = endOfDay(toDate);
     }
-
-    const formatDate = (date: Date) => {
-      return date.toISOString().split('T')[0];
-    };
 
     setFilters(prev => ({
       ...prev,
       predefinedRange: range,
-      dateFrom: !isNaN(fromDate.getTime()) ? formatDate(fromDate) : '',
-      dateTo: !isNaN(toDate.getTime()) ? formatDate(toDate) : '',
+      dateFrom: format(fromDate, 'yyyy-MM-dd'),
+      dateTo: format(toDate, 'yyyy-MM-dd'),
     }));
   };
 
@@ -150,39 +156,36 @@ export const RegisteredTasks: React.FC = () => {
       [isStart ? 'dateFrom' : 'dateTo']: date,
     };
 
-    // Перевіряємо, чи відповідають дати якомусь з предефайнед періодів
     const today = new Date();
-    const selectedFrom = new Date(newFilters.dateFrom);
-    const selectedTo = new Date(newFilters.dateTo);
+    const selectedFrom = parseISO(newFilters.dateFrom);
+    const selectedTo = parseISO(newFilters.dateTo);
     let matchingRange: PredefinedRange | '' = 'CUSTOM';
 
-    if (!isNaN(selectedFrom.getTime()) && !isNaN(selectedTo.getTime())) {
-      const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-      const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+    if (selectedFrom && selectedTo) {
+      const startOfToday = startOfDay(today);
+      const endOfToday = endOfDay(today);
       
-      const yesterday = new Date(today);
+      const yesterday = subMonths(today, 0);
       yesterday.setDate(yesterday.getDate() - 1);
-      const startOfYesterday = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
-      const endOfYesterday = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 23, 59, 59);
+      const startOfYesterday = startOfDay(yesterday);
+      const endOfYesterday = endOfDay(yesterday);
       
-      const monday = new Date(today);
-      monday.setDate(today.getDate() - today.getDay() + (today.getDay() === 0 ? -6 : 1));
-      const startOfWeek = new Date(monday.setHours(0, 0, 0, 0));
+      const startOfThisWeek = startOfWeek(today, { locale: uk });
+      const startOfThisMonth = startOfMonth(today);
       
-      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-      
-      const startOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-      const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0, 23, 59, 59);
+      const lastMonth = subMonths(today, 1);
+      const startOfLastMonth = startOfMonth(lastMonth);
+      const endOfLastMonth = endOfMonth(lastMonth);
 
-      if (selectedFrom.getTime() === startOfToday.getTime() && selectedTo.getTime() === endOfToday.getTime()) {
+      if (isEqual(selectedFrom, startOfToday) && isEqual(selectedTo, endOfToday)) {
         matchingRange = 'TODAY';
-      } else if (selectedFrom.getTime() === startOfYesterday.getTime() && selectedTo.getTime() === endOfYesterday.getTime()) {
+      } else if (isEqual(selectedFrom, startOfYesterday) && isEqual(selectedTo, endOfYesterday)) {
         matchingRange = 'YESTERDAY';
-      } else if (selectedFrom.getTime() === startOfWeek.getTime() && selectedTo.getTime() >= startOfWeek.getTime()) {
+      } else if (isEqual(selectedFrom, startOfThisWeek)) {
         matchingRange = 'THIS_WEEK';
-      } else if (selectedFrom.getTime() === startOfMonth.getTime() && selectedTo.getTime() >= startOfMonth.getTime()) {
+      } else if (isEqual(selectedFrom, startOfThisMonth)) {
         matchingRange = 'THIS_MONTH';
-      } else if (selectedFrom.getTime() === startOfLastMonth.getTime() && selectedTo.getTime() === endOfLastMonth.getTime()) {
+      } else if (isEqual(selectedFrom, startOfLastMonth) && isEqual(selectedTo, endOfLastMonth)) {
         matchingRange = 'LAST_MONTH';
       }
     }
@@ -197,8 +200,8 @@ export const RegisteredTasks: React.FC = () => {
     setFilters({
       type: '',
       userId: '',
-      dateFrom: todayStart.toISOString().split('T')[0],
-      dateTo: todayEnd.toISOString().split('T')[0],
+      dateFrom: format(todayStart, 'yyyy-MM-dd'),
+      dateTo: format(todayEnd, 'yyyy-MM-dd'),
       predefinedRange: 'TODAY',
     });
   };
@@ -216,10 +219,12 @@ export const RegisteredTasks: React.FC = () => {
           params.append('userId', filters.userId);
         }
         if (filters.dateFrom) {
-          params.append('registeredFrom', new Date(filters.dateFrom).toISOString());
+          const fromDate = startOfDay(parseISO(filters.dateFrom));
+          params.append('registeredFrom', fromDate.toISOString());
         }
         if (filters.dateTo) {
-          params.append('registeredTo', new Date(filters.dateTo).toISOString());
+          const toDate = endOfDay(parseISO(filters.dateTo));
+          params.append('registeredTo', toDate.toISOString());
         }
 
         const response = await api.get(`/task-logs/project/${projectId}?${params.toString()}`);

@@ -1,7 +1,7 @@
 import { Box, Heading, Card, CardBody, Stack, Text, Badge, Button, HStack, VStack, SimpleGrid, Stat, StatLabel, StatNumber, Progress, CardHeader } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { Project, ProjectStatus } from '../../types/project';
-import { format, isToday } from 'date-fns';
+import { format, isToday, parseISO, startOfDay, endOfDay } from 'date-fns';
 import { uk } from 'date-fns/locale';
 import { useEffect, useState } from 'react';
 import { api } from '../../lib/api';
@@ -115,7 +115,11 @@ export const WorkerProjectDetails = ({ project }: WorkerProjectDetailsProps) => 
     return `${hours}г ${remainingMinutes}хв`;
   };
 
-  const todayTasks = tasks.filter(task => isToday(new Date(task.createdAt)));
+  const todayTasks = tasks.filter(task => {
+    const taskDate = parseISO(task.registeredAt);
+    const today = new Date();
+    return taskDate >= startOfDay(today) && taskDate <= endOfDay(today);
+  });
 
   return (
     <Box>

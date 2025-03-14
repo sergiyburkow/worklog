@@ -1,7 +1,7 @@
 import { Box, Heading, Card, CardBody, Stack, Text, Badge, Button, HStack, VStack, CardHeader } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
 import { Project } from '../../types/project';
-import { format, isToday } from 'date-fns';
+import { format, isToday, parseISO, startOfDay, endOfDay } from 'date-fns';
 import { uk } from 'date-fns/locale';
 import { TaskRegistrationButtons } from '../../components/buttons/TaskRegistrationButtons';
 import { RegisteredTasksTable } from '../../components/tables/RegisteredTasksTable';
@@ -58,7 +58,11 @@ export const AdminProjectDetails = ({ project }: AdminProjectDetailsProps) => {
     }
   }, [project.id]);
 
-  const todayTasks = tasks.filter(task => isToday(new Date(task.registeredAt)));
+  const todayTasks = tasks.filter(task => {
+    const taskDate = parseISO(task.registeredAt);
+    const today = new Date();
+    return taskDate >= startOfDay(today) && taskDate <= endOfDay(today);
+  });
 
   return (
     <Box>
