@@ -16,4 +16,9 @@ export class UpdateTaskLogDto {
   @IsNumber()
   @IsOptional()
   timeSpent?: number;
+
+  @ApiProperty({ required: false })
+  @IsNumber()
+  @IsOptional()
+  quantity?: number;
 } 

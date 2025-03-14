@@ -53,7 +53,6 @@ export interface RegisteredTask {
   id: string;
   name: string;
   type: 'PRODUCT' | 'INTERMEDIATE' | 'GENERAL';
-  productCode?: string;
   assignee?: {
     name: string;
   };
@@ -65,6 +64,7 @@ export interface RegisteredTask {
   registeredAt: string;
   timeSpent?: number;
   product?: {
+    id: string;
     code: string;
   };
   task: {

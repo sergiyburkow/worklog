@@ -8,6 +8,11 @@ export class FindTaskLogsDto {
   @IsString()
   userId?: string;
 
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  productId?: string;
+
   @ApiProperty({ required: false, enum: TaskType })
   @IsOptional()
   @IsEnum(TaskType)

@@ -91,6 +91,9 @@ export class TaskLogsService {
             projectId
           }
         },
+        ...(filters?.productId ? [{
+          productId: filters.productId
+        }] : []),
         ...(filters?.registeredFrom ? [{
           registeredAt: {
             gte: new Date(filters.registeredFrom)
@@ -207,6 +210,7 @@ export class TaskLogsService {
         ...(productId && { productId }),
         ...(updateTaskLogDto.registeredAt && { registeredAt: new Date(updateTaskLogDto.registeredAt) }),
         ...(updateTaskLogDto.timeSpent && { timeSpent: updateTaskLogDto.timeSpent }),
+        ...(updateTaskLogDto.quantity !== undefined && { quantity: updateTaskLogDto.quantity }),
       },
       include: {
         user: true,

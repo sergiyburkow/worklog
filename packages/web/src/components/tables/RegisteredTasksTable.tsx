@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Table,
   Thead,
@@ -16,6 +17,7 @@ import {
   useDisclosure,
   Box,
   Spinner,
+  Link as ChakraLink,
 } from '@chakra-ui/react';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import { useAuth } from '../../contexts/AuthContext';
@@ -38,6 +40,7 @@ interface RegisteredTask {
   timeSpent?: number;
   quantity?: number;
   product?: {
+    id: string;
     code: string;
   };
   statusHistory: Array<{
@@ -51,6 +54,7 @@ interface RegisteredTasksTableProps {
   type: 'PRODUCT' | 'INTERMEDIATE' | 'GENERAL';
   onTaskDeleted?: () => void;
   isLoading?: boolean;
+  hiddenColumns?: Array<'taskName' | 'taskType' | 'productCode' | 'assignee' | 'date' | 'quantity' | 'status' | 'actions'>;
 }
 
 const STATUS_COLORS = {
@@ -67,7 +71,13 @@ const STATUS_LABELS = {
   PENDING: 'Потребує перевірки',
 };
 
-export const RegisteredTasksTable: React.FC<RegisteredTasksTableProps> = ({ tasks, type, onTaskDeleted, isLoading }) => {
+export const RegisteredTasksTable: React.FC<RegisteredTasksTableProps> = ({ 
+  tasks, 
+  type, 
+  onTaskDeleted, 
+  isLoading,
+  hiddenColumns = [] 
+}) => {
   const { user } = useAuth() || {};
   const toast = useToast();
   const { isOpen: isEditOpen, onOpen: onEditOpen, onClose: onEditClose } = useDisclosure();
@@ -129,54 +139,74 @@ export const RegisteredTasksTable: React.FC<RegisteredTasksTableProps> = ({ task
         <Table variant="simple">
           <Thead>
             <Tr>
-              <Th>Назва задачі</Th>
-              <Th>Тип задачі</Th>
-              {type === 'PRODUCT' && <Th>Код продукту</Th>}
-              <Th>Виконавець</Th>
-              <Th>Дата виконання</Th>
-              <Th>Кількість</Th>
-              <Th>Статус</Th>
-              {isAdmin && <Th>Дії</Th>}
+              {!hiddenColumns.includes('taskName') && <Th>Назва задачі</Th>}
+              {!hiddenColumns.includes('taskType') && <Th>Тип задачі</Th>}
+              {type === 'PRODUCT' && !hiddenColumns.includes('productCode') && <Th>Код продукту</Th>}
+              {!hiddenColumns.includes('assignee') && <Th>Виконавець</Th>}
+              {!hiddenColumns.includes('date') && <Th>Дата виконання</Th>}
+              {!hiddenColumns.includes('quantity') && <Th>Кількість</Th>}
+              {!hiddenColumns.includes('status') && <Th>Статус</Th>}
+              {isAdmin && !hiddenColumns.includes('actions') && <Th>Дії</Th>}
             </Tr>
           </Thead>
           <Tbody>
             {tasks.map((task) => (
               <Tr key={task.id}>
-                <Td>{task.task.name}</Td>
-                <Td>
-                  <Badge colorScheme={
-                    task.task.type === 'PRODUCT' ? 'blue' :
-                    task.task.type === 'INTERMEDIATE' ? 'purple' : 'green'
-                  }>
-                    {task.task.type === 'PRODUCT' ? 'Продуктова' :
-                     task.task.type === 'INTERMEDIATE' ? 'Проміжна' : 'Загальна'}
-                  </Badge>
-                </Td>
-                {type === 'PRODUCT' && <Td>{task.product?.code || '-'}</Td>}
-                <Td>{task.user.name}</Td>
-                <Td>{new Date(task.registeredAt).toLocaleString()}</Td>
-                <Td>
-                  {task.task.type === 'INTERMEDIATE' ? `${task.quantity} шт` || '-' : 
-                   task.task.type === 'GENERAL' ? `${Number(task.timeSpent || 0).toFixed(2)} год` : '-'}
-                </Td>
-                <Td>
-                  {task.completedAt ? (
-                    <Badge colorScheme="green">
-                      {STATUS_LABELS.APPROVED}
-                    </Badge>
-                  ) : (
-                    <Badge colorScheme={task.statusHistory?.length > 0 
-                      ? STATUS_COLORS[task.statusHistory[0].status]
-                      : STATUS_COLORS.PENDING
+                {!hiddenColumns.includes('taskName') && <Td>{task.task.name}</Td>}
+                {!hiddenColumns.includes('taskType') && (
+                  <Td>
+                    <Badge colorScheme={
+                      task.task.type === 'PRODUCT' ? 'blue' :
+                      task.task.type === 'INTERMEDIATE' ? 'purple' : 'green'
                     }>
-                      {task.statusHistory?.length > 0 
-                        ? STATUS_LABELS[task.statusHistory[0].status]
-                        : STATUS_LABELS.PENDING
-                      }
+                      {task.task.type === 'PRODUCT' ? 'Продуктова' :
+                       task.task.type === 'INTERMEDIATE' ? 'Проміжна' : 'Загальна'}
                     </Badge>
-                  )}
-                </Td>
-                {isAdmin && (
+                  </Td>
+                )}
+                {type === 'PRODUCT' && !hiddenColumns.includes('productCode') && (
+                  <Td>
+                    {task.product?.code ? (
+                      <ChakraLink
+                        as={Link}
+                        to={`/products/${task.product.id}/logs`}
+                        color="blue.500"
+                        textDecoration="underline"
+                        _hover={{ color: 'blue.600' }}
+                      >
+                        {task.product.code}
+                      </ChakraLink>
+                    ) : '-'}
+                  </Td>
+                )}
+                {!hiddenColumns.includes('assignee') && <Td>{task.user.name}</Td>}
+                {!hiddenColumns.includes('date') && <Td>{new Date(task.registeredAt).toLocaleString()}</Td>}
+                {!hiddenColumns.includes('quantity') && (
+                  <Td>
+                    {task.task.type === 'INTERMEDIATE' ? `${task.quantity} шт` || '-' : 
+                     task.task.type === 'GENERAL' ? `${Number(task.timeSpent || 0).toFixed(2)} год` : '-'}
+                  </Td>
+                )}
+                {!hiddenColumns.includes('status') && (
+                  <Td>
+                    {task.completedAt ? (
+                      <Badge colorScheme="green">
+                        {STATUS_LABELS.APPROVED}
+                      </Badge>
+                    ) : (
+                      <Badge colorScheme={task.statusHistory?.length > 0 
+                        ? STATUS_COLORS[task.statusHistory[0].status]
+                        : STATUS_COLORS.PENDING
+                      }>
+                        {task.statusHistory?.length > 0 
+                          ? STATUS_LABELS[task.statusHistory[0].status]
+                          : STATUS_LABELS.PENDING
+                        }
+                      </Badge>
+                    )}
+                  </Td>
+                )}
+                {isAdmin && !hiddenColumns.includes('actions') && (
                   <Td>
                     <HStack spacing={2}>
                       <Tooltip label="Редагувати">

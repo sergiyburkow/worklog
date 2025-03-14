@@ -55,6 +55,7 @@ interface TaskLog {
   registeredAt: string;
   timeSpent?: number;
   product?: {
+    id: string;
     code: string;
   };
   statusHistory: Array<{
@@ -70,6 +71,7 @@ interface ProjectUser {
 }
 
 const PREDEFINED_RANGES = {
+  ALL_TIME: 'За весь час',
   TODAY: 'Сьогодні',
   YESTERDAY: 'Вчора',
   THIS_WEEK: 'На цьому тижні',
@@ -96,23 +98,26 @@ export const RegisteredTasks: React.FC = () => {
   
   // Встановлюємо початкові значення для фільтрів
   const today = new Date();
-  const todayStart = startOfDay(today);
+  const weekStart = startOfWeek(today, { locale: uk });
   const todayEnd = endOfDay(today);
   
   const [filters, setFilters] = useState<Filters>({
     type: '',
     userId: '',
-    dateFrom: format(todayStart, 'yyyy-MM-dd'),
+    dateFrom: format(weekStart, 'yyyy-MM-dd'),
     dateTo: format(todayEnd, 'yyyy-MM-dd'),
-    predefinedRange: 'TODAY',
+    predefinedRange: 'THIS_WEEK',
   });
 
   const handleRangeChange = (range: PredefinedRange | '') => {
     const today = new Date();
-    let fromDate: Date;
-    let toDate: Date;
+    let fromDate: Date | null = null;
+    let toDate: Date | null = null;
 
     switch (range) {
+      case 'ALL_TIME':
+        // Не встановлюємо дати для фільтрації за весь час
+        break;
       case 'TODAY':
         fromDate = startOfDay(today);
         toDate = endOfDay(today);
@@ -145,8 +150,8 @@ export const RegisteredTasks: React.FC = () => {
     const newFilters = {
       ...filters,
       predefinedRange: range,
-      dateFrom: format(fromDate, 'yyyy-MM-dd'),
-      dateTo: format(toDate, 'yyyy-MM-dd'),
+      dateFrom: fromDate ? format(fromDate, 'yyyy-MM-dd') : '',
+      dateTo: toDate ? format(toDate, 'yyyy-MM-dd') : '',
     };
     setFilters(newFilters);
   };
@@ -202,9 +207,9 @@ export const RegisteredTasks: React.FC = () => {
     setFilters({
       type: '',
       userId: '',
-      dateFrom: format(todayStart, 'yyyy-MM-dd'),
+      dateFrom: format(weekStart, 'yyyy-MM-dd'),
       dateTo: format(todayEnd, 'yyyy-MM-dd'),
-      predefinedRange: 'TODAY',
+      predefinedRange: 'THIS_WEEK',
     });
   };
 
@@ -220,11 +225,11 @@ export const RegisteredTasks: React.FC = () => {
         if (filters.userId) {
           params.append('userId', filters.userId);
         }
-        if (filters.dateFrom) {
+        if (filters.dateFrom && filters.predefinedRange !== 'ALL_TIME') {
           const fromDate = startOfDay(parseISO(filters.dateFrom));
           params.append('registeredFrom', fromDate.toISOString());
         }
-        if (filters.dateTo) {
+        if (filters.dateTo && filters.predefinedRange !== 'ALL_TIME') {
           const toDate = endOfDay(parseISO(filters.dateTo));
           params.append('registeredTo', toDate.toISOString());
         }
