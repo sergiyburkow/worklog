@@ -9,15 +9,22 @@ export class UsersService {
   constructor(private prisma: PrismaService) {}
 
   async create(createUserDto: CreateUserDto) {
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email: createUserDto.email },
-    });
+    // Перевіряємо email тільки якщо він наданий
+    if (createUserDto.email) {
+      const existingUser = await this.prisma.user.findUnique({
+        where: { email: createUserDto.email },
+      });
 
-    if (existingUser) {
-      throw new ConflictException('User with this email already exists');
+      if (existingUser) {
+        throw new ConflictException('User with this email already exists');
+      }
     }
 
-    const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+    // Хешуємо пароль тільки якщо він наданий
+    let hashedPassword: string | undefined;
+    if (createUserDto.password) {
+      hashedPassword = await bcrypt.hash(createUserDto.password, 10);
+    }
 
     const user = await this.prisma.user.create({
       data: {
@@ -25,6 +32,9 @@ export class UsersService {
         email: createUserDto.email,
         passwordHash: hashedPassword,
         phone: createUserDto.phone,
+        role: createUserDto.role,
+        lastName: createUserDto.lastName,
+        callSign: createUserDto.callSign,
       },
       include: {
         skills: {
@@ -157,6 +167,10 @@ export class UsersService {
 
     // Якщо користувач хоче змінити пароль
     if (updateProfileDto.currentPassword && updateProfileDto.newPassword) {
+      if (!user.passwordHash) {
+        throw new BadRequestException('Користувач не має пароля');
+      }
+
       const isPasswordValid = await bcrypt.compare(
         updateProfileDto.currentPassword,
         user.passwordHash,
