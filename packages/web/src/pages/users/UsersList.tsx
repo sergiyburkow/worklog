@@ -97,6 +97,7 @@ export const UsersList = () => {
     try {
       await api.put(`/users/${selectedUser.id}`, userData);
       await fetchUsers();
+      setSelectedUser(null);
       onEditClose();
       
       toast({
@@ -117,6 +118,11 @@ export const UsersList = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleEditClose = () => {
+    setSelectedUser(null);
+    onEditClose();
   };
 
   const handleDeleteUser = async () => {
@@ -173,7 +179,7 @@ export const UsersList = () => {
               <Tbody>
                 {users.map((user) => (
                   <Tr key={user.id}>
-                    <Td>{user.name}</Td>
+                    <Td>{user.name} {user.lastName}</Td>
                     <Td>{user.email}</Td>
                     <Td>{user.phone || '-'}</Td>
                     <Td>
@@ -215,7 +221,7 @@ export const UsersList = () => {
             <EditUserForm
               user={selectedUser}
               isOpen={isEditOpen}
-              onClose={onEditClose}
+              onClose={handleEditClose}
               onSubmit={handleUpdateUser}
               isLoading={isLoading}
             />

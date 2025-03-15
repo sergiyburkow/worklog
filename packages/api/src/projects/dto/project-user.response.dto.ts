@@ -7,6 +7,9 @@ export class ProjectUserResponseDto {
   @ApiProperty()
   name: string;
 
+  @ApiProperty({ required: false })
+  lastName?: string;
+
   @ApiProperty()
   email: string;
 

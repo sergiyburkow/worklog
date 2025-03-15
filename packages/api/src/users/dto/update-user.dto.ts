@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsOptional, IsEmail, IsPhoneNumber, MinLength, IsEnum } from 'class-validator';
+import { IsString, IsOptional, IsEmail, IsPhoneNumber, MinLength, IsEnum, ValidateIf } from 'class-validator';
 import { UserRole } from '../enums/user-role.enum';
 
 export class UpdateUserDto {
@@ -7,6 +7,11 @@ export class UpdateUserDto {
   @IsString()
   @IsOptional()
   name?: string;
+
+  @ApiProperty({ required: false })
+  @IsString()
+  @IsOptional()
+  lastName?: string;
 
   @ApiProperty({ required: false })
   @IsEmail()
@@ -21,6 +26,7 @@ export class UpdateUserDto {
   @ApiProperty({ required: false })
   @IsString()
   @IsOptional()
+  @ValidateIf((o) => o.password !== undefined && o.password !== '')
   @MinLength(6)
   password?: string;
 

@@ -91,16 +91,20 @@ export class UsersService {
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
-    const updateData: any = { ...updateUserDto };
+    const { password, ...updateData } = updateUserDto;
     
-    if (updateUserDto.password) {
-      updateData.passwordHash = await bcrypt.hash(updateUserDto.password, 10);
-      delete updateData.password;
+    const data: any = {
+      ...updateData
+    };
+    
+    // Оновлюємо пароль тільки якщо він був переданий
+    if (password) {
+      data.passwordHash = await bcrypt.hash(password, 10);
     }
 
     const user = await this.prisma.user.update({
       where: { id },
-      data: updateData,
+      data,
       include: {
         skills: {
           select: {

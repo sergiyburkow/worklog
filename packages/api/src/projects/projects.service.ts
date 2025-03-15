@@ -168,6 +168,7 @@ export class ProjectsService {
               select: {
                 id: true,
                 name: true,
+                lastName: true,
                 email: true,
               },
             },
@@ -212,6 +213,7 @@ export class ProjectsService {
           select: {
             id: true,
             name: true,
+            lastName: true,
             email: true,
           },
         },
@@ -221,6 +223,7 @@ export class ProjectsService {
     return projectUsers.map(pu => ({
       id: pu.user.id,
       name: pu.user.name,
+      lastName: pu.user.lastName,
       email: pu.user.email,
       role: pu.role,
       isActive: pu.isActive

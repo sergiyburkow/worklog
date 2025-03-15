@@ -18,6 +18,7 @@ import {
   WrapItem,
   Tag,
   TagCloseButton,
+  InputLeftElement,
 } from '@chakra-ui/react';
 import { api } from '../../lib/api';
 import { FaQrcode } from 'react-icons/fa';
@@ -33,6 +34,7 @@ interface Task {
 interface ProjectUser {
   id: string;
   name: string;
+  lastName: string;
   role: string;
 }
 
@@ -377,52 +379,6 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
   return (
     <form onSubmit={handleSubmit}>
       <VStack spacing={6}>
-        {isProductTask && (
-          <FormControl>
-            <FormLabel>Код продукту</FormLabel>
-            <InputGroup>
-              <Input
-                value={formData.productCode}
-                onChange={handleProductCodeChange}
-                onBlur={handleProductCodeBlur}
-                placeholder="Введіть коди продуктів через кому або пробіл"
-              />
-              <InputRightElement>
-                <Icon
-                  as={FaQrcode}
-                  cursor="pointer"
-                  onClick={() => setShowScanner(true)}
-                />
-              </InputRightElement>
-            </InputGroup>
-            {productCodes.length > 0 && (
-              <Box mt={2}>
-                <Text fontSize="sm" mb={2}>Додані коди:</Text>
-                <Wrap spacing={2}>
-                  {productCodes.map(code => (
-                    <WrapItem key={code}>
-                      <Tag 
-                        size="md" 
-                        variant="subtle" 
-                        colorScheme={productStatuses[code] === false ? "orange" : "blue"}
-                      >
-                        {code}
-                        <TagCloseButton onClick={() => handleRemoveCode(code)} />
-                      </Tag>
-                    </WrapItem>
-                  ))}
-                </Wrap>
-              </Box>
-            )}
-          </FormControl>
-        )}
-
-        <QRScanner
-          onScan={handleScan}
-          onError={handleScanError}
-          isOpen={showScanner}
-          onClose={() => setShowScanner(false)}
-        />
 
         <FormControl isRequired>
           <FormLabel>Задача</FormLabel>
@@ -499,7 +455,7 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
             >
               {projectUsers.map(user => (
                 <option key={user.id} value={user.id}>
-                  {user.name} ({user.role})
+                  {user.name} {user.lastName} ({user.role})
                 </option>
               ))}
             </Select>
@@ -510,6 +466,53 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
             )}
           </FormControl>
         )}
+
+{isProductTask && (
+          <FormControl>
+            <FormLabel>Код продукту</FormLabel>
+            <InputGroup>
+              <Input
+                value={formData.productCode}
+                onChange={handleProductCodeChange}
+                onBlur={handleProductCodeBlur}
+                placeholder="Введіть коди продуктів через кому або пробіл"
+              />
+              <InputLeftElement>
+                <Icon
+                  as={FaQrcode}
+                  cursor="pointer"
+                  onClick={() => setShowScanner(true)}
+                />
+              </InputLeftElement>
+            </InputGroup>
+            {productCodes.length > 0 && (
+              <Box mt={2}>
+                <Text fontSize="sm" mb={2}>Додані коди:</Text>
+                <Wrap spacing={2}>
+                  {productCodes.map(code => (
+                    <WrapItem key={code}>
+                      <Tag 
+                        size="md" 
+                        variant="subtle" 
+                        colorScheme={productStatuses[code] === false ? "orange" : "blue"}
+                      >
+                        {code}
+                        <TagCloseButton onClick={() => handleRemoveCode(code)} />
+                      </Tag>
+                    </WrapItem>
+                  ))}
+                </Wrap>
+              </Box>
+            )}
+          </FormControl>
+        )}
+
+        <QRScanner
+          onScan={handleScan}
+          onError={handleScanError}
+          isOpen={showScanner}
+          onClose={() => setShowScanner(false)}
+        />
 
         <FormControl isRequired>
           <FormLabel>Дата та час виконання</FormLabel>

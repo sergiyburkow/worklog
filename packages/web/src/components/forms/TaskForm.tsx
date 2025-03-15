@@ -38,7 +38,6 @@ export const TaskForm = ({
   onCancel,
   submitButtonText = 'Додати завдання'
 }: TaskFormProps) => {
-  const showEstimatedTime = formData.type === TaskType.PRODUCT || formData.type === TaskType.INTERMEDIATE;
 
   return (
     <form onSubmit={onSubmit}>
@@ -108,7 +107,6 @@ export const TaskForm = ({
             />
           </FormControl>
 
-          {showEstimatedTime && (
             <FormControl isRequired>
               <FormLabel>Очікуваний час виконання (хвилин)</FormLabel>
               <Input
@@ -120,7 +118,6 @@ export const TaskForm = ({
                 placeholder="Введіть очікуваний час"
               />
             </FormControl>
-          )}
         </VStack>
       </ModalBody>
 
