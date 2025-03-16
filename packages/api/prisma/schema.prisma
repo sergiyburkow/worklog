@@ -110,6 +110,7 @@ model Task {
   complexity    Int?
   tags          String?
   estimatedTime Decimal?   @map("estimated_time")
+  cost          Decimal    @default(0) @map("cost")
   projectId     String     @map("project_id")
   createdAt     DateTime   @default(now()) @map("created_at")
   updatedAt     DateTime   @updatedAt @map("updated_at")
