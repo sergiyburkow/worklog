@@ -1,8 +1,13 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateProjectDto, UpdateProjectDto } from './dto';
-import { ProjectStatus, Prisma, ProjectUserRole } from '@prisma/client';
+import { CreateProjectDto, UpdateProjectDto, ProjectPaymentResponseDto, CreateProjectPaymentDto } from './dto';
+import { ProjectStatus, Prisma, ProjectUserRole, User } from '@prisma/client';
 import { ProjectUserDto } from './dto/project-user.dto';
+import { Request } from 'express';
+
+interface RequestWithUser extends Request {
+  user: User;
+}
 
 @Injectable()
 export class ProjectsService {
@@ -326,6 +331,170 @@ export class ProjectsService {
       include: {
         user: true
       }
+    });
+  }
+
+  async findProjectPayments(projectId: string): Promise<ProjectPaymentResponseDto[]> {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
+
+    if (!project) {
+      throw new NotFoundException(`Project with ID ${projectId} not found`);
+    }
+
+    const payments = await this.prisma.payment.findMany({
+      where: {
+        projectId,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            lastName: true,
+            callSign: true,
+          },
+        },
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            lastName: true,
+            callSign: true,
+          },
+        },
+      },
+    });
+
+    return payments.map(payment => ({
+      ...payment,
+      amount: Number(payment.amount),
+    }));
+  }
+
+  async createProjectPayment(
+    projectId: string,
+    createPaymentDto: CreateProjectPaymentDto,
+    req: RequestWithUser,
+  ): Promise<ProjectPaymentResponseDto> {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
+
+    if (!project) {
+      throw new NotFoundException(`Project with ID ${projectId} not found`);
+    }
+
+    const payment = await this.prisma.payment.create({
+      data: {
+        ...createPaymentDto,
+        projectId,
+        createdById: req.user.id,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            lastName: true,
+            callSign: true,
+          },
+        },
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            lastName: true,
+            callSign: true,
+          },
+        },
+      },
+    });
+
+    return {
+      ...payment,
+      amount: Number(payment.amount),
+    };
+  }
+
+  async updateProjectPayment(
+    projectId: string,
+    paymentId: string,
+    updatePaymentDto: CreateProjectPaymentDto,
+  ): Promise<ProjectPaymentResponseDto> {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
+
+    if (!project) {
+      throw new NotFoundException(`Project with ID ${projectId} not found`);
+    }
+
+    const payment = await this.prisma.payment.findUnique({
+      where: { id: paymentId },
+    });
+
+    if (!payment) {
+      throw new NotFoundException(`Payment with ID ${paymentId} not found`);
+    }
+
+    if (payment.projectId !== projectId) {
+      throw new BadRequestException('Payment does not belong to this project');
+    }
+
+    const updatedPayment = await this.prisma.payment.update({
+      where: { id: paymentId },
+      data: updatePaymentDto,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            lastName: true,
+            callSign: true,
+          },
+        },
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            lastName: true,
+            callSign: true,
+          },
+        },
+      },
+    });
+
+    return {
+      ...updatedPayment,
+      amount: Number(updatedPayment.amount),
+    };
+  }
+
+  async deleteProjectPayment(projectId: string, paymentId: string): Promise<void> {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+    });
+
+    if (!project) {
+      throw new NotFoundException(`Project with ID ${projectId} not found`);
+    }
+
+    const payment = await this.prisma.payment.findUnique({
+      where: { id: paymentId },
+    });
+
+    if (!payment) {
+      throw new NotFoundException(`Payment with ID ${paymentId} not found`);
+    }
+
+    if (payment.projectId !== projectId) {
+      throw new BadRequestException('Payment does not belong to this project');
+    }
+
+    await this.prisma.payment.delete({
+      where: { id: paymentId },
     });
   }
 } 

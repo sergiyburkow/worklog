@@ -114,6 +114,10 @@ export const AdminProjectDetails = ({ project }: AdminProjectDetailsProps) => {
       <HStack justify="space-between" mb={5}>
         <Heading size="lg">{project.name}</Heading>
         <HStack spacing={3}>
+          <Button colorScheme='gray' onClick={() => navigate(`/projects/${project.id}/payments`)}>
+            Платежі
+          </Button>
+
           <Button colorScheme='green' onClick={() => navigate(`/projects/${project.id}/products`)}>
             Продукти проекту
           </Button>

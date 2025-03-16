@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { ProjectsService } from './projects.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { ProjectResponseDto, CreateProjectDto, UpdateProjectDto, TaskResponseDto, ProjectUserResponseDto } from './dto';
+import { ProjectResponseDto, CreateProjectDto, UpdateProjectDto, TaskResponseDto, ProjectUserResponseDto, ProjectPaymentResponseDto, CreateProjectPaymentDto } from './dto';
 import { ProjectUserRole } from '@prisma/client';
 import { ProjectAccessGuard } from './guards/project-access.guard';
+import { Request } from 'express';
 
 @ApiTags('projects')
 @Controller('projects')
@@ -64,6 +65,7 @@ export class ProjectsController {
   }
 
   @Get(':id/users')
+  @UseGuards(ProjectAccessGuard)
   @ApiOperation({ summary: 'Get users by project id' })
   @ApiResponse({ status: 200, description: 'Return users by project id', type: [ProjectUserResponseDto] })
   async findUsersByProject(@Param('id') id: string) {
@@ -91,13 +93,6 @@ export class ProjectsController {
     return this.projectsService.toggleUserActive(projectId, userId, isActive);
   }
 
-  @Get(':projectId/users')
-  @ApiOperation({ summary: 'Get project users' })
-  @ApiResponse({ status: 200, description: 'Return project users' })
-  async getProjectUsers(@Param('projectId') projectId: string) {
-    return this.projectsService.findUsersByProject(projectId);
-  }
-
   @Put(':projectId/users/:userId/role')
   @ApiOperation({ summary: 'Update user role in project' })
   @ApiResponse({ status: 200, description: 'User role has been updated' })
@@ -107,5 +102,63 @@ export class ProjectsController {
     @Body('role') role: ProjectUserRole,
   ) {
     return this.projectsService.updateUserRole(projectId, userId, role);
+  }
+
+  @Get(':projectId/payments')
+  @UseGuards(ProjectAccessGuard)
+  @ApiOperation({ summary: 'Get project payments' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns project payments',
+    type: [ProjectPaymentResponseDto],
+  })
+  async findProjectPayments(@Param('projectId') projectId: string): Promise<ProjectPaymentResponseDto[]> {
+    return this.projectsService.findProjectPayments(projectId);
+  }
+
+  @Post(':projectId/payments')
+  @UseGuards(ProjectAccessGuard)
+  @ApiOperation({ summary: 'Create project payment' })
+  @ApiResponse({
+    status: 201,
+    description: 'Payment has been created',
+    type: ProjectPaymentResponseDto,
+  })
+  async createProjectPayment(
+    @Param('projectId') projectId: string,
+    @Body() createPaymentDto: CreateProjectPaymentDto,
+    @Req() req: Request,
+  ): Promise<ProjectPaymentResponseDto> {
+    return this.projectsService.createProjectPayment(projectId, createPaymentDto, req);
+  }
+
+  @Put(':projectId/payments/:paymentId')
+  @UseGuards(ProjectAccessGuard)
+  @ApiOperation({ summary: 'Update project payment' })
+  @ApiResponse({
+    status: 200,
+    description: 'Payment has been updated',
+    type: ProjectPaymentResponseDto,
+  })
+  async updateProjectPayment(
+    @Param('projectId') projectId: string,
+    @Param('paymentId') paymentId: string,
+    @Body() updatePaymentDto: CreateProjectPaymentDto,
+  ): Promise<ProjectPaymentResponseDto> {
+    return this.projectsService.updateProjectPayment(projectId, paymentId, updatePaymentDto);
+  }
+
+  @Delete(':projectId/payments/:paymentId')
+  @UseGuards(ProjectAccessGuard)
+  @ApiOperation({ summary: 'Delete project payment' })
+  @ApiResponse({
+    status: 200,
+    description: 'Payment has been deleted',
+  })
+  async deleteProjectPayment(
+    @Param('projectId') projectId: string,
+    @Param('paymentId') paymentId: string,
+  ): Promise<void> {
+    return this.projectsService.deleteProjectPayment(projectId, paymentId);
   }
 } 

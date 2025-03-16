@@ -1,5 +1,7 @@
 generator client {
   provider = "prisma-client-js"
+  // previewFeatures = ["fullTextSearch"]
+  // seed = "ts-node prisma/seed.ts"
 }
 
 datasource db {
@@ -23,6 +25,8 @@ model User {
   skills        UserSkill[]
   tokens        UserToken[]
   taskLogs      TaskLog[]              @relation("CreatedBy")
+  receivedPayments Payment[] @relation("ReceivedPayments")
+  createdPayments  Payment[] @relation("CreatedPayments")
 
   @@map("Users")
 }
@@ -80,6 +84,7 @@ model Project {
   users         ProjectUser[]
   client        Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
   tasks         Task[]
+  payments      Payment[]
 
   @@map("Projects")
 }
@@ -171,6 +176,23 @@ model UserSkill {
 
   @@id([userId, skillId])
   @@map("UserSkills")
+}
+
+model Payment {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  projectId     String   @map("project_id")
+  createdById   String   @map("created_by_id")
+  amount        Decimal
+  date          DateTime @default(now())
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  
+  user          User     @relation("ReceivedPayments", fields: [userId], references: [id])
+  project       Project  @relation(fields: [projectId], references: [id])
+  createdBy     User     @relation("CreatedPayments", fields: [createdById], references: [id])
+
+  @@map("Payments")
 }
 
 enum UserRole {

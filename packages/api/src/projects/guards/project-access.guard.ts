@@ -8,7 +8,7 @@ export class ProjectAccessGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const projectId = request.params.id;
+    const projectId = request.params.projectId || request.params.id;
     const user = request.user;
 
     // Адміністратори мають доступ до всіх проектів
