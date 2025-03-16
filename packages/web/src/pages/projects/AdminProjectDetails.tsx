@@ -1,5 +1,5 @@
 import { Box, Heading, Card, CardBody, Stack, Text, Badge, Button, HStack, VStack, CardHeader } from '@chakra-ui/react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Project } from '../../types/project';
 import { format, isToday, parseISO, startOfDay, endOfDay } from 'date-fns';
 import { uk } from 'date-fns/locale';
@@ -40,7 +40,6 @@ interface AdminProjectDetailsProps {
 
 export const AdminProjectDetails = ({ project }: AdminProjectDetailsProps) => {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [productsCount, setProductsCount] = useState(0);
@@ -194,7 +193,7 @@ export const AdminProjectDetails = ({ project }: AdminProjectDetailsProps) => {
             <VStack align="stretch" spacing={3}>
               {project.users.map(user => (
                 <HStack key={user.userId} justify="space-between">
-                  <Text>{user.user.name}</Text>
+                  <Link to={`/projects/${project.id}/users/${user.userId}`}>{user.user.name} {user.user.callSign && `"${user.user.callSign}"`} {user.user.lastName}</Link>
                   <Badge>{user.role}</Badge>
                 </HStack>
               ))}

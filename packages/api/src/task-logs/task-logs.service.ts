@@ -155,6 +155,30 @@ export class TaskLogsService {
     });
   }
 
+  async getProjectUserTasksSummary(projectId: string, userId: string) {
+    const taskLogs = await this.prisma.taskLog.groupBy({
+      by: ['taskId'],
+      where: {
+        userId,
+        task: {
+          projectId,
+        },
+      },
+      _count: {
+        taskId: true,
+      },
+      _sum: {
+        timeSpent: true,
+      },
+    });
+
+    return taskLogs.map(log => ({
+      taskId: log.taskId,
+      logsCount: log._count.taskId,
+      timeSpent: log._sum.timeSpent || 0,
+    }));
+  }
+
   async remove(id: string) {
     const taskLog = await this.prisma.taskLog.findUnique({
       where: { id },

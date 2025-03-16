@@ -41,6 +41,16 @@ export class TaskLogsController {
     return this.taskLogsService.findByProjectAndUser(projectId, userId);
   }
 
+  @Get('project/:projectId/user/:userId/summary')
+  @ApiOperation({ summary: 'Get summary of registered tasks for user in project' })
+  @ApiResponse({ status: 200, description: 'Return summary of registered tasks for user in project' })
+  async getProjectUserTasksSummary(
+    @Param('projectId') projectId: string,
+    @Param('userId') userId: string,
+  ) {
+    return this.taskLogsService.getProjectUserTasksSummary(projectId, userId);
+  }
+
   @Delete(':id')
   @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Delete task log' })

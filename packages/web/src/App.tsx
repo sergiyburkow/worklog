@@ -18,6 +18,7 @@ import { UsersList } from './pages/users/UsersList';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ProductTaskLogs } from './pages/products/ProductTaskLogs';
 import { ProjectProductsList } from './pages/projects/ProjectProductsList';
+import { ProjectUserDetails } from './pages/projects/ProjectUserDetails';
 
 const queryClient = new QueryClient();
 
@@ -138,6 +139,14 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['ADMIN']}>
                     <UsersList />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/projects/:projectId/users/:userId"
+                element={
+                  <ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER']}>
+                    <ProjectUserDetails />
                   </ProtectedRoute>
                 }
               />
