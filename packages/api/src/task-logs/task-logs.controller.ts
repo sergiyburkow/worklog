@@ -6,6 +6,7 @@ import { UpdateTaskLogDto } from './dto/update-task-log.dto';
 import { FindTaskLogsDto } from './dto/find-task-logs.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AdminGuard } from '../auth/admin.guard';
+import { UserData, UserDataResponse } from './types/user-data.type';
 
 @ApiTags('task-logs')
 @Controller('task-logs')
@@ -32,23 +33,23 @@ export class TaskLogsController {
   }
 
   @Get('project/:projectId/user/:userId')
-  @ApiOperation({ summary: 'Get all registered tasks for user in project' })
-  @ApiResponse({ status: 200, description: 'Return all registered tasks for user in project' })
-  async findByProjectAndUser(
+  @ApiOperation({ summary: 'Get user details in project context' })
+  @ApiResponse({ status: 200, description: 'Return user details in project context', type: UserDataResponse })
+  async getProjectUser(
     @Param('projectId') projectId: string,
     @Param('userId') userId: string,
-  ) {
-    return this.taskLogsService.findByProjectAndUser(projectId, userId);
+  ): Promise<UserData> {
+    return this.taskLogsService.getProjectUser(projectId, userId);
   }
 
-  @Get('project/:projectId/user/:userId/summary')
-  @ApiOperation({ summary: 'Get summary of registered tasks for user in project' })
-  @ApiResponse({ status: 200, description: 'Return summary of registered tasks for user in project' })
-  async getProjectUserTasksSummary(
+  @Get('project/:projectId/logsbytasks')
+  @ApiOperation({ summary: 'Get logs grouped by tasks for project' })
+  @ApiResponse({ status: 200, description: 'Return logs grouped by tasks for project' })
+  async getLogsByTasks(
     @Param('projectId') projectId: string,
-    @Param('userId') userId: string,
+    @Query('userId') userId?: string,
   ) {
-    return this.taskLogsService.getProjectUserTasksSummary(projectId, userId);
+    return this.taskLogsService.getLogsByTasks(projectId, userId);
   }
 
   @Delete(':id')

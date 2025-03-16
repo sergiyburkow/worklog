@@ -27,6 +27,8 @@ export interface ProjectUser {
   user: {
     id: string;
     name: string;
+    lastName?: string;
+    callSign?: string;
     email: string;
   };
 } 

@@ -214,6 +214,7 @@ export class ProjectsService {
             id: true,
             name: true,
             lastName: true,
+            callSign: true,
             email: true,
           },
         },
@@ -224,6 +225,7 @@ export class ProjectsService {
       id: pu.user.id,
       name: pu.user.name,
       lastName: pu.user.lastName,
+      callSign: pu.user.callSign,
       email: pu.user.email,
       role: pu.role,
       isActive: pu.isActive

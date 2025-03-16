@@ -4,6 +4,7 @@ import { RegisterTaskLogDto } from './dto/register-task-log.dto';
 import { UpdateTaskLogDto } from './dto/update-task-log.dto';
 import { FindTaskLogsDto } from './dto/find-task-logs.dto';
 import { TaskLogApprovalStatus, TaskType } from '@prisma/client';
+import { UserData } from './types/user-data.type';
 
 @Injectable()
 export class TaskLogsService {
@@ -155,15 +156,23 @@ export class TaskLogsService {
     });
   }
 
-  async getProjectUserTasksSummary(projectId: string, userId: string) {
+  async getProjectUserTasksSummary(projectId: string, userId?: string) {
+    console.log('getProjectUserTasksSummary called with:', { projectId, userId });
+
+    // Базові умови для where
+    const whereCondition = {
+      task: {
+        projectId,
+      },
+      ...(userId ? { userId } : {}),
+    };
+
+    console.log('Getting task logs with conditions:', whereCondition);
+
+    // Отримуємо всі логи по проекту (або по користувачу в проекті)
     const taskLogs = await this.prisma.taskLog.groupBy({
       by: ['taskId'],
-      where: {
-        userId,
-        task: {
-          projectId,
-        },
-      },
+      where: whereCondition,
       _count: {
         taskId: true,
       },
@@ -172,11 +181,88 @@ export class TaskLogsService {
       },
     });
 
-    return taskLogs.map(log => ({
-      taskId: log.taskId,
-      logsCount: log._count.taskId,
-      timeSpent: log._sum.timeSpent || 0,
-    }));
+    console.log('Task logs found:', taskLogs);
+
+    if (taskLogs.length === 0) {
+      return { tasks: [] };
+    }
+
+    // Отримуємо деталі задач
+    const taskIds = taskLogs.map(log => log.taskId);
+
+    const tasks = await this.prisma.task.findMany({
+      where: {
+        id: {
+          in: taskIds
+        }
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        type: true,
+        status: true,
+        estimatedTime: true,
+        complexity: true,
+        tags: true,
+        projectId: true,
+      }
+    });
+
+    console.log('Tasks details:', tasks);
+
+    // Якщо вказано userId, отримуємо деталі користувача
+    let userData: UserData | null = null;
+    if (userId) {
+      const projectUser = await this.prisma.projectUser.findUnique({
+        where: {
+          userId_projectId: {
+            userId,
+            projectId
+          }
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              lastName: true,
+              callSign: true,
+              phone: true,
+            }
+          }
+        }
+      });
+
+      if (!projectUser) {
+        throw new NotFoundException('User not found in project');
+      }
+
+      userData = {
+        user: projectUser.user,
+        role: projectUser.role,
+      };
+    }
+
+    // Формуємо відповідь
+    const response = {
+      ...(userData && { user: userData.user, role: userData.role }),
+      tasks: taskLogs.map(log => {
+        const task = tasks.find(t => t.id === log.taskId);
+        if (!task) {
+          console.warn(`Task not found for log:`, log);
+          return null;
+        }
+        return {
+          task,
+          logsCount: log._count.taskId,
+          totalTimeSpent: log._sum.timeSpent || 0,
+        };
+      }).filter(Boolean)
+    };
+
+    console.log('Final response:', response);
+    return response;
   }
 
   async remove(id: string) {
@@ -247,5 +333,99 @@ export class TaskLogsService {
         },
       },
     });
+  }
+
+  async getProjectUser(projectId: string, userId: string): Promise<UserData> {
+    const projectUser = await this.prisma.projectUser.findUnique({
+      where: {
+        userId_projectId: {
+          userId,
+          projectId
+        }
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            lastName: true,
+            callSign: true,
+            phone: true,
+          }
+        }
+      }
+    });
+
+    if (!projectUser) {
+      throw new NotFoundException('User not found in project');
+    }
+
+    return {
+      user: projectUser.user,
+      role: projectUser.role,
+    };
+  }
+
+  async getLogsByTasks(projectId: string, userId?: string) {
+    // Базові умови для where
+    const whereCondition = {
+      task: {
+        projectId,
+      },
+      ...(userId ? { userId } : {}),
+    };
+
+    // Отримуємо всі логи по проекту (або по користувачу в проекті)
+    const taskLogs = await this.prisma.taskLog.groupBy({
+      by: ['taskId'],
+      where: whereCondition,
+      _count: {
+        taskId: true,
+      },
+      _sum: {
+        timeSpent: true,
+      },
+    });
+
+    if (taskLogs.length === 0) {
+      return { tasks: [] };
+    }
+
+    // Отримуємо деталі задач
+    const taskIds = taskLogs.map(log => log.taskId);
+
+    const tasks = await this.prisma.task.findMany({
+      where: {
+        id: {
+          in: taskIds
+        }
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        type: true,
+        status: true,
+        estimatedTime: true,
+        complexity: true,
+        tags: true,
+        projectId: true,
+      }
+    });
+
+    return {
+      tasks: taskLogs.map(log => {
+        const task = tasks.find(t => t.id === log.taskId);
+        if (!task) {
+          console.warn(`Task not found for log:`, log);
+          return null;
+        }
+        return {
+          task,
+          logsCount: log._count.taskId,
+          totalTimeSpent: log._sum.timeSpent || 0,
+        };
+      }).filter(Boolean)
+    };
   }
 } 

@@ -7,15 +7,11 @@ import { TaskRegistrationButtons } from '../../components/buttons/TaskRegistrati
 import { RegisteredTasksTable } from '../../components/tables/RegisteredTasksTable';
 import { useEffect, useState } from 'react';
 import { api } from '../../lib/api';
-import { useAuth } from '../../hooks/useAuth';
+import { LogsByTasks } from './components/LogsByTasks';
+import { Task } from '../../types/task';
 
-interface Task {
+interface RegisteredTask {
   id: string;
-  name: string;
-  status: string;
-  completedAt: string;
-  timeSpent: number;
-  createdAt: string;
   task: {
     name: string;
     estimatedTime: number;
@@ -24,8 +20,12 @@ interface Task {
   user: {
     name: string;
   };
+  completedAt: string | null;
   registeredAt: string;
+  timeSpent?: number;
+  quantity?: number;
   product?: {
+    id: string;
     code: string;
   };
   statusHistory: Array<{
@@ -34,13 +34,28 @@ interface Task {
   }>;
 }
 
+interface TaskWithLogs {
+  task: Task;
+  logsCount: number;
+  totalTimeSpent: number;
+}
+
+interface LogsByTasksData {
+  tasks: TaskWithLogs[];
+}
+
+interface ProjectTasksSummary {
+  tasks: TaskWithLogs[];
+}
+
 interface AdminProjectDetailsProps {
   project: Project;
 }
 
 export const AdminProjectDetails = ({ project }: AdminProjectDetailsProps) => {
   const navigate = useNavigate();
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<RegisteredTask[]>([]);
+  const [taskLogs, setTaskLogs] = useState<LogsByTasksData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [productsCount, setProductsCount] = useState(0);
 
@@ -53,8 +68,7 @@ export const AdminProjectDetails = ({ project }: AdminProjectDetailsProps) => {
           registeredTo: endOfDay(today).toISOString()
         });
 
-        console.log('AdminProjectDetails - Fetching tasks with params:', params.toString());
-        const response = await api.get(`/task-logs/project/${project.id}?${params.toString()}`);
+        const response = await api.get<RegisteredTask[]>(`/task-logs/project/${project.id}?${params.toString()}`);
         setTasks(response.data);
       } catch (error) {
         console.error('Error fetching tasks:', error);
@@ -72,9 +86,19 @@ export const AdminProjectDetails = ({ project }: AdminProjectDetailsProps) => {
       }
     };
 
+    const fetchTaskLogs = async () => {
+      try {
+        const response = await api.get<LogsByTasksData>(`/task-logs/project/${project.id}/logsbytasks`);
+        setTaskLogs(response.data);
+      } catch (error) {
+        console.error('Error fetching task logs:', error);
+      }
+    };
+
     if (project.id) {
       fetchTasks();
       fetchProducts();
+      fetchTaskLogs();
     }
   }, [project.id]);
 
@@ -151,6 +175,8 @@ export const AdminProjectDetails = ({ project }: AdminProjectDetailsProps) => {
           </CardBody>
         </Card>
 
+        {taskLogs?.tasks && <LogsByTasks tasks={taskLogs.tasks} />}
+
         <Card>
           <CardBody>
               <HStack justify="space-between">
@@ -168,10 +194,9 @@ export const AdminProjectDetails = ({ project }: AdminProjectDetailsProps) => {
                 tasks={todayTasks} 
                 type="PRODUCT"
                 onTaskDeleted={() => {
-                  // Оновлюємо список задач після видалення
                   const fetchTasks = async () => {
                     try {
-                      const response = await api.get(`/projects/${project.id}/tasks`);
+                      const response = await api.get<RegisteredTask[]>(`/task-logs/project/${project.id}/tasks`);
                       setTasks(response.data);
                     } catch (error) {
                       console.error('Error fetching tasks:', error);
@@ -193,7 +218,11 @@ export const AdminProjectDetails = ({ project }: AdminProjectDetailsProps) => {
             <VStack align="stretch" spacing={3}>
               {project.users.map(user => (
                 <HStack key={user.userId} justify="space-between">
-                  <Link to={`/projects/${project.id}/users/${user.userId}`}>{user.user.name} {user.user.callSign && `"${user.user.callSign}"`} {user.user.lastName}</Link>
+                  <Link to={`/projects/${project.id}/users/${user.userId}`}>
+                    {user.user.name}
+                    {user.user.callSign && <Text as="span" color="gray.500" ml={2}>"{user.user.callSign}"</Text>}
+                    {user.user.lastName && <Text as="span" ml={2}>{user.user.lastName}</Text>}
+                  </Link>
                   <Badge>{user.role}</Badge>
                 </HStack>
               ))}
@@ -203,4 +232,4 @@ export const AdminProjectDetails = ({ project }: AdminProjectDetailsProps) => {
       </Stack>
     </Box>
   );
-}; 
+};
