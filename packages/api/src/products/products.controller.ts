@@ -27,6 +27,7 @@ export class ProductsController {
   }
 
   @Get('project/:projectId')
+  @UseGuards(ProjectMemberGuard)
   @ApiOperation({ summary: 'Get products by project id' })
   @ApiResponse({ status: 200, description: 'Return products by project id', type: [ProductResponseDto] })
   async findByProject(@Param('projectId') projectId: string) {
