@@ -6,6 +6,7 @@ import { ProjectResponseDto, CreateProjectDto, UpdateProjectDto, TaskResponseDto
 import { ProjectUserRole } from '@prisma/client';
 import { ProjectAccessGuard } from './guards/project-access.guard';
 import { Request } from 'express';
+import { RequestWithUser } from '../auth/interfaces/request-with-user.interface';
 
 @ApiTags('projects')
 @Controller('projects')
@@ -17,36 +18,36 @@ export class ProjectsController {
   @Get()
   @ApiOperation({ summary: 'Get all projects' })
   @ApiResponse({ status: 200, description: 'Return all projects', type: [ProjectResponseDto] })
-  async findAll() {
-    return this.projectsService.findAll();
+  async findAll(@Req() req: RequestWithUser): Promise<ProjectResponseDto[]> {
+    return this.projectsService.findAll(req.user.id);
   }
 
   @Get(':id')
   @UseGuards(ProjectAccessGuard)
   @ApiOperation({ summary: 'Get project by id' })
   @ApiResponse({ status: 200, description: 'Return project by id', type: ProjectResponseDto })
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id') id: string): Promise<ProjectResponseDto> {
     return this.projectsService.findOne(id);
   }
 
   @Post()
   @ApiOperation({ summary: 'Create project' })
   @ApiResponse({ status: 201, description: 'Project has been created', type: ProjectResponseDto })
-  async create(@Body() createProjectDto: CreateProjectDto) {
-    return this.projectsService.create(createProjectDto);
+  async create(@Body() createProjectDto: CreateProjectDto, @Req() req: RequestWithUser): Promise<ProjectResponseDto> {
+    return this.projectsService.create(createProjectDto, req.user.id);
   }
 
   @Put(':id')
   @ApiOperation({ summary: 'Update project' })
   @ApiResponse({ status: 200, description: 'Project has been updated', type: ProjectResponseDto })
-  async update(@Param('id') id: string, @Body() updateProjectDto: UpdateProjectDto) {
+  async update(@Param('id') id: string, @Body() updateProjectDto: UpdateProjectDto): Promise<ProjectResponseDto> {
     return this.projectsService.update(id, updateProjectDto);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete project' })
   @ApiResponse({ status: 200, description: 'Project has been deleted' })
-  async remove(@Param('id') id: string) {
+  async remove(@Param('id') id: string): Promise<void> {
     return this.projectsService.remove(id);
   }
 
@@ -127,7 +128,7 @@ export class ProjectsController {
   async createProjectPayment(
     @Param('projectId') projectId: string,
     @Body() createPaymentDto: CreateProjectPaymentDto,
-    @Req() req: Request,
+    @Req() req: RequestWithUser,
   ): Promise<ProjectPaymentResponseDto> {
     return this.projectsService.createProjectPayment(projectId, createPaymentDto, req);
   }

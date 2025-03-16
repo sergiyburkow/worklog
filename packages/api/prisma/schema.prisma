@@ -140,6 +140,7 @@ model TaskLog {
   registeredAt  DateTime               @map("registered_at")
   timeSpent     Decimal?               @map("time_spent")
   quantity      Int?                   @map("quantity")
+  cost          Decimal?               @map("cost")
   statusHistory TaskLogStatusHistory[]
   product       Product?               @relation(fields: [productId], references: [id])
   task          Task                   @relation(fields: [taskId], references: [id], onDelete: Cascade)

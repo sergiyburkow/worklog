@@ -3,18 +3,21 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateProjectDto, UpdateProjectDto, ProjectPaymentResponseDto, CreateProjectPaymentDto } from './dto';
 import { ProjectStatus, Prisma, ProjectUserRole, User } from '@prisma/client';
 import { ProjectUserDto } from './dto/project-user.dto';
-import { Request } from 'express';
-
-interface RequestWithUser extends Request {
-  user: User;
-}
+import { RequestWithUser } from '../auth/interfaces/request-with-user.interface';
 
 @Injectable()
 export class ProjectsService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll() {
+  async findAll(userId: string) {
     const projects = await this.prisma.project.findMany({
+      where: {
+        users: {
+          some: {
+            userId,
+          },
+        },
+      },
       include: {
         users: {
           include: {
@@ -38,7 +41,17 @@ export class ProjectsService {
 
     return projects.map(project => ({
       ...project,
-      projectUsers: project.users,
+      users: project.users.map(user => ({
+        userId: user.userId,
+        role: user.role as string,
+        user: {
+          id: user.user.id,
+          name: user.user.name,
+          email: user.user.email || '',
+        },
+      })),
+      actualEndDate: project.actualEndDate || undefined,
+      quantity: project.quantity || undefined,
     }));
   }
 
@@ -72,11 +85,21 @@ export class ProjectsService {
 
     return {
       ...project,
-      projectUsers: project.users,
+      users: project.users.map(user => ({
+        userId: user.userId,
+        role: user.role as string,
+        user: {
+          id: user.user.id,
+          name: user.user.name,
+          email: user.user.email || '',
+        },
+      })),
+      actualEndDate: project.actualEndDate || undefined,
+      quantity: project.quantity || undefined,
     };
   }
 
-  async create(createProjectDto: CreateProjectDto) {
+  async create(createProjectDto: CreateProjectDto, userId: string) {
     const { projectUsers, startDate, deadline, ...projectData } = createProjectDto;
 
     const project = await this.prisma.project.create({
@@ -85,14 +108,27 @@ export class ProjectsService {
         startDate: new Date(startDate),
         deadline: new Date(deadline),
         users: {
-          create: projectUsers.map(({ userId, role }) => ({
-            userId,
-            role,
-          })),
+          create: [
+            { userId, role: ProjectUserRole.MANAGER },
+            ...projectUsers.map(({ userId, role }) => ({
+              userId,
+              role,
+            })),
+          ],
         },
       },
       include: {
-        users: true,
+        users: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
         client: {
           select: {
             id: true,
@@ -104,7 +140,17 @@ export class ProjectsService {
 
     return {
       ...project,
-      projectUsers: project.users,
+      users: project.users.map(user => ({
+        userId: user.userId,
+        role: user.role as string,
+        user: {
+          id: user.user.id,
+          name: user.user.name,
+          email: user.user.email || '',
+        },
+      })),
+      actualEndDate: project.actualEndDate || undefined,
+      quantity: project.quantity || undefined,
     };
   }
 
@@ -135,45 +181,12 @@ export class ProjectsService {
         ...(deadline && { deadline: new Date(deadline) }),
       },
       include: {
-        users: true,
-        client: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-    });
-
-    return {
-      ...project,
-      projectUsers: project.users,
-    };
-  }
-
-  async remove(id: string) {
-    await this.prisma.project.delete({
-      where: { id },
-    });
-  }
-
-  async findByUser(userId: string) {
-    const projects = await this.prisma.project.findMany({
-      where: {
-        users: {
-          some: {
-            userId,
-          },
-        },
-      },
-      include: {
         users: {
           include: {
             user: {
               select: {
                 id: true,
                 name: true,
-                lastName: true,
                 email: true,
               },
             },
@@ -188,10 +201,26 @@ export class ProjectsService {
       },
     });
 
-    return projects.map(project => ({
+    return {
       ...project,
-      projectUsers: project.users,
-    }));
+      users: project.users.map(user => ({
+        userId: user.userId,
+        role: user.role as string,
+        user: {
+          id: user.user.id,
+          name: user.user.name,
+          email: user.user.email || '',
+        },
+      })),
+      actualEndDate: project.actualEndDate || undefined,
+      quantity: project.quantity || undefined,
+    };
+  }
+
+  async remove(id: string) {
+    await this.prisma.project.delete({
+      where: { id },
+    });
   }
 
   async findTasksByProject(id: string) {
@@ -249,88 +278,14 @@ export class ProjectsService {
     });
 
     if (userLogs.length > 0) {
-      throw new BadRequestException('Неможливо видалити користувача, який має записи логів у проекті');
+      throw new BadRequestException('Cannot remove user with existing task logs');
     }
 
-    // If no logs found, delete the user from project
-    return this.prisma.projectUser.delete({
+    await this.prisma.projectUser.deleteMany({
       where: {
-        userId_projectId: {
-          userId,
-          projectId
-        }
-      }
-    });
-  }
-
-  async toggleUserActive(projectId: string, userId: string, isActive: boolean) {
-    const projectUser = await this.prisma.projectUser.findUnique({
-      where: {
-        userId_projectId: {
-          userId,
-          projectId
-        }
-      }
-    });
-
-    if (!projectUser) {
-      throw new NotFoundException('Користувача не знайдено в проекті');
-    }
-
-    return this.prisma.projectUser.update({
-      where: {
-        userId_projectId: {
-          userId,
-          projectId
-        }
+        projectId,
+        userId,
       },
-      data: {
-        isActive
-      },
-      include: {
-        user: true
-      }
-    });
-  }
-
-  async findProjectUsers(projectId: string) {
-    return this.prisma.projectUser.findMany({
-      where: {
-        projectId
-      },
-      include: {
-        user: true
-      }
-    });
-  }
-
-  async updateUserRole(projectId: string, userId: string, role: ProjectUserRole) {
-    const projectUser = await this.prisma.projectUser.findUnique({
-      where: {
-        userId_projectId: {
-          userId,
-          projectId
-        }
-      }
-    });
-
-    if (!projectUser) {
-      throw new NotFoundException('Користувача не знайдено в проекті');
-    }
-
-    return this.prisma.projectUser.update({
-      where: {
-        userId_projectId: {
-          userId,
-          projectId
-        }
-      },
-      data: {
-        role
-      },
-      include: {
-        user: true
-      }
     });
   }
 
@@ -344,9 +299,7 @@ export class ProjectsService {
     }
 
     const payments = await this.prisma.payment.findMany({
-      where: {
-        projectId,
-      },
+      where: { projectId },
       include: {
         user: {
           select: {
@@ -431,19 +384,7 @@ export class ProjectsService {
       throw new NotFoundException(`Project with ID ${projectId} not found`);
     }
 
-    const payment = await this.prisma.payment.findUnique({
-      where: { id: paymentId },
-    });
-
-    if (!payment) {
-      throw new NotFoundException(`Payment with ID ${paymentId} not found`);
-    }
-
-    if (payment.projectId !== projectId) {
-      throw new BadRequestException('Payment does not belong to this project');
-    }
-
-    const updatedPayment = await this.prisma.payment.update({
+    const payment = await this.prisma.payment.update({
       where: { id: paymentId },
       data: updatePaymentDto,
       include: {
@@ -467,8 +408,8 @@ export class ProjectsService {
     });
 
     return {
-      ...updatedPayment,
-      amount: Number(updatedPayment.amount),
+      ...payment,
+      amount: Number(payment.amount),
     };
   }
 
@@ -481,20 +422,108 @@ export class ProjectsService {
       throw new NotFoundException(`Project with ID ${projectId} not found`);
     }
 
-    const payment = await this.prisma.payment.findUnique({
-      where: { id: paymentId },
-    });
-
-    if (!payment) {
-      throw new NotFoundException(`Payment with ID ${paymentId} not found`);
-    }
-
-    if (payment.projectId !== projectId) {
-      throw new BadRequestException('Payment does not belong to this project');
-    }
-
     await this.prisma.payment.delete({
       where: { id: paymentId },
+    });
+  }
+
+  async findByUser(userId: string) {
+    const projects = await this.prisma.project.findMany({
+      where: {
+        users: {
+          some: {
+            userId,
+          },
+        },
+      },
+      include: {
+        users: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+          },
+        },
+        client: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    return projects.map(project => ({
+      ...project,
+      users: project.users.map(user => ({
+        userId: user.userId,
+        role: user.role as string,
+        user: {
+          id: user.user.id,
+          name: user.user.name,
+          email: user.user.email || '',
+        },
+      })),
+      actualEndDate: project.actualEndDate || undefined,
+      quantity: project.quantity || undefined,
+    }));
+  }
+
+  async toggleUserActive(projectId: string, userId: string, isActive: boolean) {
+    const projectUser = await this.prisma.projectUser.findUnique({
+      where: {
+        userId_projectId: {
+          projectId,
+          userId,
+        },
+      },
+    });
+
+    if (!projectUser) {
+      throw new NotFoundException('Project user not found');
+    }
+
+    return this.prisma.projectUser.update({
+      where: {
+        userId_projectId: {
+          projectId,
+          userId,
+        },
+      },
+      data: {
+        isActive,
+      },
+    });
+  }
+
+  async updateUserRole(projectId: string, userId: string, role: ProjectUserRole) {
+    const projectUser = await this.prisma.projectUser.findUnique({
+      where: {
+        userId_projectId: {
+          projectId,
+          userId,
+        },
+      },
+    });
+
+    if (!projectUser) {
+      throw new NotFoundException('Project user not found');
+    }
+
+    return this.prisma.projectUser.update({
+      where: {
+        userId_projectId: {
+          projectId,
+          userId,
+        },
+      },
+      data: {
+        role,
+      },
     });
   }
 } 
