@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import {
   Box,
   Table,
@@ -19,8 +19,11 @@ import {
   AlertIcon,
   Button,
   HStack,
+  Input,
+  InputGroup,
+  InputLeftElement,
 } from '@chakra-ui/react';
-import { EditIcon, DeleteIcon, AddIcon } from '@chakra-ui/icons';
+import { EditIcon, DeleteIcon, AddIcon, SearchIcon } from '@chakra-ui/icons';
 import { format } from 'date-fns';
 import { uk } from 'date-fns/locale';
 import { productsApi } from '../../api/products';
@@ -31,6 +34,8 @@ import { EditProductModal } from '../../components/products/EditProductModal';
 export const ProjectProductsList = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const [products, setProducts] = useState<ProductWithProgress[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<ProductWithProgress[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -38,12 +43,12 @@ export const ProjectProductsList = () => {
   const toast = useToast();
 
   const calculateProgress = (product: Product): number => {
-    const completedTasks = product.registeredTasks.filter(
+    const completedTasks = product.taskLogs.filter(
       task => task.status === 'COMPLETED'
     ).length;
     
-    return product.registeredTasks.length > 0
-      ? (completedTasks / product.registeredTasks.length) * 100
+    return product.taskLogs.length > 0
+      ? (completedTasks / product.taskLogs.length) * 100
       : 0;
   };
 
@@ -59,10 +64,11 @@ export const ProjectProductsList = () => {
       setProducts(productsWithProgress);
       setError(null);
     } catch (error) {
+      console.error('Error fetching products:', error);
       setError('Не вдалося завантажити список продуктів');
       toast({
         title: 'Помилка',
-        description: 'Не вдалося завантажити список продуктів',
+        description: error instanceof Error ? error.message : 'Не вдалося завантажити список продуктів',
         status: 'error',
         duration: 5000,
         isClosable: true,
@@ -72,7 +78,7 @@ export const ProjectProductsList = () => {
     }
   };
 
-  const handleDelete = async (productId: number) => {
+  const handleDelete = async (productId: string) => {
     try {
       await productsApi.deleteProduct(productId);
       await fetchProducts();
@@ -98,89 +104,106 @@ export const ProjectProductsList = () => {
     fetchProducts();
   }, [projectId]);
 
-  if (isLoading) {
-    return (
-      <Center h="200px">
-        <Spinner size="xl" />
-      </Center>
+  useEffect(() => {
+    const filtered = products.filter(product => 
+      product.code.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }
-
-  if (error) {
-    return (
-      <Alert status="error">
-        <AlertIcon />
-        {error}
-      </Alert>
-    );
-  }
+    setFilteredProducts(filtered);
+  }, [products, searchQuery]);
 
   return (
-    <Box p={4}>
-      <HStack justify="space-between" mb={4}>
-        <Text fontSize="2xl">Продукти проекту</Text>
-        <Button
-          leftIcon={<AddIcon />}
-          colorScheme="blue"
-          onClick={() => setIsCreateModalOpen(true)}
-        >
-          Створити продукт
-        </Button>
-      </HStack>
-      
-      <Table variant="simple">
-        <Thead>
-          <Tr>
-            <Th>Код</Th>
-            <Th>Дата створення</Th>
-            <Th>Відсоток виконання</Th>
-            <Th>Дії</Th>
-          </Tr>
-        </Thead>
-        <Tbody>
-          {products.map((product) => (
-            <Tr key={product.id}>
-              <Td>{product.code}</Td>
-              <Td>
-                {format(new Date(product.createdAt), 'dd MMMM yyyy', { locale: uk })}
-              </Td>
-              <Td>
-                <Box>
-                  <Progress 
-                    value={product.progress} 
-                    size="sm" 
-                    colorScheme={product.progress === 100 ? 'green' : 'blue'}
-                  />
-                  <Text mt={1} fontSize="sm">
-                    {product.progress.toFixed(0)}% ({product.registeredTasks.filter(t => t.status === 'COMPLETED').length}/{product.registeredTasks.length})
-                  </Text>
-                </Box>
-              </Td>
-              <Td>
-                <Tooltip label="Редагувати">
-                  <IconButton
-                    aria-label="Редагувати продукт"
-                    icon={<EditIcon />}
-                    size="sm"
-                    mr={2}
-                    onClick={() => setEditingProduct(product)}
-                  />
-                </Tooltip>
-                <Tooltip label="Видалити">
-                  <IconButton
-                    aria-label="Видалити продукт"
-                    icon={<DeleteIcon />}
-                    size="sm"
-                    colorScheme="red"
-                    onClick={() => handleDelete(product.id)}
-                  />
-                </Tooltip>
-              </Td>
-            </Tr>
-          ))}
-        </Tbody>
-      </Table>
-
+    <Box>
+      {isLoading ? (
+        <Center h="200px">
+          <Spinner />
+        </Center>
+      ) : error ? (
+        <Alert status="error">
+          <AlertIcon />
+          {error}
+        </Alert>
+      ) : (
+        <>
+          <HStack mb={4} justify="space-between">
+            <Text fontSize="xl" fontWeight="bold">
+              Продукти проекту
+            </Text>
+            <Button
+              leftIcon={<AddIcon />}
+              colorScheme="blue"
+              onClick={() => setIsCreateModalOpen(true)}
+            >
+              Додати продукт
+            </Button>
+          </HStack>
+          <InputGroup mb={4}>
+            <InputLeftElement pointerEvents="none">
+              <SearchIcon color="gray.300" />
+            </InputLeftElement>
+            <Input
+              placeholder="Пошук за кодом продукту"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </InputGroup>
+          <Table variant="simple">
+            <Thead>
+              <Tr>
+                <Th>Код</Th>
+                <Th>Дата створення</Th>
+                <Th>Прогрес</Th>
+                <Th>Дії</Th>
+              </Tr>
+            </Thead>
+            <Tbody>
+              {filteredProducts.map((product) => (
+                <Tr key={product.id}>
+                  <Td>
+                    <Link
+                      to={`/products/${product.id}/logs`}
+                      style={{
+                        color: 'var(--chakra-colors-blue-500)',
+                        textDecoration: 'underline'
+                      }}
+                    >
+                      {product.code}
+                    </Link>
+                  </Td>
+                  <Td>
+                    {format(new Date(product.createdAt), 'dd MMMM yyyy', {
+                      locale: uk,
+                    })}
+                  </Td>
+                  <Td>
+                    <Progress value={product.progress} size="sm" />
+                  </Td>
+                  <Td>
+                    <HStack spacing={2}>
+                      <Tooltip label="Редагувати">
+                        <IconButton
+                          aria-label="Редагувати"
+                          icon={<EditIcon />}
+                          size="sm"
+                          onClick={() => setEditingProduct(product)}
+                        />
+                      </Tooltip>
+                      <Tooltip label="Видалити">
+                        <IconButton
+                          aria-label="Видалити"
+                          icon={<DeleteIcon />}
+                          size="sm"
+                          colorScheme="red"
+                          onClick={() => handleDelete(product.id)}
+                        />
+                      </Tooltip>
+                    </HStack>
+                  </Td>
+                </Tr>
+              ))}
+            </Tbody>
+          </Table>
+        </>
+      )}
       {projectId && (
         <CreateProductModal
           isOpen={isCreateModalOpen}
@@ -189,7 +212,6 @@ export const ProjectProductsList = () => {
           onSuccess={fetchProducts}
         />
       )}
-
       {editingProduct && (
         <EditProductModal
           isOpen={!!editingProduct}

@@ -4,7 +4,7 @@ export const config = {
     port: import.meta.env.VITE_API_PORT || 4096,
     protocol: import.meta.env.VITE_API_PROTOCOL || 'https',
     get baseUrl() {
-      return `${this.protocol}://${this.host}:${this.port}/api`;
+      return '/api';
     }
   },
   web: {

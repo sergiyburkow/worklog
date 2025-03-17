@@ -6,11 +6,11 @@ export const productsApi = {
     return api.get<Product[]>(`/products/project/${projectId}`);
   },
   
-  deleteProduct: (productId: number) => {
+  deleteProduct: (productId: string) => {
     return api.delete(`/products/${productId}`);
   },
 
-  updateProduct: (productId: number, data: { code: string }) => {
+  updateProduct: (productId: string, data: { code: string }) => {
     return api.put<Product>(`/products/${productId}`, data);
   },
 
