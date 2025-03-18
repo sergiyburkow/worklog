@@ -14,7 +14,7 @@ import {
   HStack,
   useDisclosure,
 } from '@chakra-ui/react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { EditIcon, DeleteIcon, ViewIcon } from '@chakra-ui/icons';
 import { api } from '../../lib/api';
 import { ConfirmModal } from '../../components/ui/ConfirmModal';
@@ -163,7 +163,17 @@ export const ProjectsList = () => {
             <Tbody>
               {projects.map((project) => (
                 <Tr key={project.id}>
-                  <Td>{project.name}</Td>
+                  <Td>
+                    <Link
+                      to={`/projects/${project.id}`}
+                      style={{
+                        color: 'var(--chakra-colors-blue-500)',
+                        textDecoration: 'underline'
+                      }}
+                    >
+                      {project.name}
+                    </Link>
+                  </Td>
                   <Td>{project.client.name}</Td>
                   <Td>{project.quantity || '-'}</Td>
                   <Td>{new Date(project.startDate).toLocaleDateString()}</Td>

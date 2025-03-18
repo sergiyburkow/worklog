@@ -384,6 +384,7 @@ export class TaskLogsService {
       },
       _sum: {
         timeSpent: true,
+        quantity: true,
       },
     });
 
@@ -424,6 +425,7 @@ export class TaskLogsService {
           task,
           logsCount: log._count.taskId,
           totalTimeSpent: log._sum.timeSpent || 0,
+          quantity: task.type === TaskType.INTERMEDIATE ? (log._sum.quantity || 0) : undefined,
         };
       }).filter(Boolean)
     };

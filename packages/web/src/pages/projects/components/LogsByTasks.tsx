@@ -5,6 +5,7 @@ interface TaskWithLogs {
   task: Task;
   logsCount: number;
   totalTimeSpent: number;
+  quantity?: number;
 }
 
 interface LogsByTasksProps {
@@ -28,10 +29,11 @@ export const LogsByTasks = ({ tasks }: LogsByTasksProps) => {
               <Th>Тип</Th>
               <Th isNumeric>Кількість реєстрацій</Th>
               <Th isNumeric>Загальний час (год)</Th>
+              <Th isNumeric>Кількість</Th>
             </Tr>
           </Thead>
           <Tbody>
-            {tasks.map(({ task, logsCount, totalTimeSpent }) => {
+            {tasks.map(({ task, logsCount, totalTimeSpent, quantity }) => {
               return (
                 <Tr key={task.id}>
                   <Td>{task.name}</Td>
@@ -42,6 +44,7 @@ export const LogsByTasks = ({ tasks }: LogsByTasksProps) => {
                   </Td>
                   <Td isNumeric>{logsCount}</Td>
                   <Td isNumeric>{totalTimeSpent}</Td>
+                  <Td isNumeric>{task.type === TaskType.INTERMEDIATE ? quantity : '-'}</Td>
                 </Tr>
               );
             })}
