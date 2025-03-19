@@ -15,6 +15,7 @@ export class ProductsService {
         taskLogs: {
           include: {
             statusHistory: true,
+            task: true,
           },
         },
       },
@@ -28,6 +29,7 @@ export class ProductsService {
         taskLogs: {
           include: {
             statusHistory: true,
+            task: true,
           },
         },
       },
@@ -47,6 +49,7 @@ export class ProductsService {
         taskLogs: {
           include: {
             statusHistory: true,
+            task: true,
           },
         },
       },
@@ -63,6 +66,7 @@ export class ProductsService {
         taskLogs: {
           include: {
             statusHistory: true,
+            task: true,
           },
         },
       },

@@ -68,6 +68,14 @@ export interface RegisteredTask {
     code: string;
   };
   task: {
+    id: string;
+    name: string;
     type: 'PRODUCT' | 'INTERMEDIATE' | 'GENERAL';
+    status: TaskStatus;
+    description?: string;
+    code: string;
+    estimatedTime?: string;
+    complexity?: number;
+    tags?: string;
   };
 } 

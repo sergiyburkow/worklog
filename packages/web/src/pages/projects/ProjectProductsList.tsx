@@ -22,14 +22,17 @@ import {
   Input,
   InputGroup,
   InputLeftElement,
+  VStack,
+  Badge,
 } from '@chakra-ui/react';
-import { EditIcon, DeleteIcon, AddIcon, SearchIcon } from '@chakra-ui/icons';
+import { EditIcon, DeleteIcon, AddIcon, SearchIcon, CheckIcon, CloseIcon } from '@chakra-ui/icons';
 import { format } from 'date-fns';
 import { uk } from 'date-fns/locale';
 import { productsApi } from '../../api/products';
 import { Product, ProductWithProgress } from '../../types/product';
 import { CreateProductModal } from '../../components/products/CreateProductModal';
 import { EditProductModal } from '../../components/products/EditProductModal';
+import { AdminLayout } from '../../components/admin/AdminLayout';
 
 export const ProjectProductsList = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -112,6 +115,8 @@ export const ProjectProductsList = () => {
   }, [products, searchQuery]);
 
   return (
+    <AdminLayout>
+
     <Box>
       {isLoading ? (
         <Center h="200px">
@@ -175,7 +180,28 @@ export const ProjectProductsList = () => {
                     })}
                   </Td>
                   <Td>
-                    <Progress value={product.progress} size="sm" />
+                    <VStack align="stretch" spacing={2}>
+                      <Progress value={product.taskLogs.length / 8 * 100} size="sm" />
+                      <Box fontSize="sm">
+                        {product.taskLogs.map((taskLog) => (
+                          <HStack key={taskLog.id} spacing={2} mb={1}>
+                            <Badge
+                              colorScheme={taskLog.status === 'COMPLETED' ? 'green' : 'gray'}
+                              display="flex"
+                              alignItems="center"
+                              gap={1}
+                            >
+                              {taskLog.status === 'COMPLETED' ? (
+                                <CheckIcon boxSize={3} />
+                              ) : (
+                                <CloseIcon boxSize={3} />
+                              )}
+                              {taskLog.task.name || `Завдання ${taskLog.id}`}
+                            </Badge>
+                          </HStack>
+                        ))}
+                      </Box>
+                    </VStack>
                   </Td>
                   <Td>
                     <HStack spacing={2}>
@@ -221,5 +247,6 @@ export const ProjectProductsList = () => {
         />
       )}
     </Box>
+    </AdminLayout>
   );
 }; 
