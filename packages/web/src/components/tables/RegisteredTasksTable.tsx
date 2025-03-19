@@ -26,30 +26,7 @@ import { api } from '../../lib/api';
 import { EditTaskLogModal } from '../modals/EditTaskLogModal';
 import { ConfirmModal } from '../ui/ConfirmModal';
 import { QaCheck } from '../modals/QaCheck';
-
-interface RegisteredTask {
-  id: string;
-  task: {
-    name: string;
-    estimatedTime: number;
-    type: 'PRODUCT' | 'INTERMEDIATE' | 'GENERAL';
-  };
-  user: {
-    name: string;
-  };
-  completedAt: string | null;
-  registeredAt: string;
-  timeSpent?: number;
-  quantity?: number;
-  product?: {
-    id: string;
-    code: string;
-  };
-  statusHistory: Array<{
-    status: 'APPROVED' | 'NEEDS_FIXES' | 'ON_HOLD' | 'PENDING';
-    createdAt: string;
-  }>;
-}
+import { RegisteredTask } from '../../types/task';
 
 interface RegisteredTasksTableProps {
   tasks: RegisteredTask[];

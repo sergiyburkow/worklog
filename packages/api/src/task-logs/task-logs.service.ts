@@ -430,4 +430,33 @@ export class TaskLogsService {
       }).filter(Boolean)
     };
   }
+
+  async getUserLogsByDays(projectId: string, userId: string) {
+    const logs = await this.prisma.taskLog.findMany({
+      where: {
+        userId,
+        task: {
+          projectId,
+        },
+      },
+      include: {
+        user: true,
+        task: true,
+        product: true,
+        statusHistory: {
+          include: {
+            user: true,
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
+      },
+      orderBy: {
+        registeredAt: 'desc',
+      },
+    });
+
+    return { logs };
+  }
 } 

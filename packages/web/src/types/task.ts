@@ -78,4 +78,12 @@ export interface RegisteredTask {
     complexity?: number;
     tags?: string;
   };
+  user: {
+    name: string;
+  };
+  completedAt: string | null;
+  statusHistory: Array<{
+    status: 'APPROVED' | 'NEEDS_FIXES' | 'ON_HOLD' | 'PENDING';
+    createdAt: string;
+  }>;
 } 

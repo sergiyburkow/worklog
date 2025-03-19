@@ -52,6 +52,16 @@ export class TaskLogsController {
     return this.taskLogsService.getLogsByTasks(projectId, userId);
   }
 
+  @Get('project/:projectId/user/:userId/logs')
+  @ApiOperation({ summary: 'Get user logs by days in project context' })
+  @ApiResponse({ status: 200, description: 'Return user logs by days in project context' })
+  async getUserLogsByDays(
+    @Param('projectId') projectId: string,
+    @Param('userId') userId: string,
+  ) {
+    return this.taskLogsService.getUserLogsByDays(projectId, userId);
+  }
+
   @Delete(':id')
   @UseGuards(AdminGuard)
   @ApiOperation({ summary: 'Delete task log' })

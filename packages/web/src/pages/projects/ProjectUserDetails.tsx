@@ -6,6 +6,8 @@ import { api } from '../../lib/api';
 import { User } from '../../types/user';
 import { Task } from '../../types/task';
 import { LogsByTasks } from './components/LogsByTasks';
+import { LogsByDays } from './components/LogsByDays';
+import { RegisteredTask } from '../../types/task';
 
 interface TaskWithLogs {
   task: Task;
@@ -22,12 +24,17 @@ interface LogsByTasksData {
   tasks: TaskWithLogs[];
 }
 
+interface LogsByDaysData {
+  logs: RegisteredTask[];
+}
+
 export const ProjectUserDetails = () => {
   const { projectId, userId } = useParams<{ projectId: string; userId: string }>();
   const navigate = useNavigate();
   const toast = useToast();
   const [projectUser, setProjectUser] = useState<ProjectUser | null>(null);
   const [taskLogs, setTaskLogs] = useState<LogsByTasksData | null>(null);
+  const [logsByDays, setLogsByDays] = useState<LogsByDaysData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -44,6 +51,10 @@ export const ProjectUserDetails = () => {
           params: { userId }
         });
         setTaskLogs(logsResponse.data);
+
+        // Отримуємо дані про логи по днях
+        const logsByDaysResponse = await api.get<LogsByDaysData>(`/task-logs/project/${projectId}/user/${userId}/logs`);
+        setLogsByDays(logsByDaysResponse.data);
       } catch (error) {
         toast({
           title: 'Помилка',
@@ -99,6 +110,7 @@ export const ProjectUserDetails = () => {
             )}
 
             {taskLogs?.tasks && <LogsByTasks tasks={taskLogs.tasks} />}
+            {logsByDays?.logs && <LogsByDays logs={logsByDays.logs} />}
           </VStack>
         )}
       </Box>
