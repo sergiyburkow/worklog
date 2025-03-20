@@ -33,6 +33,8 @@ import { Product, ProductWithProgress } from '../../types/product';
 import { CreateProductModal } from '../../components/products/CreateProductModal';
 import { EditProductModal } from '../../components/products/EditProductModal';
 import { AdminLayout } from '../../components/admin/AdminLayout';
+import { QRInput } from '../../components/common/QRInput';
+import { QRScanner } from '../../components/QRScanner';
 
 export const ProjectProductsList = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -43,6 +45,7 @@ export const ProjectProductsList = () => {
   const [error, setError] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [showScanner, setShowScanner] = useState(false);
   const toast = useToast();
 
   const calculateProgress = (product: Product): number => {
@@ -103,6 +106,22 @@ export const ProjectProductsList = () => {
     }
   };
 
+  const handleScan = (result: string) => {
+    setSearchQuery(result);
+    setShowScanner(false);
+    toast({
+      title: 'Успіх',
+      description: 'Код продукту відскановано',
+      status: 'success',
+      duration: 3000,
+      isClosable: true,
+    });
+  };
+
+  const handleScanError = (error: any) => {
+    console.error('Помилка сканування:', error);
+  };
+
   useEffect(() => {
     fetchProducts();
   }, [projectId]);
@@ -141,16 +160,14 @@ export const ProjectProductsList = () => {
               Додати продукт
             </Button>
           </HStack>
-          <InputGroup mb={4}>
-            <InputLeftElement pointerEvents="none">
-              <SearchIcon color="gray.300" />
-            </InputLeftElement>
-            <Input
+          <Box mb={4}>
+            <QRInput
               placeholder="Пошук за кодом продукту"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onScan={handleScan}
             />
-          </InputGroup>
+          </Box>
           <Table variant="simple">
             <Thead>
               <Tr>

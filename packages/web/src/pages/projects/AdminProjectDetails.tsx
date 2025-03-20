@@ -1,4 +1,4 @@
-import { Box, Heading, Card, CardBody, Stack, Text, Badge, Button, HStack, VStack, CardHeader } from '@chakra-ui/react';
+import { Box, Heading, Card, CardBody, Stack, Text, Badge, Button, HStack, VStack, CardHeader, Icon } from '@chakra-ui/react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Project } from '../../types/project';
 import { format, isToday, parseISO, startOfDay, endOfDay } from 'date-fns';
@@ -8,31 +8,8 @@ import { RegisteredTasksTable } from '../../components/tables/RegisteredTasksTab
 import { useEffect, useState } from 'react';
 import { api } from '../../lib/api';
 import { LogsByTasks } from './components/LogsByTasks';
-import { Task } from '../../types/task';
-
-interface RegisteredTask {
-  id: string;
-  task: {
-    name: string;
-    estimatedTime: number;
-    type: 'PRODUCT' | 'INTERMEDIATE' | 'GENERAL';
-  };
-  user: {
-    name: string;
-  };
-  completedAt: string | null;
-  registeredAt: string;
-  timeSpent?: number;
-  quantity?: number;
-  product?: {
-    id: string;
-    code: string;
-  };
-  statusHistory: Array<{
-    status: 'APPROVED' | 'NEEDS_FIXES' | 'ON_HOLD' | 'PENDING';
-    createdAt: string;
-  }>;
-}
+import { Task, RegisteredTask } from '../../types/task';
+import { EditIcon } from '@chakra-ui/icons';
 
 interface TaskWithLogs {
   task: Task;
@@ -111,24 +88,50 @@ export const AdminProjectDetails = ({ project }: AdminProjectDetailsProps) => {
 
   return (
     <Box>
-      <HStack justify="space-between" mb={5}>
-        <Heading size="lg">{project.name}</Heading>
+      <Stack 
+        justify="space-between" 
+        mb={5}
+        direction={{ base: 'column', md: 'row' }}
+        spacing={{ base: 4, md: 0 }}
+        align={{ base: 'stretch', md: 'center' }}
+      >
+        <Heading size={{ base: 'md', md: 'lg' }}>{project.name}</Heading>
         <HStack spacing={3}>
-          <Button colorScheme='gray' onClick={() => navigate(`/projects/${project.id}/payments`)}>
+          <Button 
+            colorScheme='gray' 
+            onClick={() => navigate(`/projects/${project.id}/payments`)}
+            size={{ base: 'sm', md: 'md' }}
+          >
             Платежі
           </Button>
-
-          <Button colorScheme='green' onClick={() => navigate(`/projects/${project.id}/products`)}>
-            Продукти проекту
+          <Button 
+            colorScheme='green' 
+            onClick={() => navigate(`/projects/${project.id}/products`)}
+            size={{ base: 'sm', md: 'md' }}
+          >
+            Продукти
           </Button>
-          <Button colorScheme="orange" onClick={() => navigate(`/projects/${project.id}/tasks`)}>
-            Задачі проекту
+          <Button 
+            colorScheme="orange" 
+            onClick={() => navigate(`/projects/${project.id}/tasks`)}
+            size={{ base: 'sm', md: 'md' }}
+          >
+            Задачі 
           </Button>
-          <Button colorScheme="blue" onClick={() => navigate(`/projects/${project.id}/edit`)}>
-            Редагувати проект
+          <Button 
+            colorScheme="blue" 
+            onClick={() => navigate(`/projects/${project.id}/edit`)}
+            size={{ base: 'sm', md: 'md' }}
+            px={{ base: 2, md: 4 }}
+          >
+            <Icon as={EditIcon} display={{ base: 'block', md: 'none' }} />
+            <HStack display={{ base: 'none', md: 'flex' }} spacing={2}>
+              <Icon as={EditIcon} />
+              <Text>Редагувати проект</Text>
+            </HStack>
           </Button>
         </HStack>
-      </HStack>
+      </Stack>
 
       <Stack spacing={5}>
         <Card shadow="xl">

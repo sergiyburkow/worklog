@@ -23,6 +23,7 @@ import {
 import { api } from '../../lib/api';
 import { FaQrcode } from 'react-icons/fa';
 import { QRScanner } from '../QRScanner';
+import { QRInput } from '../common/QRInput';
 
 interface Task {
   id: string;
@@ -70,7 +71,6 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
   taskType,
 }) => {
   const toast = useToast();
-  const [showScanner, setShowScanner] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projectUsers, setProjectUsers] = useState<ProjectUser[]>([]);
   const [isCheckingProduct, setIsCheckingProduct] = useState(false);
@@ -98,7 +98,7 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
     productCode: '',
     taskId: '',
     registeredAt: formatDateForInput(new Date()),
-    userId: ['ADMIN', 'PROJECT_MANAGER'].includes(currentUser.role) ? undefined : currentUser.id,
+    userId: currentUser.id,
     timeSpent: '',
     hours: '',
     minutes: '',
@@ -228,7 +228,6 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
         duration: 3000,
         isClosable: true,
       });
-      setShowScanner(false);
       return;
     }
 
@@ -238,7 +237,6 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
       ...prev, 
       productCode: [...productCodes, result].join(', ') 
     }));
-    setShowScanner(false);
     toast({
       title: 'Успіх',
       description: 'Код продукту додано',
@@ -467,24 +465,16 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
           </FormControl>
         )}
 
-{isProductTask && (
+        {isProductTask && (
           <FormControl>
             <FormLabel>Код продукту</FormLabel>
-            <InputGroup>
-              <Input
-                value={formData.productCode}
-                onChange={handleProductCodeChange}
-                onBlur={handleProductCodeBlur}
-                placeholder="Введіть коди продуктів через кому або пробіл"
-              />
-              <InputLeftElement>
-                <Icon
-                  as={FaQrcode}
-                  cursor="pointer"
-                  onClick={() => setShowScanner(true)}
-                />
-              </InputLeftElement>
-            </InputGroup>
+            <QRInput
+              value={formData.productCode}
+              onChange={handleProductCodeChange}
+              onBlur={handleProductCodeBlur}
+              onScan={handleScan}
+              placeholder="Введіть коди продуктів через кому або пробіл"
+            />
             {productCodes.length > 0 && (
               <Box mt={2}>
                 <Text fontSize="sm" mb={2}>Додані коди:</Text>
@@ -506,13 +496,6 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
             )}
           </FormControl>
         )}
-
-        <QRScanner
-          onScan={handleScan}
-          onError={handleScanError}
-          isOpen={showScanner}
-          onClose={() => setShowScanner(false)}
-        />
 
         <FormControl isRequired>
           <FormLabel>Дата та час виконання</FormLabel>
