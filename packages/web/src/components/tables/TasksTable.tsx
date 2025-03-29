@@ -47,6 +47,7 @@ export const TasksTable = ({ tasks, title, type, onDelete, onEdit }: TasksTableP
               <Th>Тип</Th>
               {showEstimatedTime && <Th>Продукт</Th>}
               <Th>Опис</Th>
+              <Th>Вартість</Th>
               <Th>Дії</Th>
             </Tr>
           </Thead>
@@ -63,6 +64,7 @@ export const TasksTable = ({ tasks, title, type, onDelete, onEdit }: TasksTableP
                   <Td>{task.type === TaskType.PRODUCT ? task.product : '-'}</Td>
                 )}
                 <Td>{task.description || '-'}</Td>
+                <Td>{task.cost ? `${task.cost} грн` : '-'}</Td>
                 <Td>
                   <HStack spacing={2}>
                     {onEdit && (

@@ -49,4 +49,9 @@ export class UpdateTaskDto {
   @IsString()
   @IsOptional()
   estimatedTime?: string;
+
+  @ApiProperty({ required: false })
+  @IsNumber()
+  @IsOptional()
+  cost?: number;
 } 

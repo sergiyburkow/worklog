@@ -19,6 +19,7 @@ export interface TaskFormData {
   type: TaskType;
   complexity?: number;
   tags?: string;
+  cost?: number;
 }
 
 interface TaskFormProps {
@@ -107,17 +108,31 @@ export const TaskForm = ({
             />
           </FormControl>
 
-            <FormControl isRequired>
-              <FormLabel>Очікуваний час виконання (хвилин)</FormLabel>
-              <Input
-                type="number"
-                step="0.1"
-                min="0"
-                value={formData.estimatedTime || ''}
-                onChange={(e) => onChange({ estimatedTime: e.target.value })}
-                placeholder="Введіть очікуваний час"
-              />
-            </FormControl>
+          <FormControl>
+            <FormLabel>Вартість</FormLabel>
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              value={formData.cost || ''}
+              onChange={(e) => onChange({ 
+                cost: e.target.value ? parseFloat(e.target.value) : undefined 
+              })}
+              placeholder="Введіть вартість"
+            />
+          </FormControl>
+
+          <FormControl isRequired>
+            <FormLabel>Очікуваний час виконання (хвилин)</FormLabel>
+            <Input
+              type="number"
+              step="0.1"
+              min="0"
+              value={formData.estimatedTime || ''}
+              onChange={(e) => onChange({ estimatedTime: e.target.value })}
+              placeholder="Введіть очікуваний час"
+            />
+          </FormControl>
         </VStack>
       </ModalBody>
 

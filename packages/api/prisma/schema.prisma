@@ -1,7 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  // previewFeatures = ["fullTextSearch"]
-  // seed = "ts-node prisma/seed.ts"
 }
 
 datasource db {
@@ -10,23 +8,23 @@ datasource db {
 }
 
 model User {
-  id            String                 @id @default(uuid())
-  name          String
-  email         String?                @unique
-  phone         String?
-  passwordHash  String?                @map("password_hash")
-  role          UserRole               @default(WORKER)
-  callSign      String?
-  createdAt     DateTime               @default(now())
-  lastName      String?
-  updatedAt     DateTime               @updatedAt
-  projects      ProjectUser[]
-  statusHistory TaskLogStatusHistory[]
-  skills        UserSkill[]
-  tokens        UserToken[]
-  taskLogs      TaskLog[]              @relation("CreatedBy")
-  receivedPayments Payment[] @relation("ReceivedPayments")
-  createdPayments  Payment[] @relation("CreatedPayments")
+  id               String                 @id @default(uuid())
+  name             String
+  email            String?                @unique
+  phone            String?
+  passwordHash     String?                @map("password_hash")
+  role             UserRole               @default(WORKER)
+  callSign         String?
+  createdAt        DateTime               @default(now())
+  lastName         String?
+  updatedAt        DateTime               @updatedAt
+  createdPayments  Payment[]              @relation("CreatedPayments")
+  receivedPayments Payment[]              @relation("ReceivedPayments")
+  projects         ProjectUser[]
+  statusHistory    TaskLogStatusHistory[]
+  skills           UserSkill[]
+  tokens           UserToken[]
+  taskLogs         TaskLog[]              @relation("CreatedBy")
 
   @@map("Users")
 }
@@ -80,11 +78,11 @@ model Project {
   status        ProjectStatus @default(NEW)
   quantity      Int?
   updatedAt     DateTime      @updatedAt @map("updated_at")
+  payments      Payment[]
   products      Product[]
   users         ProjectUser[]
   client        Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
   tasks         Task[]
-  payments      Payment[]
 
   @@map("Projects")
 }
@@ -110,10 +108,10 @@ model Task {
   complexity    Int?
   tags          String?
   estimatedTime Decimal?   @map("estimated_time")
-  cost          Decimal    @default(0) @map("cost")
   projectId     String     @map("project_id")
   createdAt     DateTime   @default(now()) @map("created_at")
   updatedAt     DateTime   @updatedAt @map("updated_at")
+  cost          Decimal    @default(0) @map("cost")
   logs          TaskLog[]
   project       Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
@@ -181,18 +179,17 @@ model UserSkill {
 }
 
 model Payment {
-  id            String   @id @default(uuid())
-  userId        String   @map("user_id")
-  projectId     String   @map("project_id")
-  createdById   String   @map("created_by_id")
-  amount        Decimal
-  date          DateTime @default(now())
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-  
-  user          User     @relation("ReceivedPayments", fields: [userId], references: [id])
-  project       Project  @relation(fields: [projectId], references: [id])
-  createdBy     User     @relation("CreatedPayments", fields: [createdById], references: [id])
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  projectId   String   @map("project_id")
+  createdById String   @map("created_by_id")
+  amount      Decimal
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdBy   User     @relation("CreatedPayments", fields: [createdById], references: [id])
+  project     Project  @relation(fields: [projectId], references: [id])
+  user        User     @relation("ReceivedPayments", fields: [userId], references: [id])
 
   @@map("Payments")
 }

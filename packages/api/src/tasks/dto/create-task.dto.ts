@@ -34,4 +34,9 @@ export class CreateTaskDto {
   @IsString()
   @IsOptional()
   estimatedTime?: string;
+
+  @ApiProperty({ required: false })
+  @IsNumber()
+  @IsOptional()
+  cost?: number;
 } 

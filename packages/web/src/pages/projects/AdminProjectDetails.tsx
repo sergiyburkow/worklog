@@ -1,4 +1,4 @@
-import { Box, Heading, Card, CardBody, Stack, Text, Badge, Button, HStack, VStack, CardHeader, Icon } from '@chakra-ui/react';
+import { Box, Heading, Card, CardBody, Stack, Text, Badge, Button, HStack, VStack, CardHeader, Icon, TableContainer, Table, Thead, Tr, Th, Tbody, IconButton, Td } from '@chakra-ui/react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Project } from '../../types/project';
 import { format, isToday, parseISO, startOfDay, endOfDay } from 'date-fns';
@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../../lib/api';
 import { LogsByTasks } from './components/LogsByTasks';
 import { Task, RegisteredTask } from '../../types/task';
-import { EditIcon } from '@chakra-ui/icons';
+import { EditIcon, DeleteIcon } from '@chakra-ui/icons';
 
 interface TaskWithLogs {
   task: Task;
@@ -35,6 +35,11 @@ export const AdminProjectDetails = ({ project }: AdminProjectDetailsProps) => {
   const [taskLogs, setTaskLogs] = useState<LogsByTasksData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [productsCount, setProductsCount] = useState(0);
+
+  useEffect(() => {
+    console.log('Project:', project);
+    console.log('Project users:', project.users);
+  }, [project]);
 
   useEffect(() => {
     const fetchTasks = async () => {
@@ -85,6 +90,21 @@ export const AdminProjectDetails = ({ project }: AdminProjectDetailsProps) => {
     const today = new Date();
     return taskDate >= startOfDay(today) && taskDate <= endOfDay(today);
   });
+
+  const handleEditRole = async (userId: string) => {
+    // TODO: Implement role editing functionality
+    console.log('Edit role for user:', userId);
+  };
+
+  const handleRemoveUser = async (userId: string) => {
+    try {
+      await api.delete(`/projects/${project.id}/users/${userId}`);
+      // Refresh project data or update local state
+      window.location.reload();
+    } catch (error) {
+      console.error('Error removing user:', error);
+    }
+  };
 
   return (
     <Box>
@@ -222,18 +242,37 @@ export const AdminProjectDetails = ({ project }: AdminProjectDetailsProps) => {
         <Card>
           <CardBody>
             <Heading size="md" mb={4}>Учасники проекту</Heading>
-            <VStack align="stretch" spacing={3}>
-              {project.users.map(user => (
-                <HStack key={user.userId} justify="space-between">
-                  <Link to={`/projects/${project.id}/users/${user.userId}`}>
-                    {user.user.name}
-                    {user.user.callSign && <Text as="span" color="gray.500" ml={2}>"{user.user.callSign}"</Text>}
-                    {user.user.lastName && <Text as="span" ml={2}>{user.user.lastName}</Text>}
-                  </Link>
-                  <Badge>{user.role}</Badge>
-                </HStack>
-              ))}
-            </VStack>
+            <TableContainer>
+              <Table variant="simple">
+                <Thead>
+                  <Tr>
+                    <Th>Користувач</Th>
+                    <Th>Email</Th>
+                    <Th>Телефон</Th>
+                    <Th>Роль</Th>
+                    <Th>Дії</Th>
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  {project.users.map(user => (
+                    <Tr key={user.userId}>
+                      <Td>
+                        <Link to={`/projects/${project.id}/users/${user.userId}`}>
+                          {user.user.name}
+                          {user.user.callSign && <Text as="span" color="gray.500" ml={2}>"{user.user.callSign}"</Text>}
+                          {user.user.lastName && <Text as="span" ml={2}>{user.user.lastName}</Text>}
+                        </Link>
+                      </Td>
+                      <Td>{user.user.email}</Td>
+                      <Td>{user.user.phone || '-'}</Td>
+                      <Td>
+                        <Badge>{user.role}</Badge>
+                      </Td>
+                    </Tr>
+                  ))}
+                </Tbody>
+              </Table>
+            </TableContainer>
           </CardBody>
         </Card>
       </Stack>

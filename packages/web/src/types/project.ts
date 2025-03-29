@@ -27,8 +27,9 @@ export interface ProjectUser {
   user: {
     id: string;
     name: string;
-    lastName?: string;
-    callSign?: string;
+    lastName: string | null;
+    callSign: string | null;
     email: string;
+    phone: string | null;
   };
 } 

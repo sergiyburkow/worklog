@@ -19,6 +19,7 @@ export class TasksService {
         complexity: createTaskDto.complexity,
         tags: createTaskDto.tags,
         estimatedTime: createTaskDto.estimatedTime ? new Prisma.Decimal(createTaskDto.estimatedTime) : new Prisma.Decimal(0),
+        cost: createTaskDto.cost ? new Prisma.Decimal(createTaskDto.cost) : new Prisma.Decimal(0),
         project: {
           connect: {
             id: createTaskDto.projectId,
@@ -80,6 +81,9 @@ export class TasksService {
       ...(updateTaskDto.status && { status: updateTaskDto.status }),
       ...(updateTaskDto.estimatedTime && { 
         estimatedTime: new Prisma.Decimal(updateTaskDto.estimatedTime) 
+      }),
+      ...(updateTaskDto.cost !== undefined && { 
+        cost: new Prisma.Decimal(updateTaskDto.cost) 
       }),
       ...(updateTaskDto.projectId && {
         project: {

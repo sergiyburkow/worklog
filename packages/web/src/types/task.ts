@@ -21,6 +21,9 @@ export interface Task {
   estimatedTime?: string;
   complexity?: number;
   tags?: string;
+  product?: string;
+  quantity?: number;
+  cost?: number;
 }
 
 export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {

@@ -25,7 +25,10 @@ export class ProjectsService {
               select: {
                 id: true,
                 name: true,
+                lastName: true,
+                callSign: true,
                 email: true,
+                phone: true,
               },
             },
           },
@@ -41,16 +44,21 @@ export class ProjectsService {
 
     return projects.map(project => ({
       ...project,
-      users: project.users.map(user => ({
-        userId: user.userId,
-        role: user.role as string,
+      startDate: new Date(project.startDate),
+      deadline: new Date(project.deadline),
+      actualEndDate: project.actualEndDate ? new Date(project.actualEndDate) : undefined,
+      users: project.users.map(pu => ({
+        userId: pu.userId,
+        role: pu.role as string,
         user: {
-          id: user.user.id,
-          name: user.user.name,
-          email: user.user.email || '',
+          id: pu.user.id,
+          name: pu.user.name,
+          lastName: pu.user.lastName,
+          callSign: pu.user.callSign,
+          email: pu.user.email || '',
+          phone: pu.user.phone || '',
         },
       })),
-      actualEndDate: project.actualEndDate || undefined,
       quantity: project.quantity || undefined,
     }));
   }
@@ -59,21 +67,24 @@ export class ProjectsService {
     const project = await this.prisma.project.findUnique({
       where: { id },
       include: {
+        client: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         users: {
           include: {
             user: {
               select: {
                 id: true,
                 name: true,
+                lastName: true,
+                callSign: true,
                 email: true,
+                phone: true,
               },
             },
-          },
-        },
-        client: {
-          select: {
-            id: true,
-            name: true,
           },
         },
       },
@@ -85,16 +96,21 @@ export class ProjectsService {
 
     return {
       ...project,
-      users: project.users.map(user => ({
-        userId: user.userId,
-        role: user.role as string,
+      startDate: new Date(project.startDate),
+      deadline: new Date(project.deadline),
+      actualEndDate: project.actualEndDate ? new Date(project.actualEndDate) : undefined,
+      users: project.users.map(pu => ({
+        userId: pu.userId,
+        role: pu.role as string,
         user: {
-          id: user.user.id,
-          name: user.user.name,
-          email: user.user.email || '',
+          id: pu.user.id,
+          name: pu.user.name,
+          lastName: pu.user.lastName,
+          callSign: pu.user.callSign,
+          email: pu.user.email || '',
+          phone: pu.user.phone || '',
         },
       })),
-      actualEndDate: project.actualEndDate || undefined,
       quantity: project.quantity || undefined,
     };
   }
@@ -124,7 +140,10 @@ export class ProjectsService {
               select: {
                 id: true,
                 name: true,
+                lastName: true,
+                callSign: true,
                 email: true,
+                phone: true,
               },
             },
           },
@@ -140,16 +159,21 @@ export class ProjectsService {
 
     return {
       ...project,
-      users: project.users.map(user => ({
-        userId: user.userId,
-        role: user.role as string,
+      startDate: new Date(project.startDate),
+      deadline: new Date(project.deadline),
+      actualEndDate: project.actualEndDate ? new Date(project.actualEndDate) : undefined,
+      users: project.users.map(pu => ({
+        userId: pu.userId,
+        role: pu.role as string,
         user: {
-          id: user.user.id,
-          name: user.user.name,
-          email: user.user.email || '',
+          id: pu.user.id,
+          name: pu.user.name,
+          lastName: pu.user.lastName,
+          callSign: pu.user.callSign,
+          email: pu.user.email || '',
+          phone: pu.user.phone || '',
         },
       })),
-      actualEndDate: project.actualEndDate || undefined,
       quantity: project.quantity || undefined,
     };
   }
@@ -187,7 +211,10 @@ export class ProjectsService {
               select: {
                 id: true,
                 name: true,
+                lastName: true,
+                callSign: true,
                 email: true,
+                phone: true,
               },
             },
           },
@@ -203,16 +230,21 @@ export class ProjectsService {
 
     return {
       ...project,
-      users: project.users.map(user => ({
-        userId: user.userId,
-        role: user.role as string,
+      startDate: new Date(project.startDate),
+      deadline: new Date(project.deadline),
+      actualEndDate: project.actualEndDate ? new Date(project.actualEndDate) : undefined,
+      users: project.users.map(pu => ({
+        userId: pu.userId,
+        role: pu.role as string,
         user: {
-          id: user.user.id,
-          name: user.user.name,
-          email: user.user.email || '',
+          id: pu.user.id,
+          name: pu.user.name,
+          lastName: pu.user.lastName,
+          callSign: pu.user.callSign,
+          email: pu.user.email || '',
+          phone: pu.user.phone || '',
         },
       })),
-      actualEndDate: project.actualEndDate || undefined,
       quantity: project.quantity || undefined,
     };
   }
@@ -443,7 +475,10 @@ export class ProjectsService {
               select: {
                 id: true,
                 name: true,
+                lastName: true,
+                callSign: true,
                 email: true,
+                phone: true,
               },
             },
           },
@@ -459,16 +494,19 @@ export class ProjectsService {
 
     return projects.map(project => ({
       ...project,
-      users: project.users.map(user => ({
-        userId: user.userId,
-        role: user.role as string,
-        user: {
-          id: user.user.id,
-          name: user.user.name,
-          email: user.user.email || '',
-        },
+      startDate: new Date(project.startDate),
+      deadline: new Date(project.deadline),
+      actualEndDate: project.actualEndDate ? new Date(project.actualEndDate) : undefined,
+      users: project.users.map(pu => ({
+        id: pu.user.id,
+        name: pu.user.name,
+        lastName: pu.user.lastName,
+        callSign: pu.user.callSign,
+        email: pu.user.email || '',
+        phone: pu.user.phone || '',
+        role: pu.role as string,
+        isActive: pu.isActive,
       })),
-      actualEndDate: project.actualEndDate || undefined,
       quantity: project.quantity || undefined,
     }));
   }

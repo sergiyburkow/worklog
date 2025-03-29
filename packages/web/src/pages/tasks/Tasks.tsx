@@ -46,6 +46,7 @@ interface TaskFormData {
   tags?: string;
   quantity?: number;
   product?: string;
+  cost?: number;
 }
 
 export const Tasks = () => {
@@ -124,6 +125,7 @@ export const Tasks = () => {
         ...formData,
         projectId,
         estimatedTime: formData.type === TaskType.GENERAL ? '0' : formData.estimatedTime,
+        cost: formData.cost || 0
       });
 
       toast({
@@ -169,7 +171,8 @@ export const Tasks = () => {
       complexity: task.complexity,
       tags: task.tags,
       product: task.product,
-      quantity: task.quantity
+      quantity: task.quantity,
+      cost: task.cost
     });
     onEditOpen();
   };
@@ -185,6 +188,7 @@ export const Tasks = () => {
         ...formData,
         projectId,
         estimatedTime: formData.type === TaskType.GENERAL ? '0' : formData.estimatedTime,
+        cost: formData.cost || 0
       });
 
       toast({

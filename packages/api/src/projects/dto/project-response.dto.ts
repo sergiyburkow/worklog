@@ -1,14 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { ProjectUserResponseDto } from './project-user-response.dto';
 
 export class ProjectResponseDto {
   @ApiProperty()
-  id: number;
+  id: string;
 
   @ApiProperty()
   name: string;
 
   @ApiProperty()
-  clientId: number;
+  clientId: string;
 
   @ApiProperty()
   startDate: Date;
@@ -20,11 +21,17 @@ export class ProjectResponseDto {
   actualEndDate?: Date;
 
   @ApiProperty()
-  statusId: number;
+  status: string;
+
+  @ApiProperty({ required: false })
+  quantity?: number;
 
   @ApiProperty()
-  updatedAt: Date;
+  client: {
+    id: string;
+    name: string;
+  };
 
-  @ApiProperty({ type: [Number] })
-  userIds: number[];
+  @ApiProperty({ type: [ProjectUserResponseDto] })
+  users: ProjectUserResponseDto[];
 } 
