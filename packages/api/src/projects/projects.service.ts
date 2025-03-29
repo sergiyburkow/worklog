@@ -358,6 +358,20 @@ export class ProjectsService {
     }));
   }
 
+  async getProjectUserPaymentsSum(projectId: string, userId: string): Promise<number> {
+    const payments = await this.prisma.payment.findMany({
+      where: { 
+        projectId,
+        userId 
+      },
+      select: {
+        amount: true
+      }
+    });
+
+    return payments.reduce((sum, payment) => sum + Number(payment.amount), 0);
+  }
+
   async createProjectPayment(
     projectId: string,
     createPaymentDto: CreateProjectPaymentDto,

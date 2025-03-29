@@ -117,6 +117,21 @@ export class ProjectsController {
     return this.projectsService.findProjectPayments(projectId);
   }
 
+  @Get(':projectId/users/:userId/payments/sum')
+  @UseGuards(ProjectAccessGuard)
+  @ApiOperation({ summary: 'Get sum of payments for a user in project' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns sum of payments',
+    type: Number,
+  })
+  async getProjectUserPaymentsSum(
+    @Param('projectId') projectId: string,
+    @Param('userId') userId: string,
+  ): Promise<number> {
+    return this.projectsService.getProjectUserPaymentsSum(projectId, userId);
+  }
+
   @Post(':projectId/payments')
   @UseGuards(ProjectAccessGuard)
   @ApiOperation({ summary: 'Create project payment' })

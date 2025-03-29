@@ -24,7 +24,6 @@ export const LogsByDays = ({ logs }: LogsByDaysProps) => {
 
   return (
     <VStack spacing={6} align="stretch">
-      <Heading size="md">Реєстрації по днях</Heading>
       {sortedDays.map((date) => (
         <DayLogs key={date} date={date} logs={logsByDays[date]} />
       ))}
@@ -38,7 +37,7 @@ interface DayLogsProps {
 }
 
 const DayLogs = ({ date, logs }: DayLogsProps) => {
-  const { isOpen, onToggle } = useDisclosure({ defaultIsOpen: true });
+  const { isOpen, onToggle } = useDisclosure({ defaultIsOpen: false });
   const formattedDate = format(parseISO(date), 'dd MMMM yyyy', { locale: uk });
 
   return (

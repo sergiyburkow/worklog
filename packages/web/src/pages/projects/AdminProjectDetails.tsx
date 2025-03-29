@@ -1,4 +1,4 @@
-import { Box, Heading, Card, CardBody, Stack, Text, Badge, Button, HStack, VStack, CardHeader, Icon, TableContainer, Table, Thead, Tr, Th, Tbody, IconButton, Td } from '@chakra-ui/react';
+import { Box, Heading, Card, CardBody, Stack, Text, Badge, Button, HStack, VStack, CardHeader, Icon, TableContainer, Table, Thead, Tr, Th, Tbody, IconButton, Td, Collapse, useDisclosure } from '@chakra-ui/react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Project } from '../../types/project';
 import { format, isToday, parseISO, startOfDay, endOfDay } from 'date-fns';
@@ -9,12 +9,13 @@ import { useEffect, useState } from 'react';
 import { api } from '../../lib/api';
 import { LogsByTasks } from './components/LogsByTasks';
 import { Task, RegisteredTask } from '../../types/task';
-import { EditIcon, DeleteIcon } from '@chakra-ui/icons';
+import { EditIcon, DeleteIcon, ChevronDownIcon, ChevronUpIcon } from '@chakra-ui/icons';
 
 interface TaskWithLogs {
   task: Task;
   logsCount: number;
   totalTimeSpent: number;
+  totalCost: number;
 }
 
 interface LogsByTasksData {
@@ -35,6 +36,31 @@ export const AdminProjectDetails = ({ project }: AdminProjectDetailsProps) => {
   const [taskLogs, setTaskLogs] = useState<LogsByTasksData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [productsCount, setProductsCount] = useState(0);
+
+  const {
+    isOpen: isRegistrationOpen,
+    onToggle: onRegistrationToggle
+  } = useDisclosure({ defaultIsOpen: true });
+
+  const {
+    isOpen: isProjectInfoOpen,
+    onToggle: onProjectInfoToggle
+  } = useDisclosure({ defaultIsOpen: true });
+
+  const {
+    isOpen: isTasksOpen,
+    onToggle: onTasksToggle
+  } = useDisclosure({ defaultIsOpen: true });
+
+  const {
+    isOpen: isUsersOpen,
+    onToggle: onUsersToggle
+  } = useDisclosure({ defaultIsOpen: true });
+
+  const {
+    isOpen: isRegisteredTasksOpen,
+    onToggle: onRegisteredTasksToggle
+  } = useDisclosure({ defaultIsOpen: true });
 
   useEffect(() => {
     console.log('Project:', project);
@@ -155,125 +181,189 @@ export const AdminProjectDetails = ({ project }: AdminProjectDetailsProps) => {
 
       <Stack spacing={5}>
         <Card shadow="xl">
-          <CardHeader bg="gray.300" py={2}>
-            <Heading size="sm">Зареєструвати роботу</Heading>
+          <CardHeader 
+            bg="gray.300" 
+            py={2} 
+            cursor="pointer"
+            onClick={onRegistrationToggle}
+            _hover={{ bg: 'gray.400' }}
+          >
+            <HStack justify="space-between">
+              <Heading size="sm">Зареєструвати роботу</Heading>
+              <Icon as={isRegistrationOpen ? ChevronUpIcon : ChevronDownIcon} />
+            </HStack>
           </CardHeader>
-          <CardBody>
-            <TaskRegistrationButtons projectId={project.id} />
-          </CardBody>
+          <Collapse in={isRegistrationOpen}>
+            <CardBody>
+              <TaskRegistrationButtons projectId={project.id} />
+            </CardBody>
+          </Collapse>
         </Card>
 
         <Card>
-          <CardBody>
-            <VStack align="stretch" spacing={3}>
-              <HStack justify="space-between">
-                <Text fontWeight="bold">Статус:</Text>
-                <Badge colorScheme={project.status === 'IN_PROGRESS' ? 'green' : 'yellow'}>
-                  {project.status === 'IN_PROGRESS' ? 'В роботі' : 'Не розпочато'}
-                </Badge>
-              </HStack>
-              
-              <HStack justify="space-between">
-                <Text fontWeight="bold">Клієнт:</Text>
-                <Text>{project.client.name}</Text>
-              </HStack>
-
-              <HStack justify="space-between">
-                <Text fontWeight="bold">Дата початку:</Text>
-                <Text>
-                  {format(new Date(project.startDate), 'dd MMMM yyyy', { locale: uk })}
-                </Text>
-              </HStack>
-
-              <HStack justify="space-between">
-                <Text fontWeight="bold">Дата завершення:</Text>
-                <Text>
-                  {format(new Date(project.deadline), 'dd MMMM yyyy', { locale: uk })}
-                </Text>
-              </HStack>
-
-              {project.quantity && (
+          <CardHeader 
+            cursor="pointer"
+            onClick={onProjectInfoToggle}
+            _hover={{ bg: 'gray.50' }}
+          >
+            <HStack justify="space-between">
+              <Heading size="sm">Інформація про проект</Heading>
+              <Icon as={isProjectInfoOpen ? ChevronUpIcon : ChevronDownIcon} />
+            </HStack>
+          </CardHeader>
+          <Collapse in={isProjectInfoOpen}>
+            <CardBody>
+              <VStack align="stretch" spacing={3}>
                 <HStack justify="space-between">
-                  <Text fontWeight="bold">Кількість:</Text>
-                  <Text>{project.quantity} / {productsCount}</Text>
+                  <Text fontWeight="bold">Статус:</Text>
+                  <Badge colorScheme={project.status === 'IN_PROGRESS' ? 'green' : 'yellow'}>
+                    {project.status === 'IN_PROGRESS' ? 'В роботі' : 'Не розпочато'}
+                  </Badge>
                 </HStack>
-              )}
-            </VStack>
-          </CardBody>
+                
+                <HStack justify="space-between">
+                  <Text fontWeight="bold">Клієнт:</Text>
+                  <Text>{project.client.name}</Text>
+                </HStack>
+
+                <HStack justify="space-between">
+                  <Text fontWeight="bold">Дата початку:</Text>
+                  <Text>
+                    {format(new Date(project.startDate), 'dd MMMM yyyy', { locale: uk })}
+                  </Text>
+                </HStack>
+
+                <HStack justify="space-between">
+                  <Text fontWeight="bold">Дата завершення:</Text>
+                  <Text>
+                    {format(new Date(project.deadline), 'dd MMMM yyyy', { locale: uk })}
+                  </Text>
+                </HStack>
+
+                {project.quantity && (
+                  <HStack justify="space-between">
+                    <Text fontWeight="bold">Кількість:</Text>
+                    <Text>{project.quantity} / {productsCount}</Text>
+                  </HStack>
+                )}
+              </VStack>
+            </CardBody>
+          </Collapse>
         </Card>
 
-        {taskLogs?.tasks && <LogsByTasks tasks={taskLogs.tasks} />}
-
-        <Card>
-          <CardBody>
+        {taskLogs?.tasks && (
+          <Card>
+            <CardHeader 
+              cursor="pointer"
+              onClick={onTasksToggle}
+              _hover={{ bg: 'gray.50' }}
+            >
               <HStack justify="space-between">
-                <Heading size="md">Зареєстровані задачі</Heading>
-                <Button 
-                colorScheme="blue"
-                onClick={() => navigate(`/projects/${project.id}/tasks/registered`)}
-                >Всі задачі</Button>
-
+                <Heading size="sm">Задачі та реєстрації</Heading>
+                <Icon as={isTasksOpen ? ChevronUpIcon : ChevronDownIcon} />
               </HStack>
-            {isLoading ? (
-              <Text color="gray.500">Завантаження...</Text>
-            ) : (
-              <RegisteredTasksTable 
-                tasks={todayTasks} 
-                type="PRODUCT"
-                onTaskDeleted={() => {
-                  const fetchTasks = async () => {
-                    try {
-                      const response = await api.get<RegisteredTask[]>(`/task-logs/project/${project.id}/tasks`);
-                      setTasks(response.data);
-                    } catch (error) {
-                      console.error('Error fetching tasks:', error);
-                    }
-                  };
+            </CardHeader>
+            <Collapse in={isTasksOpen}>
+              <CardBody>
+                <LogsByTasks tasks={taskLogs.tasks} />
+              </CardBody>
+            </Collapse>
+          </Card>
+        )}
 
-                  if (project.id) {
-                    fetchTasks();
-                  }
-                }}
-              />
-            )}
-          </CardBody>
+        <Card>
+          <CardHeader 
+            cursor="pointer"
+            onClick={onRegisteredTasksToggle}
+            _hover={{ bg: 'gray.50' }}
+          >
+            <HStack justify="space-between">
+              <Heading size="sm">Зареєстровані задачі</Heading>
+              <HStack justify="end" >
+                <Button 
+                  colorScheme="blue"
+                  size="sm"
+                  onClick={() => navigate(`/projects/${project.id}/tasks/registered`)}
+                >
+                  Всі задачі
+                </Button>
+                <Icon as={isRegisteredTasksOpen ? ChevronUpIcon : ChevronDownIcon} />
+                </HStack>
+            </HStack>
+          </CardHeader>
+          <Collapse in={isRegisteredTasksOpen}>
+            <CardBody>
+              {isLoading ? (
+                <Text color="gray.500">Завантаження...</Text>
+              ) : (
+                <RegisteredTasksTable 
+                  tasks={todayTasks} 
+                  type="PRODUCT"
+                  onTaskDeleted={() => {
+                    const fetchTasks = async () => {
+                      try {
+                        const response = await api.get<RegisteredTask[]>(`/task-logs/project/${project.id}/tasks`);
+                        setTasks(response.data);
+                      } catch (error) {
+                        console.error('Error fetching tasks:', error);
+                      }
+                    };
+
+                    if (project.id) {
+                      fetchTasks();
+                    }
+                  }}
+                />
+              )}
+            </CardBody>
+          </Collapse>
         </Card>
 
         <Card>
-          <CardBody>
-            <Heading size="md" mb={4}>Учасники проекту</Heading>
-            <TableContainer>
-              <Table variant="simple">
-                <Thead>
-                  <Tr>
-                    <Th>Користувач</Th>
-                    <Th>Email</Th>
-                    <Th>Телефон</Th>
-                    <Th>Роль</Th>
-                    <Th>Дії</Th>
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {project.users.map(user => (
-                    <Tr key={user.userId}>
-                      <Td>
-                        <Link to={`/projects/${project.id}/users/${user.userId}`}>
-                          {user.user.name}
-                          {user.user.callSign && <Text as="span" color="gray.500" ml={2}>"{user.user.callSign}"</Text>}
-                          {user.user.lastName && <Text as="span" ml={2}>{user.user.lastName}</Text>}
-                        </Link>
-                      </Td>
-                      <Td>{user.user.email}</Td>
-                      <Td>{user.user.phone || '-'}</Td>
-                      <Td>
-                        <Badge>{user.role}</Badge>
-                      </Td>
+          <CardHeader 
+            cursor="pointer"
+            onClick={onUsersToggle}
+            _hover={{ bg: 'gray.50' }}
+          >
+            <HStack justify="space-between">
+              <Heading size="sm">Учасники проекту</Heading>
+              <Icon as={isUsersOpen ? ChevronUpIcon : ChevronDownIcon} />
+            </HStack>
+          </CardHeader>
+          <Collapse in={isUsersOpen}>
+            <CardBody>
+              <TableContainer>
+                <Table variant="simple">
+                  <Thead>
+                    <Tr>
+                      <Th>Користувач</Th>
+                      <Th>Email</Th>
+                      <Th>Телефон</Th>
+                      <Th>Роль</Th>
                     </Tr>
-                  ))}
-                </Tbody>
-              </Table>
-            </TableContainer>
-          </CardBody>
+                  </Thead>
+                  <Tbody>
+                    {project.users.map(user => (
+                      <Tr key={user.userId}>
+                        <Td>
+                          <Link to={`/projects/${project.id}/users/${user.userId}`}>
+                            {user.user.name}
+                            {user.user.callSign && <Text as="span" color="gray.500" ml={2}>"{user.user.callSign}"</Text>}
+                            {user.user.lastName && <Text as="span" ml={2}>{user.user.lastName}</Text>}
+                          </Link>
+                        </Td>
+                        <Td>{user.user.email}</Td>
+                        <Td>{user.user.phone || '-'}</Td>
+                        <Td>
+                          <Badge>{user.role}</Badge>
+                        </Td>
+                      </Tr>
+                    ))}
+                  </Tbody>
+                </Table>
+              </TableContainer>
+            </CardBody>
+          </Collapse>
         </Card>
       </Stack>
     </Box>

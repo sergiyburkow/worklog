@@ -89,4 +89,12 @@ export interface RegisteredTask {
     status: 'APPROVED' | 'NEEDS_FIXES' | 'ON_HOLD' | 'PENDING';
     createdAt: string;
   }>;
+}
+
+export interface TaskWithLogs {
+  task: Task;
+  logsCount: number;
+  totalTimeSpent: number;
+  quantity?: number;
+  totalCost: number;
 } 

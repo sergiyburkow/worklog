@@ -392,7 +392,7 @@ export class TaskLogsService {
       return { tasks: [] };
     }
 
-    // Отримуємо деталі задач
+    // Отримуємо деталі задач та їх логи
     const taskIds = taskLogs.map(log => log.taskId);
 
     const tasks = await this.prisma.task.findMany({
@@ -411,6 +411,15 @@ export class TaskLogsService {
         complexity: true,
         tags: true,
         projectId: true,
+        cost: true,
+        logs: {
+          where: userId ? { userId } : undefined,
+          select: {
+            cost: true,
+            quantity: true,
+            timeSpent: true,
+          }
+        }
       }
     });
 
@@ -421,11 +430,26 @@ export class TaskLogsService {
           console.warn(`Task not found for log:`, log);
           return null;
         }
+
+        let totalCost = 0;
+        switch (task.type) {
+          case TaskType.PRODUCT:
+            totalCost = task.logs.reduce((sum, log) => sum + Number(log.cost || 0), 0);
+            break;
+          case TaskType.INTERMEDIATE:
+            totalCost = task.logs.reduce((sum, log) => sum + (Number(log.cost || 0) * (log.quantity || 0)), 0);
+            break;
+          case TaskType.GENERAL:
+            totalCost = task.logs.reduce((sum, log) => sum + (Number(log.cost || 0) * Number(log.timeSpent || 0)), 0);
+            break;
+        }
+
         return {
           task,
           logsCount: log._count.taskId,
           totalTimeSpent: log._sum.timeSpent || 0,
           quantity: task.type === TaskType.INTERMEDIATE ? (log._sum.quantity || 0) : undefined,
+          totalCost,
         };
       }).filter(Boolean)
     };
