@@ -36,7 +36,7 @@ export const LogsByTasks = ({ tasks }: LogsByTasksProps) => {
                     </Badge>
                   </Td>
                   <Td isNumeric>{logsCount}</Td>
-                  <Td isNumeric>{totalTimeSpent}</Td>
+                  <Td isNumeric>{totalTimeSpent ?? '-'}</Td>
                   <Td isNumeric>{task.type === TaskType.INTERMEDIATE ? quantity : '-'}</Td>
                   <Td isNumeric>
                     {new Intl.NumberFormat('uk-UA', {

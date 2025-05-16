@@ -256,7 +256,7 @@ export class TaskLogsService {
         return {
           task,
           logsCount: log._count.taskId,
-          totalTimeSpent: log._sum.timeSpent || 0,
+          totalTimeSpent: log._sum.timeSpent || null,
         };
       }).filter(Boolean)
     };
@@ -447,7 +447,7 @@ export class TaskLogsService {
         return {
           task,
           logsCount: log._count.taskId,
-          totalTimeSpent: log._sum.timeSpent || 0,
+          totalTimeSpent: log._sum.timeSpent || null,
           quantity: task.type === TaskType.INTERMEDIATE ? (log._sum.quantity || 0) : undefined,
           totalCost,
         };

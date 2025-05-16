@@ -14,7 +14,7 @@ import { EditIcon, DeleteIcon, ChevronDownIcon, ChevronUpIcon } from '@chakra-ui
 interface TaskWithLogs {
   task: Task;
   logsCount: number;
-  totalTimeSpent: number;
+  totalTimeSpent: number | null;
   totalCost: number;
 }
 

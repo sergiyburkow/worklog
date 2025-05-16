@@ -94,7 +94,7 @@ export interface RegisteredTask {
 export interface TaskWithLogs {
   task: Task;
   logsCount: number;
-  totalTimeSpent: number;
+  totalTimeSpent: number | null;
   quantity?: number;
   totalCost: number;
 } 
