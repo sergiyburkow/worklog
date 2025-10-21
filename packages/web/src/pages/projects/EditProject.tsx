@@ -90,7 +90,24 @@ interface Client {
 interface User {
   id: string;
   name: string;
+  lastName?: string;
+  callSign?: string;
 }
+
+// Функція форматування імені користувача
+const formatUserName = (user: User) => {
+  const parts = [user.name];
+  
+  if (user.callSign) {
+    parts.splice(1, 0, `"${user.callSign}"`);
+  }
+  
+  if (user.lastName) {
+    parts.push(user.lastName);
+  }
+  
+  return parts.join(' ');
+};
 
 export const EditProject = () => {
   const { id } = useParams();
@@ -136,6 +153,20 @@ export const EditProject = () => {
             })),
             status: project.status as ProjectStatus,
             quantity: project.quantity,
+          });
+          
+          // Оновити список користувачів з даними проекту
+          const projectUsers = project.users.map((pu: any) => ({
+            id: pu.user.id,
+            name: pu.user.name,
+            lastName: pu.user.lastName,
+            callSign: pu.user.callSign,
+          }));
+          setUsers(prevUsers => {
+            // Об'єднати користувачів з проекту з загальним списком
+            const existingUserIds = new Set(prevUsers.map(u => u.id));
+            const newUsers = projectUsers.filter(pu => !existingUserIds.has(pu.id));
+            return [...prevUsers, ...newUsers];
           });
         }
       } catch (error) {
@@ -294,7 +325,7 @@ export const EditProject = () => {
                       .filter(user => !projectData.projectUsers.some(pu => pu.userId === user.id))
                       .map((user) => (
                         <option key={user.id} value={user.id}>
-                          {user.name}
+                          {formatUserName(user)}
                         </option>
                       ))}
                   </Select>
@@ -327,7 +358,7 @@ export const EditProject = () => {
                     const user = users.find(u => u.id === projectUser.userId);
                     return (
                       <Tr key={projectUser.userId}>
-                        <Td>{user?.name || 'Невідомий користувач'}</Td>
+                        <Td>{user ? formatUserName(user) : 'Невідомий користувач'}</Td>
                         <Td>
                           <Badge colorScheme={PROJECT_USER_ROLE_COLORS[projectUser.role]}>
                             {PROJECT_USER_ROLE_LABELS[projectUser.role]}

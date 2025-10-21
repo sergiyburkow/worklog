@@ -39,22 +39,30 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route
-                path="/projects"
-                element={
-                  <ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER']}>
-                    <ProjectsList />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/projects/:id"
-                element={
-                  <ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER', 'WORKER', 'GUEST']}>
-                    <ProjectDetails />
-                  </ProtectedRoute>
-                }
-              />
+            <Route
+              path="/projects"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER']}>
+                  <ProjectsList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/projects/new"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER']}>
+                  <EditProject />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/projects/:id"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER', 'WORKER', 'GUEST']}>
+                  <ProjectDetails />
+                </ProtectedRoute>
+              }
+            />
               <Route
                 path="/projects/:id/edit"
                 element={
@@ -119,22 +127,30 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-              <Route
-                path="/clients"
-                element={
-                  <ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER']}>
-                    <ClientsList />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/clients/:id"
-                element={
-                  <ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER']}>
-                    <EditClient />
-                  </ProtectedRoute>
-                }
-              />
+            <Route
+              path="/clients"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER']}>
+                  <ClientsList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/clients/new"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER']}>
+                  <EditClient />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/clients/:id"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER']}>
+                  <EditClient />
+                </ProtectedRoute>
+              }
+            />
               <Route
                 path="/users"
                 element={

@@ -39,6 +39,14 @@ export const RootNavigator = () => {
               }
             />
             <Route
+              path="/projects/new"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER']}>
+                  <EditProject />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/projects/:id"
               element={
                 <ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER', 'WORKER', 'GUEST']}>
@@ -99,6 +107,14 @@ export const RootNavigator = () => {
               element={
                 <ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER']}>
                   <ClientsList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/clients/new"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER']}>
+                  <EditClient />
                 </ProtectedRoute>
               }
             />
