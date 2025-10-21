@@ -97,4 +97,40 @@ export interface TaskWithLogs {
   totalTimeSpent: number | null;
   quantity?: number;
   totalCost: number;
+}
+
+export interface TaskLog {
+  id: string;
+  task: {
+    name: string;
+    estimatedTime: number;
+    type: TaskType;
+  };
+  user: {
+    id?: string;
+    name: string;
+  };
+  completedAt: string | null;
+  registeredAt: string;
+  timeSpent?: number;
+  quantity?: number;
+  product?: {
+    id: string;
+    code: string;
+  };
+  statusHistory?: Array<{
+    status: 'APPROVED' | 'NEEDS_FIXES' | 'ON_HOLD';
+    createdAt: string;
+  }>;
+}
+
+export interface TaskLogFormData {
+  productCode: string;
+  taskId: string;
+  registeredAt: string;
+  userId?: string;
+  timeSpent?: string;
+  hours?: string;
+  minutes?: string;
+  quantity?: string;
 } 

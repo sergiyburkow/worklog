@@ -19,22 +19,17 @@ import {
   AlertIcon,
   Button,
   HStack,
-  Input,
-  InputGroup,
-  InputLeftElement,
   VStack,
   Badge,
 } from '@chakra-ui/react';
-import { EditIcon, DeleteIcon, AddIcon, SearchIcon, CheckIcon, CloseIcon } from '@chakra-ui/icons';
+import { EditIcon, DeleteIcon, AddIcon, CheckIcon, CloseIcon } from '@chakra-ui/icons';
 import { format } from 'date-fns';
 import { uk } from 'date-fns/locale';
 import { productsApi } from '../../api/products';
 import { Product, ProductWithProgress } from '../../types/product';
-import { CreateProductModal } from '../../components/products/CreateProductModal';
-import { EditProductModal } from '../../components/products/EditProductModal';
+import { ProductModal } from '../../components/products/ProductModal';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { QRInput } from '../../components/common/QRInput';
-import { QRScanner } from '../../components/QRScanner';
 
 export const ProjectProductsList = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -45,7 +40,6 @@ export const ProjectProductsList = () => {
   const [error, setError] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [showScanner, setShowScanner] = useState(false);
   const toast = useToast();
 
   const calculateProgress = (product: Product): number => {
@@ -108,7 +102,6 @@ export const ProjectProductsList = () => {
 
   const handleScan = (result: string) => {
     setSearchQuery(result);
-    setShowScanner(false);
     toast({
       title: 'Успіх',
       description: 'Код продукту відскановано',
@@ -116,10 +109,6 @@ export const ProjectProductsList = () => {
       duration: 3000,
       isClosable: true,
     });
-  };
-
-  const handleScanError = (error: any) => {
-    console.error('Помилка сканування:', error);
   };
 
   useEffect(() => {
@@ -248,17 +237,19 @@ export const ProjectProductsList = () => {
         </>
       )}
       {projectId && (
-        <CreateProductModal
+        <ProductModal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
+          mode="create"
           projectId={projectId}
           onSuccess={fetchProducts}
         />
       )}
       {editingProduct && (
-        <EditProductModal
+        <ProductModal
           isOpen={!!editingProduct}
           onClose={() => setEditingProduct(null)}
+          mode="edit"
           product={editingProduct}
           onSuccess={fetchProducts}
         />

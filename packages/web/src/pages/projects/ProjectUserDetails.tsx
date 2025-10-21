@@ -9,18 +9,7 @@ import { formatCurrency } from '../../utils/format';
 import { TaskWithLogs } from '../../types/task';
 import { RegisteredTask } from '../../types/task';
 
-interface ProjectUser {
-  userId: string;
-  role: string;
-  user: {
-    id: string;
-    name: string;
-    lastName: string | null;
-    callSign: string | null;
-    email: string;
-    phone: string | null;
-  };
-}
+import { ProjectUserResponse } from '../../types/project-user';
 
 interface TaskLogsResponse {
   tasks: TaskWithLogs[];
@@ -32,7 +21,7 @@ interface LogsByDaysResponse {
 
 export const ProjectUserDetails = () => {
   const { projectId, userId } = useParams<{ projectId: string; userId: string }>();
-  const [projectUser, setProjectUser] = useState<ProjectUser | null>(null);
+  const [projectUser, setProjectUser] = useState<ProjectUserResponse | null>(null);
   const [taskLogs, setTaskLogs] = useState<TaskLogsResponse | null>(null);
   const [logsByDays, setLogsByDays] = useState<LogsByDaysResponse | null>(null);
   const [totalPayments, setTotalPayments] = useState<number>(0);
@@ -47,7 +36,7 @@ export const ProjectUserDetails = () => {
   const fetchData = async () => {
     try {
       const [userResponse, logsResponse, logsByDaysResponse, paymentsResponse] = await Promise.all([
-        api.get<ProjectUser>(`/task-logs/project/${projectId}/user/${userId}`),
+        api.get<ProjectUserResponse>(`/task-logs/project/${projectId}/user/${userId}`),
         api.get<TaskLogsResponse>(`/task-logs/project/${projectId}/logsbytasks`, {
           params: { userId }
         }),

@@ -11,7 +11,7 @@ export interface Project {
     id: string;
     name: string;
   };
-  users: ProjectUser[];
+  users: ProjectUserResponse[];
 }
 
 export type ProjectStatus = 
@@ -21,15 +21,4 @@ export type ProjectStatus =
   | 'ON_HOLD'
   | 'CANCELLED';
 
-export interface ProjectUser {
-  userId: string;
-  role: string;
-  user: {
-    id: string;
-    name: string;
-    lastName: string | null;
-    callSign: string | null;
-    email: string;
-    phone: string | null;
-  };
-} 
+import { ProjectUserResponse } from './project-user'; 

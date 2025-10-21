@@ -13,33 +13,11 @@ import { AdminLayout } from '../../components/admin/AdminLayout';
 import { RegisteredTasksTable } from '../../components/tables/RegisteredTasksTable';
 import { api } from '../../lib/api';
 
-interface ProductTaskLog {
-  id: string;
-  task: {
-    name: string;
-    estimatedTime: number;
-    type: 'PRODUCT' | 'INTERMEDIATE' | 'GENERAL';
-  };
-  user: {
-    name: string;
-  };
-  completedAt: string | null;
-  registeredAt: string;
-  timeSpent?: number;
-  quantity?: number;
-  product?: {
-    id: string;
-    code: string;
-  };
-  statusHistory: Array<{
-    status: 'APPROVED' | 'NEEDS_FIXES' | 'ON_HOLD' | 'PENDING';
-    createdAt: string;
-  }>;
-}
+import { TaskLog } from '../../types/task';
 
 export const ProductTaskLogs: React.FC = () => {
   const { productId } = useParams<{ productId: string }>();
-  const [tasks, setTasks] = useState<ProductTaskLog[]>([]);
+  const [tasks, setTasks] = useState<TaskLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [productInfo, setProductInfo] = useState<{ code: string } | null>(null);
   const toast = useToast();

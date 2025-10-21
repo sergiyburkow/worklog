@@ -67,10 +67,7 @@ const PROJECT_USER_ROLE_COLORS: Record<ProjectUserRole, string> = {
   [ProjectUserRole.PADAWAN]: 'orange',
 };
 
-interface ProjectUser {
-  userId: string;
-  role: ProjectUserRole;
-}
+import { ProjectUser } from '../../types/project-user';
 
 interface ProjectData {
   name: string;

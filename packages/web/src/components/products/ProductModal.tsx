@@ -17,21 +17,35 @@ import {
 import { productsApi } from '../../api/products';
 import { Product } from '../../types/product';
 
-interface EditProductModalProps {
+interface ProductModalProps {
   isOpen: boolean;
   onClose: () => void;
-  product: Product;
+  mode: 'create' | 'edit';
+  product?: Product;
+  projectId?: string;
   onSuccess: () => void;
 }
 
-export const EditProductModal = ({ isOpen, onClose, product, onSuccess }: EditProductModalProps) => {
-  const [code, setCode] = useState(product.code);
+export const ProductModal = ({ 
+  isOpen, 
+  onClose, 
+  mode, 
+  product, 
+  projectId, 
+  onSuccess 
+}: ProductModalProps) => {
+  const [code, setCode] = useState(product?.code || '');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const toast = useToast();
 
+  // Оновлюємо код при зміні продукту
   useEffect(() => {
-    setCode(product.code);
+    if (product) {
+      setCode(product.code);
+    } else {
+      setCode('');
+    }
   }, [product]);
 
   const handleSubmit = async () => {
@@ -42,22 +56,40 @@ export const EditProductModal = ({ isOpen, onClose, product, onSuccess }: EditPr
 
     setIsLoading(true);
     try {
-      await productsApi.updateProduct(product.id, {
-        code: code.trim(),
-      });
-      
-      toast({
-        title: 'Успіх',
-        description: 'Продукт оновлено',
-        status: 'success',
-        duration: 5000,
-        isClosable: true,
-      });
+      if (mode === 'create' && projectId) {
+        await productsApi.createProduct({
+          code: code.trim(),
+          projectId,
+        });
+        
+        toast({
+          title: 'Успіх',
+          description: 'Продукт створено',
+          status: 'success',
+          duration: 5000,
+          isClosable: true,
+        });
+      } else if (mode === 'edit' && product) {
+        await productsApi.updateProduct(product.id, {
+          code: code.trim(),
+        });
+        
+        toast({
+          title: 'Успіх',
+          description: 'Продукт оновлено',
+          status: 'success',
+          duration: 5000,
+          isClosable: true,
+        });
+      }
       
       onSuccess();
       onClose();
+      setCode('');
+      setError('');
     } catch (error: any) {
-      const message = error.response?.data?.message || 'Не вдалося оновити продукт';
+      const message = error.response?.data?.message || 
+        (mode === 'create' ? 'Не вдалося створити продукт' : 'Не вдалося оновити продукт');
       setError(Array.isArray(message) ? message[0] : message);
       
       toast({
@@ -73,16 +105,24 @@ export const EditProductModal = ({ isOpen, onClose, product, onSuccess }: EditPr
   };
 
   const handleClose = () => {
-    setCode(product.code);
+    setCode(product?.code || '');
     setError('');
     onClose();
+  };
+
+  const getTitle = () => {
+    return mode === 'create' ? 'Створення продукту' : 'Редагування продукту';
+  };
+
+  const getButtonText = () => {
+    return mode === 'create' ? 'Створити' : 'Зберегти';
   };
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Редагування продукту</ModalHeader>
+        <ModalHeader>{getTitle()}</ModalHeader>
         <ModalCloseButton />
         
         <ModalBody>
@@ -109,10 +149,10 @@ export const EditProductModal = ({ isOpen, onClose, product, onSuccess }: EditPr
             onClick={handleSubmit}
             isLoading={isLoading}
           >
-            Зберегти
+            {getButtonText()}
           </Button>
         </ModalFooter>
       </ModalContent>
     </Modal>
   );
-}; 
+};

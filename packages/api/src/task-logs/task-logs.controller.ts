@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Get, Param, Delete, Put, Query } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get, Param, Delete, Put, Query, Patch } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { TaskLogsService } from './task-logs.service';
 import { RegisterTaskLogDto } from './dto/register-task-log.dto';
@@ -60,6 +60,13 @@ export class TaskLogsController {
     @Param('userId') userId: string,
   ) {
     return this.taskLogsService.getUserLogsByDays(projectId, userId);
+  }
+
+  @Get('project/:projectId/user/:userId/summary')
+  @ApiOperation({ summary: 'Get task logs summary by project and user' })
+  @ApiResponse({ status: 200, description: 'Task logs summary has been found' })
+  async getProjectUserTasksSummary(@Param('projectId') projectId: string, @Param('userId') userId: string) {
+    return this.taskLogsService.getProjectUserTasksSummary(projectId, userId);
   }
 
   @Delete(':id')

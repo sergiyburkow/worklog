@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Box, Button, useToast } from '@chakra-ui/react';
 import { api } from '../../lib/api';
-import { ProjectPaymentsTable } from '../../components/projects/ProjectPaymentsTable';
+import { ProjectPaymentsTable } from '../../components/ProjectPaymentsTable';
 import { PaymentModal } from '../../components/projects/PaymentModal';
 import { Payment } from '../../types/payment';
 
@@ -125,6 +125,7 @@ export const ProjectPayments = () => {
       </Box>
       <ProjectPaymentsTable
         payments={payments}
+        mode="editable"
         onEdit={handleEditPayment}
         onDelete={handleDeletePayment}
       />

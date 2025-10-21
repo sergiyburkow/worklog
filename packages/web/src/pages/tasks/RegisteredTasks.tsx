@@ -40,35 +40,9 @@ import {
 } from 'date-fns';
 import { uk } from 'date-fns/locale';
 
-interface TaskLog {
-  id: string;
-  task: {
-    name: string;
-    estimatedTime: number;
-    type: 'PRODUCT' | 'INTERMEDIATE' | 'GENERAL';
-  };
-  user: {
-    id: string;
-    name: string;
-  };
-  completedAt: string;
-  registeredAt: string;
-  timeSpent?: number;
-  product?: {
-    id: string;
-    code: string;
-  };
-  statusHistory: Array<{
-    status: 'APPROVED' | 'NEEDS_FIXES' | 'ON_HOLD';
-    createdAt: string;
-  }>;
-}
+import { RegisteredTask } from '../../types/task';
 
-interface ProjectUser {
-  id: string;
-  name: string;
-  role: string;
-}
+import { ProjectUser } from '../../types/project-user';
 
 const PREDEFINED_RANGES = {
   ALL_TIME: 'За весь час',
@@ -93,7 +67,7 @@ interface Filters {
 export const RegisteredTasks: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const toast = useToast();
-  const [tasks, setTasks] = useState<TaskLog[]>([]);
+  const [tasks, setTasks] = useState<RegisteredTask[]>([]);
   const [projectUsers, setProjectUsers] = useState<ProjectUser[]>([]);
   
   // Встановлюємо початкові значення для фільтрів

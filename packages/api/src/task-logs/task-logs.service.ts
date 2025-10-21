@@ -13,6 +13,15 @@ export class TaskLogsService {
   async register(registerTaskLogDto: RegisterTaskLogDto) {
     let productId: string | undefined;
 
+    // Отримуємо задачу для отримання її вартості
+    const task = await this.prisma.task.findUnique({
+      where: { id: registerTaskLogDto.taskId }
+    });
+
+    if (!task) {
+      throw new NotFoundException('Task not found');
+    }
+
     // Якщо це продуктова задача, знаходимо або створюємо продукт
     if (registerTaskLogDto.type === TaskType.PRODUCT) {
       if (!registerTaskLogDto.productCode) {
@@ -68,6 +77,7 @@ export class TaskLogsService {
         timeSpent: registerTaskLogDto.timeSpent,
         quantity: registerTaskLogDto.quantity,
         registeredAt: registeredDate,
+        cost: task.cost, // Додаємо вартість з задачі
       },
       include: {
         user: true,

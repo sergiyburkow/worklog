@@ -32,23 +32,9 @@ interface Task {
   type: 'PRODUCT' | 'INTERMEDIATE' | 'GENERAL';
 }
 
-interface ProjectUser {
-  id: string;
-  name: string;
-  lastName: string;
-  role: string;
-}
+import { ProjectUser } from '../../types/project-user';
 
-interface TaskLogFormData {
-  productCode: string;
-  taskId: string;
-  registeredAt: string;
-  userId?: string;
-  timeSpent?: string;
-  hours?: string;
-  minutes?: string;
-  quantity?: string;
-}
+import { TaskLogFormData } from '../../types/task';
 
 interface TaskRegisterFormProps {
   onSubmit: (data: TaskLogFormData) => Promise<void>;
