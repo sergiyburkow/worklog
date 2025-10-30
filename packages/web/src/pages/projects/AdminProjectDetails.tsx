@@ -165,6 +165,13 @@ export const AdminProjectDetails = ({ project }: AdminProjectDetailsProps) => {
             Задачі 
           </Button>
           <Button 
+            colorScheme="yellow" 
+            onClick={() => navigate(`/projects/${project.id}/inventory`)}
+            size={{ base: 'sm', md: 'md' }}
+          >
+            Склад
+          </Button>
+          <Button 
             colorScheme="blue" 
             onClick={() => navigate(`/projects/${project.id}/edit`)}
             size={{ base: 'sm', md: 'md' }}

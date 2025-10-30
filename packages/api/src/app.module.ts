@@ -13,6 +13,7 @@ import { ProjectsModule } from './projects/projects.module';
 import { TasksModule } from './tasks/tasks.module';
 import { TaskLogsModule } from './task-logs/task-logs.module';
 import { ProductsModule } from './products/products.module';
+import { InventoryModule } from './inventory/inventory.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { ProductsModule } from './products/products.module';
     TasksModule,
     TaskLogsModule,
     ProductsModule,
+    InventoryModule,
   ],
   controllers: [AppController],
   providers: [AppService],

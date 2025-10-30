@@ -20,7 +20,6 @@ import {
   Badge,
 } from '@chakra-ui/react';
 import { api } from '../../lib/api';
-import { DashboardMenu } from '../../components/DashboardMenu';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { GlobalFormWrapper } from '../../components/ui/GlobalFormWrapper';
 
@@ -67,16 +66,18 @@ const PROJECT_USER_ROLE_COLORS: Record<ProjectUserRole, string> = {
   [ProjectUserRole.PADAWAN]: 'orange',
 };
 
-import { ProjectUser } from '../../types/project-user';
+// Using a minimal assignment type for project users added to project
+type ProjectUserAssignment = { userId: string; role: ProjectUserRole };
 
 interface ProjectData {
   name: string;
   clientId: string;
   startDate: string;
   deadline: string;
-  projectUsers: ProjectUser[];
+  projectUsers: ProjectUserAssignment[];
   status: ProjectStatus;
   quantity?: number;
+  projectCode: string;
 }
 
 interface Client {
@@ -121,6 +122,7 @@ export const EditProject = () => {
     projectUsers: [],
     status: ProjectStatus.PLANNED,
     quantity: undefined,
+    projectCode: '',
   });
   const [selectedUser, setSelectedUser] = useState<string>('');
   const [selectedRole, setSelectedRole] = useState<ProjectUserRole>(ProjectUserRole.ENGINEER);
@@ -150,10 +152,11 @@ export const EditProject = () => {
             })),
             status: project.status as ProjectStatus,
             quantity: project.quantity,
+            projectCode: (project.projectCode || '').toUpperCase(),
           });
           
           // Оновити список користувачів з даними проекту
-          const projectUsers = project.users.map((pu: any) => ({
+          const projectUsers = project.users.map((pu: { user: User }) => ({
             id: pu.user.id,
             name: pu.user.name,
             lastName: pu.user.lastName,
@@ -162,7 +165,7 @@ export const EditProject = () => {
           setUsers(prevUsers => {
             // Об'єднати користувачів з проекту з загальним списком
             const existingUserIds = new Set(prevUsers.map(u => u.id));
-            const newUsers = projectUsers.filter(pu => !existingUserIds.has(pu.id));
+            const newUsers = projectUsers.filter((pu: User) => !existingUserIds.has(pu.id));
             return [...prevUsers, ...newUsers];
           });
         }
@@ -264,6 +267,19 @@ export const EditProject = () => {
               </FormControl>
 
               <FormControl isRequired>
+                <FormLabel>Код проекту (3 символи: A–Z або 0–9)</FormLabel>
+                <Input
+                  value={projectData.projectCode}
+                  maxLength={3}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0,3);
+                    setProjectData({ ...projectData, projectCode: val });
+                  }}
+                  placeholder="A1B"
+                />
+              </FormControl>
+
+              <FormControl isRequired>
                 <FormLabel>Клієнт</FormLabel>
                 <Select
                   value={projectData.clientId}
@@ -357,8 +373,8 @@ export const EditProject = () => {
                       <Tr key={projectUser.userId}>
                         <Td>{user ? formatUserName(user) : 'Невідомий користувач'}</Td>
                         <Td>
-                          <Badge colorScheme={PROJECT_USER_ROLE_COLORS[projectUser.role]}>
-                            {PROJECT_USER_ROLE_LABELS[projectUser.role]}
+                          <Badge colorScheme={PROJECT_USER_ROLE_COLORS[projectUser.role as ProjectUserRole]}>
+                            {PROJECT_USER_ROLE_LABELS[projectUser.role as ProjectUserRole]}
                           </Badge>
                         </Td>
                         <Td>

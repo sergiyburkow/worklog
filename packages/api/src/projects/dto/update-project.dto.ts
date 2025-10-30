@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsDateString, IsArray, IsOptional, IsUUID, IsEnum, IsInt, Min } from 'class-validator';
+import { IsString, IsDateString, IsArray, IsOptional, IsUUID, IsEnum, IsInt, Min, Length, Matches } from 'class-validator';
 import { ProjectStatus } from '@prisma/client';
 import { ProjectUserDto } from './project-user.dto';
 
@@ -44,4 +44,11 @@ export class UpdateProjectDto {
   @IsArray()
   @IsOptional()
   projectUsers?: ProjectUserDto[];
+
+  @ApiProperty({ required: false, description: '3 chars: A-Z or 0-9, uppercased on save' })
+  @IsOptional()
+  @IsString()
+  @Length(3, 3)
+  @Matches(/^[A-Z0-9]{3}$/)
+  projectCode?: string;
 } 

@@ -18,6 +18,7 @@ import { UsersList } from './pages/users/UsersList';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ProductTaskLogs } from './pages/products/ProductTaskLogs';
 import { ProjectProductsList } from './pages/projects/ProjectProductsList';
+import { ProjectInventory } from './pages/projects/ProjectInventory';
 import { ProjectUserDetails } from './pages/projects/ProjectUserDetails';
 import { ProjectPayments } from './pages/projects/ProjectPayments';
 
@@ -116,6 +117,14 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER']}>
                     <ProjectProductsList />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/projects/:projectId/inventory"
+                element={
+                  <ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER']}>
+                    <ProjectInventory />
                   </ProtectedRoute>
                 }
               />

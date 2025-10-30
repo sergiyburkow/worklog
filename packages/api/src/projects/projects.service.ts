@@ -116,20 +116,18 @@ export class ProjectsService {
   }
 
   async create(createProjectDto: CreateProjectDto, userId: string) {
-    const { projectUsers, startDate, deadline, ...projectData } = createProjectDto;
+    const { projectUsers, startDate, deadline, projectCode, ...projectData } = createProjectDto;
 
     const project = await this.prisma.project.create({
       data: {
         ...projectData,
+        ...(projectCode ? { projectCode: projectCode.toUpperCase() } : {}),
         startDate: new Date(startDate),
         deadline: new Date(deadline),
         users: {
           create: [
             { userId, role: ProjectUserRole.MANAGER },
-            ...projectUsers.map(({ userId, role }) => ({
-              userId,
-              role,
-            })),
+            ...projectUsers.map(({ userId, role }) => ({ userId, role })),
           ],
         },
       },
@@ -148,12 +146,7 @@ export class ProjectsService {
             },
           },
         },
-        client: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
+        client: { select: { id: true, name: true } },
       },
     });
 
@@ -162,6 +155,7 @@ export class ProjectsService {
       startDate: new Date(project.startDate),
       deadline: new Date(project.deadline),
       actualEndDate: project.actualEndDate ? new Date(project.actualEndDate) : undefined,
+      client: project.client,
       users: project.users.map(pu => ({
         userId: pu.userId,
         role: pu.role as string,
@@ -179,7 +173,7 @@ export class ProjectsService {
   }
 
   async update(id: string, updateProjectDto: UpdateProjectDto) {
-    const { projectUsers, startDate, deadline, ...projectData } = updateProjectDto;
+    const { projectUsers, startDate, deadline, projectCode, ...projectData } = updateProjectDto;
 
     // If projectUsers is provided, update user associations
     if (projectUsers) {
@@ -201,6 +195,7 @@ export class ProjectsService {
       where: { id },
       data: {
         ...projectData,
+        ...(projectCode && { projectCode: projectCode.toUpperCase() }),
         ...(startDate && { startDate: new Date(startDate) }),
         ...(deadline && { deadline: new Date(deadline) }),
       },
