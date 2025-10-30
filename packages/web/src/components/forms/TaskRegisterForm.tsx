@@ -389,8 +389,8 @@ export const TaskRegisterForm: React.FC<TaskRegisterFormProps> = ({
           )}
         </FormControl>
 
-        {taskType === 'INTERMEDIATE' ? (
-          <FormControl isRequired>
+        {(taskType === 'INTERMEDIATE' || taskType === 'GENERAL') ? (
+          <FormControl isRequired={taskType === 'INTERMEDIATE'}>
             <FormLabel>Кількість</FormLabel>
             <Input
               type="number"
