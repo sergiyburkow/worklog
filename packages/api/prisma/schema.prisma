@@ -118,6 +118,8 @@ model Task {
   cost          Decimal    @default(0) @map("cost")
   logs          TaskLog[]
   project       Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  outputParts   TaskOutputPart[]
+  consumedParts TaskPartConsumption[]
 
   @@map("tasks")
 }
@@ -127,6 +129,7 @@ model Product {
   code      String
   projectId String    @map("project_id")
   createdAt DateTime  @default(now()) @map("created_at")
+  cost      Decimal   @default(0)
   project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
   taskLogs  TaskLog[]
 
@@ -276,8 +279,11 @@ model Part {
   project        Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
   group          PartGroup?    @relation(fields: [groupId], references: [id])
   logs           InventoryLog[]
+  outputForTasks TaskOutputPart[]
+  consumedByTasks TaskPartConsumption[]
 
   @@unique([projectId, code])
+  @@index([projectId, groupId])
   @@map("Parts")
 }
 
@@ -288,6 +294,7 @@ model InventoryLog {
   partId    String           @map("part_id")
   type      InventoryLogType
   quantity  Decimal
+  unitPrice Decimal?          @map("unit_price") /// Ціна за одиницю (тільки для закупівель)
   note      String?
   createdAt DateTime         @default(now()) @map("created_at")
   createdById String         @map("created_by_id")
@@ -295,7 +302,33 @@ model InventoryLog {
   project   Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
   part      Part             @relation(fields: [partId], references: [id], onDelete: Cascade)
 
+  @@unique([taskLogId])
+  @@index([projectId, partId, createdAt(sort: Desc)])
   @@map("InventoryLogs")
+}
+
+/// Inventory recipe: output part produced per unit of task quantity
+model TaskOutputPart {
+  taskId   String   @map("task_id")
+  partId   String   @map("part_id")
+  perUnit  Decimal  @map("per_unit")
+  task     Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  part     Part     @relation(fields: [partId], references: [id])
+
+  @@id([taskId, partId])
+  @@map("TaskOutputParts")
+}
+
+/// Inventory recipe: parts consumed per unit of task quantity
+model TaskPartConsumption {
+  taskId          String  @map("task_id")
+  partId          String  @map("part_id")
+  quantityPerUnit Decimal @map("quantity_per_unit")
+  task            Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  part            Part    @relation(fields: [partId], references: [id])
+
+  @@id([taskId, partId])
+  @@map("TaskPartConsumptions")
 }
 
 enum InventoryLogType {

@@ -1,4 +1,4 @@
-import { Controller, Post, Body, UseGuards, Get, Param, Delete, Put, Query, Patch } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get, Param, Delete, Put, Query, Patch, Req } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { TaskLogsService } from './task-logs.service';
 import { RegisterTaskLogDto } from './dto/register-task-log.dto';
@@ -7,6 +7,7 @@ import { FindTaskLogsDto } from './dto/find-task-logs.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { AdminGuard } from '../auth/admin.guard';
 import { UserData, UserDataResponse } from './types/user-data.type';
+import { RequestWithUser } from '../auth/interfaces/request-with-user.interface';
 
 @ApiTags('task-logs')
 @Controller('task-logs')
@@ -18,8 +19,8 @@ export class TaskLogsController {
   @Post('register')
   @ApiOperation({ summary: 'Register completed task' })
   @ApiResponse({ status: 201, description: 'Task has been registered' })
-  async register(@Body() registerTaskLogDto: RegisterTaskLogDto) {
-    return this.taskLogsService.register(registerTaskLogDto);
+  async register(@Body() registerTaskLogDto: RegisterTaskLogDto, @Req() req: RequestWithUser) {
+    return this.taskLogsService.register(registerTaskLogDto, req.user.id);
   }
 
   @Get('project/:projectId')

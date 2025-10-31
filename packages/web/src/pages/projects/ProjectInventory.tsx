@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react'
 import { Box, Heading, Button, HStack, useToast, Card, CardHeader, CardBody, Collapse, Icon, Table, Thead, Tbody, Tr, Th, Td, Badge, Spinner, Text, Select, Input, VStack, Switch } from '@chakra-ui/react'
 import { AdminLayout } from '../../components/admin/AdminLayout'
 import { ChevronDownIcon, ChevronUpIcon, AddIcon } from '@chakra-ui/icons'
-import { useParams } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { InventoryPartModal } from '../../components/inventory/InventoryPartModal'
 import { InventoryLogModal } from '../../components/inventory/InventoryLogModal'
 import { InventoryLogsDrawer } from '../../components/inventory/InventoryLogsDrawer'
 import { InventoryPartGroupModal } from '../../components/inventory/InventoryPartGroupModal'
-import { addInventoryLog, createPart, getInventory, getPartGroups, createPartGroup, updatePartGroup, updatePart, PartGroup } from '../../api/inventory'
+import { addInventoryLog, createPart, getInventory, getPartGroups, createPartGroup, updatePartGroup, updatePart, PartGroup, getUnits } from '../../api/inventory'
 
 interface InventoryItem {
   id: string
@@ -27,6 +27,9 @@ export const ProjectInventory = () => {
   const { projectId } = useParams<{ projectId: string }>()
   const toast = useToast()
   const [items, setItems] = useState<InventoryItem[]>([])
+  const [page, setPage] = useState<number>(1)
+  const [pageSize, setPageSize] = useState<number>(25)
+  const [total, setTotal] = useState<number>(0)
   const [isLoading, setIsLoading] = useState(false)
   const [isListOpen, setIsListOpen] = useState(true)
   const [search, setSearch] = useState('')
@@ -39,6 +42,7 @@ export const ProjectInventory = () => {
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false)
   const [editingGroup, setEditingGroup] = useState<PartGroup | null>(null)
   const [qtyDraft, setQtyDraft] = useState<Record<string, string>>({})
+  const [units, setUnits] = useState<readonly string[] | null>(null)
   const qtyTimersRef = (typeof window !== 'undefined' ? (window as any) : {}) as { _invQtyTimers?: Record<string, any> }
   if (!qtyTimersRef._invQtyTimers) qtyTimersRef._invQtyTimers = {}
   
@@ -46,12 +50,13 @@ export const ProjectInventory = () => {
     if (!projectId) return
     try {
       setIsLoading(true)
-      const params: Record<string, string> = {}
+      const params: Record<string, any> = { page, pageSize }
       if (search) params.search = search
       if (onlyDeficit) params.onlyDeficit = 'true'
       if (groupId) params.groupId = groupId
       const data = await getInventory(projectId, params)
       setItems(data.items)
+      setTotal(data.total || 0)
     } catch (error) {
       toast({ title: 'Помилка', description: 'Не вдалося завантажити інвентар', status: 'error', duration: 3000, isClosable: true })
     } finally {
@@ -69,8 +74,21 @@ export const ProjectInventory = () => {
       } catch {}
     }
     fetchGroups()
+    const fetchUnits = async () => {
+      if (!projectId) return
+      try {
+        const data = await getUnits(projectId)
+        setUnits(data.units)
+      } catch {}
+    }
+    fetchUnits()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId])
+
+  useEffect(() => {
+    fetchInventory()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, pageSize])
 
   const groupsView = (() => {
     const map = new Map<string, { id: string; name: string; sortOrder: number; items: InventoryItem[] }>()
@@ -100,7 +118,7 @@ export const ProjectInventory = () => {
     }
   }
 
-  const handleAddLog = async (partId: string, data: { type: 'PURCHASE' | 'PRODUCTION' | 'ADJUSTMENT'; quantity: number; note?: string }) => {
+  const handleAddLog = async (partId: string, data: { type: 'PURCHASE' | 'PRODUCTION' | 'ADJUSTMENT'; quantity: number; unitPrice?: number; note?: string }) => {
     if (!projectId) return
     try {
       await addInventoryLog(projectId, partId, data)
@@ -123,6 +141,11 @@ export const ProjectInventory = () => {
             </Button>
             <Button onClick={fetchInventory} isDisabled={isLoading}>Оновити</Button>
             <Button variant="outline" onClick={() => setIsGroupModalOpen(true)}>Нова група</Button>
+            {projectId && (
+              <Button as={Link} to={`/projects/${projectId}/inventory/reports`} variant="outline" colorScheme="teal">
+                Звіти
+              </Button>
+            )}
           </HStack>
         </HStack>
 
@@ -218,13 +241,9 @@ export const ProjectInventory = () => {
                                     fetchInventory()
                                   }}
                                 >
-                                  <option value="pcs">шт</option>
-                                  <option value="kg">кг</option>
-                                  <option value="g">г</option>
-                                  <option value="m">м</option>
-                                  <option value="cm">см</option>
-                                  <option value="mm">мм</option>
-                                  <option value="l">л</option>
+                                  {(units || ['pcs','kg','g','m','cm','mm','l']).map(u => (
+                                    <option key={u} value={u}>{u}</option>
+                                  ))}
                                 </Select>
                               </Td>
                               <Td>
@@ -312,6 +331,21 @@ export const ProjectInventory = () => {
             </CardBody>
           </Collapse>
         </Card>
+
+        <HStack justify="space-between" mt={4}>
+          <HStack>
+            <Button size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} isDisabled={page <= 1}>Назад</Button>
+            <Text fontSize="sm">Сторінка {page}</Text>
+            <Button size="sm" onClick={() => setPage((p) => (p * pageSize < total ? p + 1 : p))} isDisabled={page * pageSize >= total}>Вперед</Button>
+          </HStack>
+          <HStack>
+            <Text fontSize="sm">На сторінці</Text>
+            <Select size="sm" value={String(pageSize)} onChange={(e) => { setPage(1); setPageSize(Number(e.target.value)) }} w="90px">
+              {[10,25,50,100].map(n => <option key={n} value={n}>{n}</option>)}
+            </Select>
+            <Text fontSize="sm">з {total}</Text>
+          </HStack>
+        </HStack>
 
         <InventoryPartModal
           isOpen={isPartModalOpen}

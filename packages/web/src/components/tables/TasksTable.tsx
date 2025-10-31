@@ -10,8 +10,15 @@ import {
   Card,
   CardBody,
   HStack,
+  Icon,
+  Tooltip,
+  Text,
 } from '@chakra-ui/react';
 import { Task, TaskType, TASK_TYPE_LABELS, TASK_TYPE_COLORS } from '../../types/task';
+import { Link } from 'react-router-dom';
+import { FaUtensils } from 'react-icons/fa';
+import { useState } from 'react';
+import { TaskRecipeViewModal } from '../tasks/TaskRecipeViewModal';
 
 const getComplexityColor = (complexity: number): string => {
   if (complexity <= 3) return 'green';
@@ -31,11 +38,13 @@ interface TasksTableProps {
   type: TaskType;
   onDelete?: (task: Task) => void;
   onEdit?: (task: Task) => void;
+  projectId?: string;
 }
 
-export const TasksTable = ({ tasks, title, type, onDelete, onEdit }: TasksTableProps) => {
+export const TasksTable = ({ tasks, title, type, onDelete, onEdit, projectId }: TasksTableProps) => {
   const showEstimatedTime = type === TaskType.PRODUCT;
   const hasProductTasks = tasks.some(task => task.type === TaskType.PRODUCT);
+  const [recipeModalTask, setRecipeModalTask] = useState<{ id: string; name?: string } | null>(null);
 
   return (
     <Card>
@@ -54,7 +63,29 @@ export const TasksTable = ({ tasks, title, type, onDelete, onEdit }: TasksTableP
           <Tbody>
             {tasks.map((task) => (
               <Tr key={task.id}>
-                <Td>{task.name}</Td>
+                <Td>
+                  <HStack spacing={2}>
+                    <Text>{task.name}</Text>
+                    {task.hasRecipe && (
+                      <Tooltip label="Натисніть, щоб переглянути рецепт" hasArrow>
+                        <Badge
+                          colorScheme="purple"
+                          display="flex"
+                          alignItems="center"
+                          gap={1}
+                          cursor="pointer"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setRecipeModalTask({ id: task.id, name: task.name })
+                          }}
+                        >
+                          <Icon as={FaUtensils} boxSize={2.5} />
+                          Рецепт
+                        </Badge>
+                      </Tooltip>
+                    )}
+                  </HStack>
+                </Td>
                 <Td>
                   <Badge colorScheme={TASK_TYPE_COLORS[task.type]}>
                     {TASK_TYPE_LABELS[task.type]}
@@ -76,6 +107,7 @@ export const TasksTable = ({ tasks, title, type, onDelete, onEdit }: TasksTableP
                         Редагувати
                       </Button>
                     )}
+                    <Button as={Link} to={`/tasks/${task.id}/recipe`} size="sm" variant="outline">Рецепт</Button>
                     {onDelete && (
                       <Button
                         size="sm"
@@ -92,6 +124,13 @@ export const TasksTable = ({ tasks, title, type, onDelete, onEdit }: TasksTableP
           </Tbody>
         </Table>
       </CardBody>
+      <TaskRecipeViewModal
+        isOpen={!!recipeModalTask}
+        onClose={() => setRecipeModalTask(null)}
+        taskId={recipeModalTask?.id || ''}
+        projectId={projectId}
+        taskName={recipeModalTask?.name}
+      />
     </Card>
   );
 }; 

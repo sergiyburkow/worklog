@@ -10,7 +10,7 @@ import { UserData } from './types/user-data.type';
 export class TaskLogsService {
   constructor(private prisma: PrismaService) {}
 
-  async register(registerTaskLogDto: RegisterTaskLogDto) {
+  async register(registerTaskLogDto: RegisterTaskLogDto, createdByUserId: string) {
     let productId: string | undefined;
 
     // Отримуємо задачу для отримання її вартості
@@ -20,6 +20,11 @@ export class TaskLogsService {
 
     if (!task) {
       throw new NotFoundException('Task not found');
+    }
+
+    // Валідація проекту: DTO має відповідати проекту задачі
+    if (registerTaskLogDto.projectId !== (task as any).projectId) {
+      throw new BadRequestException('projectId у DTO не відповідає проекту задачі');
     }
 
     // Якщо це продуктова задача, знаходимо або створюємо продукт
@@ -71,7 +76,7 @@ export class TaskLogsService {
 
     const taskLog = await this.prisma.taskLog.create({
       data: {
-        userId: registerTaskLogDto.userId,
+        userId: createdByUserId,
         taskId: registerTaskLogDto.taskId,
         productId: productId,
         timeSpent: registerTaskLogDto.timeSpent,
@@ -84,12 +89,112 @@ export class TaskLogsService {
         task: true,
         product: true,
         statusHistory: {
-          include: {
-            user: true,
-          },
+          include: { user: true },
         },
       },
     });
+
+    // Inventory integration: create PRODUCTION log when partId & quantity provided (idem-potent by taskLogId)
+    if (registerTaskLogDto.partId && registerTaskLogDto.quantity && registerTaskLogDto.projectId) {
+      // Перевірка, що part належить тому самому проекту
+      const part = await this.prisma.part.findUnique({ where: { id: registerTaskLogDto.partId } });
+      if (!part || (part as any).projectId !== registerTaskLogDto.projectId) {
+        throw new BadRequestException('partId не належить вказаному проекту');
+      }
+      const qty = Number(registerTaskLogDto.quantity);
+      if (qty > 0) {
+        const exists = await this.prisma.inventoryLog.findFirst({ where: { taskLogId: taskLog.id } });
+        if (!exists) {
+          await this.prisma.inventoryLog.create({
+            data: {
+              projectId: registerTaskLogDto.projectId,
+              partId: registerTaskLogDto.partId,
+              type: 'PRODUCTION' as any,
+              quantity: qty,
+              taskLogId: taskLog.id,
+              createdById: createdByUserId,
+              note: `Auto from taskLog ${taskLog.id}`,
+            },
+          });
+        }
+      }
+    }
+
+    // Inventory recipe integration: outputs and consumptions defined per task
+    if (registerTaskLogDto.projectId && registerTaskLogDto.quantity && registerTaskLogDto.quantity > 0) {
+      const qty = Number(registerTaskLogDto.quantity);
+      // Load recipe
+      const [outputs, consumptions] = await Promise.all([
+        this.prisma.taskOutputPart.findMany({ where: { taskId: registerTaskLogDto.taskId } }),
+        this.prisma.taskPartConsumption.findMany({ where: { taskId: registerTaskLogDto.taskId } }),
+      ]);
+
+      if (outputs.length || consumptions.length) {
+        // Validate parts belong to project
+        const partIds = Array.from(new Set([
+          ...outputs.map(o => o.partId),
+          ...consumptions.map(c => c.partId),
+        ]));
+        const parts = await this.prisma.part.findMany({ where: { id: { in: partIds }, projectId: registerTaskLogDto.projectId } });
+        if (parts.length !== partIds.length) {
+          throw new BadRequestException('Recipe contains parts outside the project');
+        }
+
+        // Validate non-negative after consumptions
+        if (consumptions.length > 0) {
+          const sums = await this.prisma.inventoryLog.groupBy({
+            by: ['partId'],
+            where: { projectId: registerTaskLogDto.projectId, partId: { in: consumptions.map(c => c.partId) } },
+            _sum: { quantity: true },
+          });
+          const qtyByPart: Record<string, number> = {};
+          for (const s of sums) qtyByPart[s.partId] = Number(s._sum.quantity || 0);
+          for (const c of consumptions) {
+            const willConsume = Number(c.quantityPerUnit) * qty;
+            const current = qtyByPart[c.partId] ?? 0;
+            if (current - willConsume < 0) {
+              throw new BadRequestException('Insufficient inventory for consumption parts');
+            }
+          }
+        }
+
+        // Create logs (idempotent by taskLogId unique already enforced)
+        await this.prisma.$transaction(async (tx) => {
+          for (const o of outputs) {
+            const produced = Number(o.perUnit) * qty;
+            if (produced > 0) {
+              await tx.inventoryLog.create({
+                data: {
+                  projectId: registerTaskLogDto.projectId!,
+                  partId: o.partId,
+                  type: 'PRODUCTION' as any,
+                  quantity: produced,
+                  taskLogId: taskLog.id,
+                  createdById: createdByUserId,
+                  note: `Auto output from taskLog ${taskLog.id}`,
+                },
+              });
+            }
+          }
+          for (const c of consumptions) {
+            const used = Number(c.quantityPerUnit) * qty;
+            if (used > 0) {
+              await tx.inventoryLog.create({
+                data: {
+                  projectId: registerTaskLogDto.projectId!,
+                  partId: c.partId,
+                  type: 'ADJUSTMENT' as any,
+                  quantity: -used,
+                  taskLogId: taskLog.id,
+                  createdById: createdByUserId,
+                  note: `Auto consumption from taskLog ${taskLog.id}`,
+                },
+              });
+            }
+          }
+        });
+      }
+    }
 
     return taskLog;
   }
@@ -276,16 +381,32 @@ export class TaskLogsService {
   }
 
   async remove(id: string) {
-    const taskLog = await this.prisma.taskLog.findUnique({
-      where: { id },
-    });
+    const taskLog = await this.prisma.taskLog.findUnique({ where: { id } });
 
     if (!taskLog) {
       throw new NotFoundException(`Task log with ID ${id} not found`);
     }
 
-    await this.prisma.taskLog.delete({
-      where: { id },
+    await this.prisma.$transaction(async (tx) => {
+      // Якщо реєстрація створювала інвентарний лог — додаємо компенсуючий ADJUSTMENT
+      const inv = await tx.inventoryLog.findFirst({ where: { taskLogId: id } });
+      if (inv) {
+        const qty = Number(inv.quantity);
+        if (qty !== 0) {
+          await tx.inventoryLog.create({
+            data: {
+              projectId: inv.projectId,
+              partId: inv.partId,
+              type: 'ADJUSTMENT' as any,
+              quantity: -qty,
+              taskLogId: undefined,
+              createdById: taskLog.userId,
+              note: `Compensation for taskLog ${id} deletion`,
+            },
+          });
+        }
+      }
+      await tx.taskLog.delete({ where: { id } });
     });
   }
 

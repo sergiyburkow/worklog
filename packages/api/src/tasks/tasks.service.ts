@@ -5,6 +5,7 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 import { TaskType } from '@prisma/client';
 import { TaskStatus } from './dto/update-task.dto';
 import { Prisma } from '@prisma/client';
+import { TaskRecipeOutputDto, TaskRecipeConsumptionDto } from './dto/recipe.dto';
 
 @Injectable()
 export class TasksService {
@@ -125,7 +126,7 @@ export class TasksService {
   }
 
   async findByProject(projectId: string) {
-    return this.prisma.task.findMany({
+    const tasks = await this.prisma.task.findMany({
       where: {
         projectId,
       },
@@ -133,5 +134,66 @@ export class TasksService {
         project: true,
       },
     });
+    
+    // Додаємо інформацію про наявність рецепта
+    const taskIds = tasks.map(t => t.id)
+    const [outputs, consumptions] = await Promise.all([
+      this.prisma.taskOutputPart.findMany({ where: { taskId: { in: taskIds } }, select: { taskId: true } }),
+      this.prisma.taskPartConsumption.findMany({ where: { taskId: { in: taskIds } }, select: { taskId: true } }),
+    ])
+    
+    const tasksWithRecipe = new Set([
+      ...outputs.map(o => o.taskId),
+      ...consumptions.map(c => c.taskId),
+    ])
+    
+    return tasks.map(task => ({
+      ...task,
+      hasRecipe: tasksWithRecipe.has(task.id),
+    }))
+  }
+
+  async getRecipe(taskId: string) {
+    const task = await this.prisma.task.findUnique({ where: { id: taskId } })
+    if (!task) throw new NotFoundException('Task not found')
+    const [outputs, consumptions] = await Promise.all([
+      this.prisma.taskOutputPart.findMany({ where: { taskId } }),
+      this.prisma.taskPartConsumption.findMany({ where: { taskId } }),
+    ])
+    return { projectId: task.projectId, outputs, consumptions }
+  }
+
+  async addOutput(taskId: string, dto: TaskRecipeOutputDto) {
+    const task = await this.prisma.task.findUnique({ where: { id: taskId } })
+    if (!task) throw new NotFoundException('Task not found')
+    const part = await this.prisma.part.findUnique({ where: { id: dto.partId } })
+    if (!part || (part as any).projectId !== task.projectId) throw new BadRequestException('Part must belong to the same project')
+    return this.prisma.taskOutputPart.upsert({
+      where: { taskId_partId: { taskId, partId: dto.partId } },
+      create: { taskId, partId: dto.partId, perUnit: new Prisma.Decimal(dto.perUnit) },
+      update: { perUnit: new Prisma.Decimal(dto.perUnit) },
+    })
+  }
+
+  async removeOutput(taskId: string, partId: string) {
+    await this.prisma.taskOutputPart.delete({ where: { taskId_partId: { taskId, partId } } })
+    return { ok: true }
+  }
+
+  async addConsumption(taskId: string, dto: TaskRecipeConsumptionDto) {
+    const task = await this.prisma.task.findUnique({ where: { id: taskId } })
+    if (!task) throw new NotFoundException('Task not found')
+    const part = await this.prisma.part.findUnique({ where: { id: dto.partId } })
+    if (!part || (part as any).projectId !== task.projectId) throw new BadRequestException('Part must belong to the same project')
+    return this.prisma.taskPartConsumption.upsert({
+      where: { taskId_partId: { taskId, partId: dto.partId } },
+      create: { taskId, partId: dto.partId, quantityPerUnit: new Prisma.Decimal(dto.quantityPerUnit) },
+      update: { quantityPerUnit: new Prisma.Decimal(dto.quantityPerUnit) },
+    })
+  }
+
+  async removeConsumption(taskId: string, partId: string) {
+    await this.prisma.taskPartConsumption.delete({ where: { taskId_partId: { taskId, partId } } })
+    return { ok: true }
   }
 }

@@ -281,6 +281,7 @@ export const Tasks = () => {
             type={TaskType.PRODUCT}
             onDelete={handleDeleteClick}
             onEdit={handleEditClick}
+            projectId={projectId}
           />
 
           <Heading size="md">Проміжні задачі</Heading>
@@ -290,6 +291,7 @@ export const Tasks = () => {
             type={TaskType.INTERMEDIATE}
             onDelete={handleDeleteClick}
             onEdit={handleEditClick}
+            projectId={projectId}
           />
 
           <Heading size="md">Загальні задачі</Heading>
@@ -299,6 +301,7 @@ export const Tasks = () => {
             type={TaskType.GENERAL}
             onDelete={handleDeleteClick}
             onEdit={handleEditClick}
+            projectId={projectId}
           />
         </VStack>
       </Box>

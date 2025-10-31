@@ -24,6 +24,7 @@ export interface Task {
   product?: string;
   quantity?: number;
   cost?: number;
+  hasRecipe?: boolean;
 }
 
 export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {

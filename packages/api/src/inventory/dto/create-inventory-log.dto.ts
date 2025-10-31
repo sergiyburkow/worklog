@@ -17,6 +17,17 @@ export class CreateInventoryLogDto {
   @Min(0.000001)
   quantity: number;
 
+  @ApiProperty({ 
+    required: false,
+    description: 'Ціна за одиницю (рекомендується вказувати для закупівель)',
+    example: 25.50,
+    minimum: 0
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  unitPrice?: number;
+
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()

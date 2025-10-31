@@ -1,8 +1,9 @@
 import { Controller, Get, Param, Post, Body, Query, UseGuards, Req, Patch } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags, ApiQuery } from '@nestjs/swagger';
 import { InventoryService } from './inventory.service';
 import { CreatePartDto } from './dto/create-part.dto';
 import { CreateInventoryLogDto } from './dto/create-inventory-log.dto';
+import { INVENTORY_UNITS } from './units';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { ProjectAccessGuard } from '../projects/guards/project-access.guard';
 import { RequestWithUser } from '../auth/interfaces/request-with-user.interface';
@@ -20,8 +21,46 @@ export class InventoryController {
   @ApiOperation({ summary: 'List inventory parts grouped with aggregates' })
   @ApiResponse({ status: 200, description: 'Returns inventory parts' })
   @UseGuards(JwtAuthGuard, ProjectAccessGuard)
+  @ApiQuery({ name: 'groupId', required: false })
+  @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'onlyDeficit', required: false, schema: { type: 'boolean' } })
+  @ApiQuery({ name: 'page', required: false, schema: { type: 'integer', minimum: 1 } })
+  @ApiQuery({ name: 'pageSize', required: false, schema: { type: 'integer', minimum: 1, maximum: 100 } })
   list(@Param('projectId') projectId: string, @Query() query: any) {
     return this.inventoryService.list(projectId, query);
+  }
+
+  @Get('units')
+  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get standardized inventory units' })
+  units() {
+    return { units: INVENTORY_UNITS };
+  }
+
+  @Get('reports/deficit')
+  @UseGuards(JwtAuthGuard, ProjectAccessGuard)
+  @ApiOperation({ summary: 'List deficit parts (requiredQuantity > 0)' })
+  @ApiQuery({ name: 'page', required: false, schema: { type: 'integer', minimum: 1 } })
+  @ApiQuery({ name: 'pageSize', required: false, schema: { type: 'integer', minimum: 1, maximum: 100 } })
+  reportDeficit(@Param('projectId') projectId: string, @Query() query: any) {
+    return this.inventoryService.reportDeficit(projectId, query);
+  }
+
+  @Get('reports/movements')
+  @UseGuards(JwtAuthGuard, ProjectAccessGuard)
+  @ApiOperation({ summary: 'Inventory movements summary by type for a period' })
+  @ApiQuery({ name: 'from', required: false })
+  @ApiQuery({ name: 'to', required: false })
+  reportMovements(@Param('projectId') projectId: string, @Query() query: any) {
+    return this.inventoryService.reportMovements(projectId, query);
+  }
+
+  @Get('reports/top-deficit')
+  @UseGuards(JwtAuthGuard, ProjectAccessGuard)
+  @ApiOperation({ summary: 'Top deficit parts by requiredQuantity' })
+  @ApiQuery({ name: 'limit', required: false, schema: { type: 'integer', minimum: 1, maximum: 100 } })
+  reportTopDeficit(@Param('projectId') projectId: string, @Query() query: any) {
+    return this.inventoryService.reportTopDeficit(projectId, query);
   }
 
   @Post('parts')
@@ -61,8 +100,10 @@ export class InventoryController {
   @ApiOperation({ summary: 'Get part logs' })
   @ApiResponse({ status: 200, description: 'Returns logs for part' })
   @UseGuards(JwtAuthGuard, ProjectAccessGuard)
-  getLogs(@Param('projectId') projectId: string, @Param('partId') partId: string) {
-    return this.inventoryService.getLogs(projectId, partId);
+  @ApiQuery({ name: 'page', required: false, schema: { type: 'integer', minimum: 1 } })
+  @ApiQuery({ name: 'pageSize', required: false, schema: { type: 'integer', minimum: 1, maximum: 100 } })
+  getLogs(@Param('projectId') projectId: string, @Param('partId') partId: string, @Query() query: any) {
+    return this.inventoryService.getLogs(projectId, partId, query);
   }
 
   @Get('groups')
