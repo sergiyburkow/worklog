@@ -114,10 +114,13 @@ export const TaskForm = ({
               type="number"
               step="0.01"
               min="0"
-              value={formData.cost || ''}
-              onChange={(e) => onChange({ 
-                cost: e.target.value ? parseFloat(e.target.value) : undefined 
-              })}
+              value={formData.cost !== undefined ? formData.cost : ''}
+              onChange={(e) => {
+                const value = e.target.value;
+                onChange({ 
+                  cost: value === '' ? undefined : (isNaN(parseFloat(value)) ? undefined : parseFloat(value))
+                });
+              }}
               placeholder="Введіть вартість"
             />
           </FormControl>

@@ -72,21 +72,53 @@ export class InventoryService {
       where: { projectId },
       _sum: { quantity: true },
     });
+    
+    // Get production consumption logs (negative quantities with taskLogId)
+    const productionConsumptionLogs = await this.prisma.inventoryLog.groupBy({
+      by: ['partId'],
+      where: { 
+        projectId,
+        taskLogId: { not: null },
+        quantity: { lt: 0 },
+      },
+      _sum: { quantity: true },
+    });
+    
     const qtyByPart: Record<string, number> = {};
-    for (const l of logs) qtyByPart[l.partId] = Number(l._sum.quantity || 0);
+    for (const l of logs) {
+      // Round to 3 decimal places to avoid floating point precision errors
+      const sum = Number(l._sum.quantity || 0);
+      qtyByPart[l.partId] = Math.round(sum * 1000) / 1000;
+    }
+    
+    const consumedForProduction: Record<string, number> = {};
+    for (const l of productionConsumptionLogs) {
+      const sum = Math.abs(Number(l._sum.quantity || 0)); // abs because quantity is negative
+      consumedForProduction[l.partId] = Math.round(sum * 1000) / 1000;
+    }
 
-    const items = parts.map((p) => ({
-      id: p.id,
-      code: p.code,
-      name: p.name,
-      description: (p as any).description ?? null,
-      unit: p.unit,
-      group: p.group ? { id: p.group.id, name: p.group.name, sortOrder: p.group.sortOrder } : null,
-      targetQuantity: p.targetQuantity ?? null,
-      currentQuantity: qtyByPart[p.id] ?? 0,
-      requiredQuantity: Math.max(0, (p.targetQuantity ?? 0) - (qtyByPart[p.id] ?? 0)),
-      isActive: p.isActive,
-    }));
+    const items = parts.map((p) => {
+      const currentQty = qtyByPart[p.id] ?? 0;
+      // Calculate base quantity: current + consumed for production
+      const productionConsumed = consumedForProduction[p.id] ?? 0;
+      const baseQuantity = currentQty + productionConsumed;
+      
+      const targetQty = p.targetQuantity ?? 0;
+      // Round to avoid floating point errors in subtraction
+      const requiredQty = Math.max(0, Math.round((targetQty - baseQuantity) * 1000) / 1000);
+      return {
+        id: p.id,
+        code: p.code,
+        name: p.name,
+        description: (p as any).description ?? null,
+        unit: p.unit,
+        group: p.group ? { id: p.group.id, name: p.group.name, sortOrder: p.group.sortOrder } : null,
+        targetQuantity: p.targetQuantity ?? null,
+        currentQuantity: currentQty,
+        requiredQuantity: requiredQty,
+        isActive: p.isActive,
+      };
+    });
 
     const filtered = String(onlyDeficit) === 'true' ? items.filter(i => i.requiredQuantity > 0) : items;
 
@@ -115,17 +147,50 @@ export class InventoryService {
       include: { group: true },
       orderBy: [{ group: { sortOrder: 'asc' } }, { code: 'asc' }],
     });
+    // Get all logs for current quantity calculation
     const logs = await this.prisma.inventoryLog.groupBy({
       by: ['partId'],
       where: { projectId },
       _sum: { quantity: true },
     });
+    
+    // Get production consumption logs (negative quantities with taskLogId)
+    // These represent materials consumed in production and should not create deficit
+    const productionConsumptionLogs = await this.prisma.inventoryLog.groupBy({
+      by: ['partId'],
+      where: { 
+        projectId,
+        taskLogId: { not: null },
+        quantity: { lt: 0 },
+      },
+      _sum: { quantity: true },
+    });
+    
     const qtyByPart: Record<string, number> = {};
-    for (const l of logs) qtyByPart[l.partId] = Number(l._sum.quantity || 0);
+    for (const l of logs) {
+      // Round to 3 decimal places to avoid floating point precision errors
+      const sum = Number(l._sum.quantity || 0);
+      qtyByPart[l.partId] = Math.round(sum * 1000) / 1000;
+    }
+    
+    const consumedForProduction: Record<string, number> = {};
+    for (const l of productionConsumptionLogs) {
+      // Round to 3 decimal places
+      const sum = Math.abs(Number(l._sum.quantity || 0)); // abs because quantity is negative
+      consumedForProduction[l.partId] = Math.round(sum * 1000) / 1000;
+    }
 
     const items = parts.map((p) => {
       const currentQuantity = qtyByPart[p.id] ?? 0;
-      const requiredQuantity = Math.max(0, (p.targetQuantity ?? 0) - currentQuantity);
+      // Calculate base quantity: current + consumed for production
+      // Production consumption doesn't create deficit - it's normal material usage
+      const productionConsumed = consumedForProduction[p.id] ?? 0;
+      const baseQuantity = currentQuantity + productionConsumed;
+      
+      // Calculate required quantity: target - base (without production consumption)
+      // Round to avoid floating point errors in subtraction
+      const targetQty = p.targetQuantity ?? 0;
+      const requiredQuantity = Math.max(0, Math.round((targetQty - baseQuantity) * 1000) / 1000);
       return {
         id: p.id,
         code: p.code,
@@ -167,11 +232,40 @@ export class InventoryService {
     if (cached) return cached;
     const parts = await this.prisma.part.findMany({ where: { projectId, isActive: true }, include: { group: true } });
     const logs = await this.prisma.inventoryLog.groupBy({ by: ['partId'], where: { projectId }, _sum: { quantity: true } });
+    
+    // Get production consumption logs (negative quantities with taskLogId)
+    const productionConsumptionLogs = await this.prisma.inventoryLog.groupBy({
+      by: ['partId'],
+      where: { 
+        projectId,
+        taskLogId: { not: null },
+        quantity: { lt: 0 },
+      },
+      _sum: { quantity: true },
+    });
+    
     const qtyByPart: Record<string, number> = {};
-    for (const l of logs) qtyByPart[l.partId] = Number(l._sum.quantity || 0);
+    for (const l of logs) {
+      // Round to 3 decimal places to avoid floating point precision errors
+      const sum = Number(l._sum.quantity || 0);
+      qtyByPart[l.partId] = Math.round(sum * 1000) / 1000;
+    }
+    
+    const consumedForProduction: Record<string, number> = {};
+    for (const l of productionConsumptionLogs) {
+      const sum = Math.abs(Number(l._sum.quantity || 0)); // abs because quantity is negative
+      consumedForProduction[l.partId] = Math.round(sum * 1000) / 1000;
+    }
+    
     const deficits = parts.map((p) => {
       const currentQuantity = qtyByPart[p.id] ?? 0;
-      const requiredQuantity = Math.max(0, (p.targetQuantity ?? 0) - currentQuantity);
+      // Calculate base quantity: current + consumed for production
+      const productionConsumed = consumedForProduction[p.id] ?? 0;
+      const baseQuantity = currentQuantity + productionConsumed;
+      
+      const targetQty = p.targetQuantity ?? 0;
+      // Round to avoid floating point errors in subtraction
+      const requiredQuantity = Math.max(0, Math.round((targetQty - baseQuantity) * 1000) / 1000);
       return {
         id: p.id,
         code: p.code,

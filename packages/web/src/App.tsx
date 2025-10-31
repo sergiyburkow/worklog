@@ -59,7 +59,7 @@ function App() {
               }
             />
             <Route
-              path="/projects/:id"
+              path="/projects/:projectId"
               element={
                 <ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER', 'WORKER', 'GUEST']}>
                   <ProjectDetails />
@@ -67,7 +67,7 @@ function App() {
               }
             />
               <Route
-                path="/projects/:id/edit"
+                path="/projects/:projectId/edit"
                 element={
                   <ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER']}>
                     <EditProject />
@@ -75,7 +75,7 @@ function App() {
                 }
               />
               <Route
-                path="/projects/:id/tasks"
+                path="/projects/:projectId/tasks"
                 element={
                   <ProtectedRoute allowedRoles={['ADMIN', 'PROJECT_MANAGER', 'WORKER']}>
                     <Tasks />

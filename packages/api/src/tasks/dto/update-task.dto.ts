@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNumber, IsOptional, IsUUID, IsEnum } from 'class-validator';
+import { IsString, IsNumber, IsOptional, IsUUID, IsEnum, Min } from 'class-validator';
+import { Type } from 'class-transformer';
 import { TaskType } from '@prisma/client';
 
 export enum TaskStatus {
@@ -51,7 +52,9 @@ export class UpdateTaskDto {
   estimatedTime?: string;
 
   @ApiProperty({ required: false })
-  @IsNumber()
   @IsOptional()
+  @Type(() => Number)
+  @IsNumber({}, { message: 'cost must be a number' })
+  @Min(0)
   cost?: number;
 } 

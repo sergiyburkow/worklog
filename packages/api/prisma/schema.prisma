@@ -69,20 +69,20 @@ model ClientContact {
 }
 
 model Project {
-  id            String        @id @default(uuid())
+  id            String         @id @default(uuid())
   name          String
-  projectCode   String?       @map("project_code")
-  clientId      String        @map("client_id")
-  startDate     DateTime      @map("start_date")
+  projectCode   String?        @map("project_code")
+  clientId      String         @map("client_id")
+  startDate     DateTime       @map("start_date")
   deadline      DateTime
-  actualEndDate DateTime?     @map("actual_end_date")
-  status        ProjectStatus @default(NEW)
+  actualEndDate DateTime?      @map("actual_end_date")
+  status        ProjectStatus  @default(NEW)
   quantity      Int?
-  updatedAt     DateTime      @updatedAt @map("updated_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
   payments      Payment[]
   products      Product[]
   users         ProjectUser[]
-  client        Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  client        Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
   tasks         Task[]
   parts         Part[]
   partGroups    PartGroup[]
@@ -104,20 +104,20 @@ model ProjectUser {
 }
 
 model Task {
-  id            String     @id @default(uuid())
+  id            String                @id @default(uuid())
   name          String
   description   String?
-  type          TaskType   @default(GENERAL)
-  status        TaskStatus @default(NEW)
+  type          TaskType              @default(GENERAL)
+  status        TaskStatus            @default(NEW)
   complexity    Int?
   tags          String?
-  estimatedTime Decimal?   @map("estimated_time")
-  projectId     String     @map("project_id")
-  createdAt     DateTime   @default(now()) @map("created_at")
-  updatedAt     DateTime   @updatedAt @map("updated_at")
-  cost          Decimal    @default(0) @map("cost")
+  estimatedTime Decimal?              @map("estimated_time")
+  projectId     String                @map("project_id")
+  createdAt     DateTime              @default(now()) @map("created_at")
+  updatedAt     DateTime              @updatedAt @map("updated_at")
+  cost          Decimal               @default(0) @map("cost")
   logs          TaskLog[]
-  project       Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project       Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
   outputParts   TaskOutputPart[]
   consumedParts TaskPartConsumption[]
 
@@ -254,32 +254,32 @@ enum TaskLogApprovalStatus {
 
 /// Inventory: grouping of parts per project
 model PartGroup {
-  id        String   @id @default(uuid())
-  projectId String   @map("project_id")
-  name      String
+  id          String  @id @default(uuid())
+  projectId   String  @map("project_id")
+  name        String
   description String?
-  sortOrder Int      @default(0) @map("sort_order")
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  parts     Part[]
+  sortOrder   Int     @default(0) @map("sort_order")
+  project     Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parts       Part[]
 
   @@map("PartGroups")
 }
 
 /// Inventory: part definition per project
 model Part {
-  id             String        @id @default(uuid())
-  projectId      String        @map("project_id")
-  code           String
-  name           String
-  description    String?
-  groupId        String?       @map("group_id")
-  unit           String?       @default("pcs")
-  targetQuantity Int?          @map("target_quantity")
-  isActive       Boolean       @default(true) @map("is_active")
-  project        Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  group          PartGroup?    @relation(fields: [groupId], references: [id])
-  logs           InventoryLog[]
-  outputForTasks TaskOutputPart[]
+  id              String                @id @default(uuid())
+  projectId       String                @map("project_id")
+  code            String
+  name            String
+  description     String?
+  groupId         String?               @map("group_id")
+  unit            String?               @default("pcs")
+  targetQuantity  Int?                  @map("target_quantity")
+  isActive        Boolean               @default(true) @map("is_active")
+  project         Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  group           PartGroup?            @relation(fields: [groupId], references: [id])
+  logs            InventoryLog[]
+  outputForTasks  TaskOutputPart[]
   consumedByTasks TaskPartConsumption[]
 
   @@unique([projectId, code])
@@ -289,31 +289,33 @@ model Part {
 
 /// Inventory: immutable movement log
 model InventoryLog {
-  id        String           @id @default(uuid())
-  projectId String           @map("project_id")
-  partId    String           @map("part_id")
-  type      InventoryLogType
-  quantity  Decimal
-  unitPrice Decimal?          @map("unit_price") /// Ціна за одиницю (тільки для закупівель)
-  note      String?
-  createdAt DateTime         @default(now()) @map("created_at")
-  createdById String         @map("created_by_id")
-  taskLogId String?
-  project   Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  part      Part             @relation(fields: [partId], references: [id], onDelete: Cascade)
+  id          String           @id @default(uuid())
+  projectId   String           @map("project_id")
+  partId      String           @map("part_id")
+  type        InventoryLogType
+  quantity    Decimal
+  unitPrice   Decimal?         @map("unit_price") /// Ціна за одиницю (тільки для закупівель)
+  note        String?
+  createdAt   DateTime         @default(now()) @map("created_at")
+  createdById String           @map("created_by_id")
+  taskLogId   String?
+  project     Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  part        Part             @relation(fields: [partId], references: [id], onDelete: Cascade)
 
-  @@unique([taskLogId])
+  // Note: We use logical idempotency in application code (check taskLogId + partId before create)
+  // instead of database constraints to avoid issues with NULL values and database state synchronization
+  @@index([taskLogId, partId]) // Non-unique index for query performance
   @@index([projectId, partId, createdAt(sort: Desc)])
   @@map("InventoryLogs")
 }
 
 /// Inventory recipe: output part produced per unit of task quantity
 model TaskOutputPart {
-  taskId   String   @map("task_id")
-  partId   String   @map("part_id")
-  perUnit  Decimal  @map("per_unit")
-  task     Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  part     Part     @relation(fields: [partId], references: [id])
+  taskId  String  @map("task_id")
+  partId  String  @map("part_id")
+  perUnit Decimal @map("per_unit")
+  task    Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  part    Part    @relation(fields: [partId], references: [id])
 
   @@id([taskId, partId])
   @@map("TaskOutputParts")

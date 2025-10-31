@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Box, Button, useToast } from '@chakra-ui/react';
+import { AdminLayout } from '../../components/admin/AdminLayout';
 import { api } from '../../lib/api';
 import { ProjectPaymentsTable } from '../../components/ProjectPaymentsTable';
 import { PaymentModal } from '../../components/projects/PaymentModal';
@@ -117,31 +118,33 @@ export const ProjectPayments = () => {
   }
 
   return (
-    <Box p={4}>
-      <Box mb={4}>
-        <Button colorScheme="blue" onClick={() => setIsModalOpen(true)}>
-          Додати платіж
-        </Button>
+    <AdminLayout>
+      <Box p={5}>
+        <Box mb={4} display="flex" justifyContent="flex-end">
+          <Button colorScheme="blue" onClick={() => setIsModalOpen(true)}>
+            Додати платіж
+          </Button>
+        </Box>
+        <ProjectPaymentsTable
+          payments={payments}
+          mode="editable"
+          onEdit={handleEditPayment}
+          onDelete={handleDeletePayment}
+        />
+        <PaymentModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setEditingPayment(null);
+          }}
+          onSubmit={editingPayment 
+            ? (paymentData) => handleUpdatePayment(editingPayment.id, paymentData)
+            : handleCreatePayment
+          }
+          payment={editingPayment}
+          projectId={projectId}
+        />
       </Box>
-      <ProjectPaymentsTable
-        payments={payments}
-        mode="editable"
-        onEdit={handleEditPayment}
-        onDelete={handleDeletePayment}
-      />
-      <PaymentModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setEditingPayment(null);
-        }}
-        onSubmit={editingPayment 
-          ? (paymentData) => handleUpdatePayment(editingPayment.id, paymentData)
-          : handleCreatePayment
-        }
-        payment={editingPayment}
-        projectId={projectId}
-      />
-    </Box>
+    </AdminLayout>
   );
 }; 

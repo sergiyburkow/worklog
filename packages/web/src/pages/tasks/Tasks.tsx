@@ -50,7 +50,7 @@ interface TaskFormData {
 }
 
 export const Tasks = () => {
-  const { id: projectId } = useParams<{ id: string }>();
+  const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [projectName, setProjectName] = useState('');
@@ -172,7 +172,7 @@ export const Tasks = () => {
       tags: task.tags,
       product: task.product,
       quantity: task.quantity,
-      cost: task.cost
+      cost: task.cost !== undefined && task.cost !== null ? Number(task.cost) : undefined
     });
     onEditOpen();
   };
@@ -188,7 +188,7 @@ export const Tasks = () => {
         ...formData,
         projectId,
         estimatedTime: formData.type === TaskType.GENERAL ? '0' : formData.estimatedTime,
-        cost: formData.cost || 0
+        cost: formData.cost !== undefined && !isNaN(formData.cost) ? formData.cost : 0
       });
 
       toast({

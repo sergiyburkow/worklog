@@ -18,7 +18,7 @@ export const TaskRecipeEditor = () => {
   const [consumptionSearch, setConsumptionSearch] = useState('')
   const [errors, setErrors] = useState<{ output?: string; consumption?: string }>({})
   const [loading, setLoading] = useState(true)
-  const [showInfo, setShowInfo] = useState(true)
+  const [showInfo, setShowInfo] = useState(false)
 
   const load = async () => {
     if (!taskId) return

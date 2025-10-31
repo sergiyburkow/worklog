@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 import { RegisterTaskLogDto } from './dto/register-task-log.dto';
 import { UpdateTaskLogDto } from './dto/update-task-log.dto';
 import { FindTaskLogsDto } from './dto/find-task-logs.dto';
@@ -94,7 +95,8 @@ export class TaskLogsService {
       },
     });
 
-    // Inventory integration: create PRODUCTION log when partId & quantity provided (idem-potent by taskLogId)
+    // Inventory integration: create PRODUCTION log when partId & quantity provided
+    // Uses logical idempotency: check taskLogId + partId before create (no DB constraint)
     if (registerTaskLogDto.partId && registerTaskLogDto.quantity && registerTaskLogDto.projectId) {
       // Перевірка, що part належить тому самому проекту
       const part = await this.prisma.part.findUnique({ where: { id: registerTaskLogDto.partId } });
@@ -103,16 +105,33 @@ export class TaskLogsService {
       }
       const qty = Number(registerTaskLogDto.quantity);
       if (qty > 0) {
-        const exists = await this.prisma.inventoryLog.findFirst({ where: { taskLogId: taskLog.id } });
-        if (!exists) {
+        // Check for existing log with same taskLogId + partId (logical idempotency)
+        const existing = await this.prisma.inventoryLog.findFirst({
+          where: {
+            taskLogId: taskLog.id,
+            partId: registerTaskLogDto.partId,
+          },
+        });
+        // Round to avoid floating point precision errors
+        const roundedQty = Math.round(qty * 1000) / 1000;
+        if (!existing) {
           await this.prisma.inventoryLog.create({
             data: {
               projectId: registerTaskLogDto.projectId,
               partId: registerTaskLogDto.partId,
               type: 'PRODUCTION' as any,
-              quantity: qty,
+              quantity: new Prisma.Decimal(roundedQty),
               taskLogId: taskLog.id,
               createdById: createdByUserId,
+              note: `Auto from taskLog ${taskLog.id}`,
+            },
+          });
+        } else {
+          // Update existing log if it exists
+          await this.prisma.inventoryLog.update({
+            where: { id: existing.id },
+            data: {
+              quantity: new Prisma.Decimal(roundedQty),
               note: `Auto from taskLog ${taskLog.id}`,
             },
           });
@@ -150,7 +169,9 @@ export class TaskLogsService {
           const qtyByPart: Record<string, number> = {};
           for (const s of sums) qtyByPart[s.partId] = Number(s._sum.quantity || 0);
           for (const c of consumptions) {
-            const willConsume = Number(c.quantityPerUnit) * qty;
+            // Use Decimal arithmetic to avoid floating point precision errors
+            const quantityPerUnit = Number(c.quantityPerUnit);
+            const willConsume = Math.round((quantityPerUnit * qty) * 1000) / 1000; // Round to 3 decimal places
             const current = qtyByPart[c.partId] ?? 0;
             if (current - willConsume < 0) {
               throw new BadRequestException('Insufficient inventory for consumption parts');
@@ -158,38 +179,85 @@ export class TaskLogsService {
           }
         }
 
-        // Create logs (idempotent by taskLogId unique already enforced)
+        // Create logs with logical idempotency (check taskLogId + partId before create)
+        // Note: We don't use database constraints - instead we rely on application logic
+        // to check existence before create. This avoids issues with NULL values in
+        // composite unique indexes and database state synchronization.
         await this.prisma.$transaction(async (tx) => {
           for (const o of outputs) {
-            const produced = Number(o.perUnit) * qty;
+            // Use rounded arithmetic to avoid floating point precision errors
+            const perUnit = Number(o.perUnit);
+            const produced = Math.round((perUnit * qty) * 1000) / 1000; // Round to 3 decimal places
             if (produced > 0) {
-              await tx.inventoryLog.create({
-                data: {
-                  projectId: registerTaskLogDto.projectId!,
-                  partId: o.partId,
-                  type: 'PRODUCTION' as any,
-                  quantity: produced,
+              // Always check existence first to avoid constraint violations
+              const existing = await tx.inventoryLog.findFirst({
+                where: {
                   taskLogId: taskLog.id,
-                  createdById: createdByUserId,
-                  note: `Auto output from taskLog ${taskLog.id}`,
+                  partId: o.partId,
                 },
               });
+              
+              if (existing) {
+                // Update existing log
+                await tx.inventoryLog.update({
+                  where: { id: existing.id },
+                  data: {
+                    quantity: new Prisma.Decimal(produced),
+                    note: `Auto output from taskLog ${taskLog.id}`,
+                  },
+                });
+              } else {
+                // Create new log
+                await tx.inventoryLog.create({
+                  data: {
+                    projectId: registerTaskLogDto.projectId!,
+                    partId: o.partId,
+                    type: 'PRODUCTION' as any,
+                    quantity: new Prisma.Decimal(produced),
+                    taskLogId: taskLog.id,
+                    createdById: createdByUserId,
+                    note: `Auto output from taskLog ${taskLog.id}`,
+                  },
+                });
+              }
             }
           }
           for (const c of consumptions) {
-            const used = Number(c.quantityPerUnit) * qty;
+            // Use rounded arithmetic to avoid floating point precision errors
+            const quantityPerUnit = Number(c.quantityPerUnit);
+            const used = Math.round((quantityPerUnit * qty) * 1000) / 1000; // Round to 3 decimal places
             if (used > 0) {
-              await tx.inventoryLog.create({
-                data: {
-                  projectId: registerTaskLogDto.projectId!,
-                  partId: c.partId,
-                  type: 'ADJUSTMENT' as any,
-                  quantity: -used,
+              // Always check existence first to avoid constraint violations
+              const existing = await tx.inventoryLog.findFirst({
+                where: {
                   taskLogId: taskLog.id,
-                  createdById: createdByUserId,
-                  note: `Auto consumption from taskLog ${taskLog.id}`,
+                  partId: c.partId,
                 },
               });
+              
+              if (existing) {
+                // Update existing log
+                await tx.inventoryLog.update({
+                  where: { id: existing.id },
+                  data: {
+                    quantity: new Prisma.Decimal(-used),
+                    note: `Auto consumption from taskLog ${taskLog.id}`,
+                  },
+                });
+              } else {
+                // Create new log
+                await tx.inventoryLog.create({
+                  data: {
+                    projectId: registerTaskLogDto.projectId!,
+                    partId: c.partId,
+                    type: 'ADJUSTMENT' as any,
+                    quantity: new Prisma.Decimal(-used),
+                    taskLogId: taskLog.id,
+                    createdById: createdByUserId,
+                    note: `Auto consumption from taskLog ${taskLog.id}`,
+                  },
+                });
+              }
             }
           }
         });

@@ -108,7 +108,7 @@ const formatUserName = (user: User) => {
 };
 
 export const EditProject = () => {
-  const { id } = useParams();
+  const { projectId } = useParams<{ projectId?: string }>();
   const navigate = useNavigate();
   const toast = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -138,8 +138,8 @@ export const EditProject = () => {
         setClients(clientsResponse.data);
         setUsers(usersResponse.data);
 
-        if (id) {
-          const projectResponse = await api.get(`/projects/${id}`);
+        if (projectId) {
+          const projectResponse = await api.get(`/projects/${projectId}`);
           const project = projectResponse.data;
           setProjectData({
             name: project.name,
@@ -181,22 +181,22 @@ export const EditProject = () => {
     };
 
     fetchData();
-  }, [id]);
+  }, [projectId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      if (id) {
-        await api.put(`/projects/${id}`, projectData);
+      if (projectId) {
+        await api.put(`/projects/${projectId}`, projectData);
       } else {
         await api.post('/projects', projectData);
       }
 
       toast({
         title: 'Успіх',
-        description: id ? 'Проект оновлено' : 'Проект створено',
+        description: projectId ? 'Проект оновлено' : 'Проект створено',
         status: 'success',
         duration: 5000,
         isClosable: true,
@@ -206,7 +206,7 @@ export const EditProject = () => {
     } catch (error) {
       toast({
         title: 'Помилка',
-        description: id ? 'Не вдалося оновити проект' : 'Не вдалося створити проект',
+        description: projectId ? 'Не вдалося оновити проект' : 'Не вдалося створити проект',
         status: 'error',
         duration: 5000,
         isClosable: true,
@@ -240,7 +240,7 @@ export const EditProject = () => {
   return (
     <AdminLayout>
       <Box p={5}>
-        <Heading mb={6}>{id ? 'Редагування проекту' : 'Новий проект'}</Heading>
+        <Heading mb={6}>{projectId ? 'Редагування проекту' : 'Новий проект'}</Heading>
         <GlobalFormWrapper>
           <form onSubmit={handleSubmit}>
             <VStack spacing={4} align="stretch">
@@ -402,7 +402,7 @@ export const EditProject = () => {
                   isLoading={isLoading}
                   width="100%"
                 >
-                  {id ? 'Зберегти' : 'Створити'}
+                  {projectId ? 'Зберегти' : 'Створити'}
                 </Button>
               </HStack>
             </VStack>

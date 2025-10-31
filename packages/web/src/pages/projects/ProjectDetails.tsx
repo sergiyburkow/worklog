@@ -10,7 +10,7 @@ import { ProjectManagerDetails } from './ProjectManagerDetails';
 import { WorkerProjectDetails } from './WorkerProjectDetails';
 
 export const ProjectDetails = () => {
-  const { id } = useParams<{ id: string }>();
+  const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [project, setProject] = useState<Project | null>(null);
@@ -20,7 +20,7 @@ export const ProjectDetails = () => {
   useEffect(() => {
     const fetchProject = async () => {
       try {
-        const response = await api.get<Project>(`/projects/${id}`);
+        const response = await api.get<Project>(`/projects/${projectId}`);
         setProject(response.data);
       } catch (error) {
         console.error('Error fetching project:', error);
@@ -30,10 +30,10 @@ export const ProjectDetails = () => {
       }
     };
 
-    if (id) {
+    if (projectId) {
       fetchProject();
     }
-  }, [id]);
+  }, [projectId]);
 
   const renderProjectDetails = () => {
     if (!project) return null;
