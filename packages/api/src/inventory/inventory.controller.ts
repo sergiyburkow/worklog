@@ -82,7 +82,8 @@ export class InventoryController {
     @Req() req: RequestWithUser,
   ) {
     const createdById = req.user.id;
-    return this.inventoryService.addLog(projectId, partId, dto, createdById);
+    const userRole = req.user.role;
+    return this.inventoryService.addLog(projectId, partId, dto, createdById, userRole);
   }
 
   @Patch('parts/:partId')

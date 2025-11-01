@@ -35,14 +35,14 @@ const getComplexityLabel = (complexity: number): string => {
 interface TasksTableProps {
   tasks: Task[];
   title: string;
-  type: TaskType;
+  type?: TaskType;
   onDelete?: (task: Task) => void;
   onEdit?: (task: Task) => void;
   projectId?: string;
 }
 
 export const TasksTable = ({ tasks, title, type, onDelete, onEdit, projectId }: TasksTableProps) => {
-  const showEstimatedTime = type === TaskType.PRODUCT;
+  const showEstimatedTime = type ? type === TaskType.PRODUCT : tasks.some(task => task.type === TaskType.PRODUCT);
   const hasProductTasks = tasks.some(task => task.type === TaskType.PRODUCT);
   const [recipeModalTask, setRecipeModalTask] = useState<{ id: string; name?: string } | null>(null);
 

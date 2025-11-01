@@ -259,11 +259,44 @@ export class ProjectsService {
       throw new NotFoundException(`Project with ID ${id} not found`);
     }
 
-    return this.prisma.task.findMany({
+    const tasks = await this.prisma.task.findMany({
       where: {
         projectId: id,
       },
+      include: {
+        project: true,
+        group: {
+          select: {
+            id: true,
+            name: true,
+            sortOrder: true,
+          },
+        },
+      },
     });
+
+    // Додаємо інформацію про наявність рецепта
+    const taskIds = tasks.map(t => t.id);
+    const [outputs, consumptions] = await Promise.all([
+      this.prisma.taskOutputPart.findMany({ 
+        where: { taskId: { in: taskIds } }, 
+        select: { taskId: true } 
+      }),
+      this.prisma.taskPartConsumption.findMany({ 
+        where: { taskId: { in: taskIds } }, 
+        select: { taskId: true } 
+      }),
+    ]);
+
+    const tasksWithRecipe = new Set([
+      ...outputs.map(o => o.taskId),
+      ...consumptions.map(c => c.taskId),
+    ]);
+
+    return tasks.map(task => ({
+      ...task,
+      hasRecipe: tasksWithRecipe.has(task.id),
+    }));
   }
 
   async findUsersByProject(id: string) {

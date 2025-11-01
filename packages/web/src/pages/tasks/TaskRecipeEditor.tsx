@@ -3,12 +3,13 @@ import { useParams, Link } from 'react-router-dom'
 import { AdminLayout } from '../../components/admin/AdminLayout'
 import { Box, Heading, HStack, VStack, Table, Thead, Tr, Th, Tbody, Td, Button, Input, Text, Select, FormControl, FormLabel, FormErrorMessage, Badge, Alert, AlertIcon, Collapse, IconButton, Card, CardBody, UnorderedList, ListItem } from '@chakra-ui/react'
 import { ChevronDownIcon, ChevronUpIcon, InfoIcon } from '@chakra-ui/icons'
-import { getTaskRecipe, upsertTaskRecipeOutput, deleteTaskRecipeOutput, upsertTaskRecipeConsumption, deleteTaskRecipeConsumption } from '../../api/tasks'
+import { getTaskRecipe, getTask, upsertTaskRecipeOutput, deleteTaskRecipeOutput, upsertTaskRecipeConsumption, deleteTaskRecipeConsumption } from '../../api/tasks'
 import { getInventory, InventoryItem } from '../../api/inventory'
 
 export const TaskRecipeEditor = () => {
   const { taskId } = useParams<{ taskId: string }>()
   const [projectId, setProjectId] = useState<string | null>(null)
+  const [taskName, setTaskName] = useState<string>('')
   const [outputs, setOutputs] = useState<{ partId: string; perUnit: number }[]>([])
   const [consumptions, setConsumptions] = useState<{ partId: string; quantityPerUnit: number }[]>([])
   const [newOutput, setNewOutput] = useState<{ partId: string; perUnit: string }>({ partId: '', perUnit: '' })
@@ -24,10 +25,14 @@ export const TaskRecipeEditor = () => {
     if (!taskId) return
     try {
       setLoading(true)
-      const data = await getTaskRecipe(taskId)
-      setProjectId(data.projectId)
-      setOutputs(data.outputs.map(o => ({ partId: o.partId, perUnit: Number(o.perUnit) as unknown as number })))
-      setConsumptions(data.consumptions.map(c => ({ partId: c.partId, quantityPerUnit: Number(c.quantityPerUnit) as unknown as number })))
+      const [recipeData, taskData] = await Promise.all([
+        getTaskRecipe(taskId),
+        getTask(taskId)
+      ])
+      setProjectId(recipeData.projectId)
+      setTaskName(taskData.name)
+      setOutputs(recipeData.outputs.map(o => ({ partId: o.partId, perUnit: Number(o.perUnit) as unknown as number })))
+      setConsumptions(recipeData.consumptions.map(c => ({ partId: c.partId, quantityPerUnit: Number(c.quantityPerUnit) as unknown as number })))
     } finally {
       setLoading(false)
     }
@@ -79,7 +84,12 @@ export const TaskRecipeEditor = () => {
     <AdminLayout>
       <Box p={4}>
         <HStack justify="space-between" mb={4}>
-          <Heading size="lg">Рецепт задачі</Heading>
+          <VStack align="flex-start" spacing={1}>
+            <Heading size="lg">Рецепт задачі</Heading>
+            {taskName && (
+              <Text fontSize="md" color="gray.600">{taskName}</Text>
+            )}
+          </VStack>
           {projectId && (
             <Button as={Link} to={`/projects/${projectId}/tasks`} variant="outline">До задач</Button>
           )}

@@ -33,7 +33,7 @@ export async function createPart(projectId: string, data: { name: string; descri
 
 export type InventoryLogType = 'PURCHASE' | 'PRODUCTION' | 'ADJUSTMENT'
 
-export async function addInventoryLog(projectId: string, partId: string, data: { type: InventoryLogType; quantity: number; unitPrice?: number; note?: string }) {
+export async function addInventoryLog(projectId: string, partId: string, data: { type: InventoryLogType; quantity: number; unitPrice?: number; note?: string; createdAt?: string }) {
   const res = await api.post(`/projects/${projectId}/inventory/parts/${partId}/logs`, data)
   return res.data
 }

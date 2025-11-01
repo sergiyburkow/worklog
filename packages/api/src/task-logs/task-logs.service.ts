@@ -6,6 +6,7 @@ import { UpdateTaskLogDto } from './dto/update-task-log.dto';
 import { FindTaskLogsDto } from './dto/find-task-logs.dto';
 import { TaskLogApprovalStatus, TaskType } from '@prisma/client';
 import { UserData } from './types/user-data.type';
+import { invalidateProjectCache } from '../inventory/inventory-cache';
 
 @Injectable()
 export class TaskLogsService {
@@ -260,6 +261,9 @@ export class TaskLogsService {
               }
             }
           }
+          
+          // Інвалідуємо кеш інвентарю після створення/оновлення inventory logs
+          invalidateProjectCache(registerTaskLogDto.projectId!);
         });
       }
     }
@@ -456,9 +460,11 @@ export class TaskLogsService {
     }
 
     await this.prisma.$transaction(async (tx) => {
-      // Якщо реєстрація створювала інвентарний лог — додаємо компенсуючий ADJUSTMENT
-      const inv = await tx.inventoryLog.findFirst({ where: { taskLogId: id } });
-      if (inv) {
+      // Якщо реєстрація створювала інвентарні логи (output/consumption) — додаємо компенсуючі ADJUSTMENT
+      const invLogs = await tx.inventoryLog.findMany({ where: { taskLogId: id } });
+      
+      // Створюємо компенсуючі логи для всіх inventory logs, пов'язаних з цим taskLog
+      for (const inv of invLogs) {
         const qty = Number(inv.quantity);
         if (qty !== 0) {
           await tx.inventoryLog.create({
@@ -466,7 +472,7 @@ export class TaskLogsService {
               projectId: inv.projectId,
               partId: inv.partId,
               type: 'ADJUSTMENT' as any,
-              quantity: -qty,
+              quantity: -qty, // Компенсація: якщо було +31, додаємо -31
               taskLogId: undefined,
               createdById: taskLog.userId,
               note: `Compensation for taskLog ${id} deletion`,
@@ -474,8 +480,15 @@ export class TaskLogsService {
           });
         }
       }
+      
       await tx.taskLog.delete({ where: { id } });
     });
+    
+    // Інвалідуємо кеш інвентарю після видалення
+    const task = await this.prisma.task.findUnique({ where: { id: taskLog.taskId } });
+    if (task) {
+      invalidateProjectCache(task.projectId);
+    }
   }
 
   async update(id: string, updateTaskLogDto: UpdateTaskLogDto) {

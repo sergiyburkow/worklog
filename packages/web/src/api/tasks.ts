@@ -1,7 +1,13 @@
 import { api } from '../lib/api'
+import { Task } from '../types/task'
 
 export interface TaskRecipeOutput { taskId: string; partId: string; perUnit: number }
 export interface TaskRecipeConsumption { taskId: string; partId: string; quantityPerUnit: number }
+
+export async function getTask(taskId: string): Promise<Task> {
+  const res = await api.get(`/tasks/${taskId}`)
+  return res.data
+}
 
 export async function getTaskRecipe(taskId: string): Promise<{ projectId: string; outputs: TaskRecipeOutput[]; consumptions: TaskRecipeConsumption[] }> {
   const res = await api.get(`/tasks/${taskId}/recipe`)

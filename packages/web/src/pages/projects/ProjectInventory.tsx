@@ -359,6 +359,10 @@ export const ProjectInventory = () => {
           isOpen={!!logPartId}
           onClose={() => setLogPartId(null)}
           onSubmit={async (d) => { if (logPartId) await handleAddLog(logPartId, d) }}
+          partName={logPartId ? (() => {
+            const part = items.find(it => it.id === logPartId)
+            return part ? `${part.code}${part.name ? ` - ${part.name}` : ''}` : undefined
+          })() : undefined}
         />
 
         {projectId && (

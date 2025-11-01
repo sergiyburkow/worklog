@@ -1,37 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePartDto } from './dto/create-part.dto';
 import { CreateInventoryLogDto } from './dto/create-inventory-log.dto';
-
-// Simple in-memory cache with TTL
-type CacheEntry = { expiresAt: number; data: any };
-const cacheStore: Map<string, CacheEntry> = new Map();
-const DEFAULT_TTL_MS = 60_000; // 60s
-
-function makeKey(parts: any[]): string {
-  return parts.map((p) => (typeof p === 'string' ? p : JSON.stringify(p))).join('|');
-}
-
-function cacheGet(key: string): any | undefined {
-  const entry = cacheStore.get(key);
-  if (!entry) return undefined;
-  if (Date.now() > entry.expiresAt) {
-    cacheStore.delete(key);
-    return undefined;
-  }
-  return entry.data;
-}
-
-function cacheSet(key: string, data: any, ttlMs: number = DEFAULT_TTL_MS): void {
-  cacheStore.set(key, { data, expiresAt: Date.now() + ttlMs });
-}
-
-function invalidateProjectCache(projectId: string): void {
-  const prefix = `inv:${projectId}`;
-  for (const k of Array.from(cacheStore.keys())) {
-    if (k.includes(prefix)) cacheStore.delete(k);
-  }
-}
+import { makeKey, cacheGet, cacheSet, invalidateProjectCache } from './inventory-cache';
 
 @Injectable()
 export class InventoryService {
@@ -315,12 +286,26 @@ export class InventoryService {
     return this.prisma.part.create({ data });
   }
 
-  async addLog(projectId: string, partId: string, dto: CreateInventoryLogDto, createdById: string) {
+  async addLog(projectId: string, partId: string, dto: CreateInventoryLogDto, createdById: string, userRole?: string) {
     // Ensure part belongs to project
     const part = await this.prisma.part.findFirst({ where: { id: partId, projectId } });
     if (!part) {
-      throw new Error('Part does not belong to project');
+      throw new NotFoundException('Part does not belong to project');
     }
+    
+    // Перевірка: тільки ADMIN може встановити кастомну дату
+    let createdAt: Date | undefined = undefined;
+    if (dto.createdAt) {
+      if (userRole !== 'ADMIN') {
+        throw new ForbiddenException('Only ADMIN can set custom date for inventory log');
+      }
+      createdAt = new Date(dto.createdAt);
+      // Валідація дати
+      if (isNaN(createdAt.getTime())) {
+        throw new BadRequestException('Invalid date format');
+      }
+    }
+    
     const res = await this.prisma.inventoryLog.create({
       data: {
         projectId,
@@ -330,6 +315,7 @@ export class InventoryService {
         unitPrice: dto.unitPrice !== undefined ? dto.unitPrice : null,
         note: dto.note,
         createdById,
+        createdAt: createdAt,
       },
     });
     invalidateProjectCache(projectId);

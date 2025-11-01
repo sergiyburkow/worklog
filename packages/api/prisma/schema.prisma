@@ -84,6 +84,7 @@ model Project {
   users         ProjectUser[]
   client        Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
   tasks         Task[]
+  taskGroups    TaskGroup[]
   parts         Part[]
   partGroups    PartGroup[]
   inventoryLogs InventoryLog[]
@@ -113,15 +114,34 @@ model Task {
   tags          String?
   estimatedTime Decimal?              @map("estimated_time")
   projectId     String                @map("project_id")
+  groupId       String?               @map("group_id")
   createdAt     DateTime              @default(now()) @map("created_at")
   updatedAt     DateTime              @updatedAt @map("updated_at")
   cost          Decimal               @default(0) @map("cost")
   logs          TaskLog[]
   project       Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  group         TaskGroup?            @relation(fields: [groupId], references: [id], onDelete: SetNull)
   outputParts   TaskOutputPart[]
   consumedParts TaskPartConsumption[]
 
+  @@index([projectId, groupId])
   @@map("tasks")
+}
+
+/// Task grouping: groups of tasks within a project
+model TaskGroup {
+  id          String   @id @default(uuid())
+  projectId   String   @map("project_id")
+  name        String
+  description String?
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks       Task[]
+
+  @@index([projectId, sortOrder])
+  @@map("TaskGroups")
 }
 
 model Product {

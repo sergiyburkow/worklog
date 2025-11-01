@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsEnum, IsNumber, IsOptional, IsString, Min, IsDateString } from 'class-validator';
 
 export enum InventoryLogType {
   PURCHASE = 'PURCHASE',
@@ -37,4 +37,15 @@ export class CreateInventoryLogDto {
   @IsOptional()
   @IsString()
   taskLogId?: string;
+
+  @ApiProperty({ 
+    required: false,
+    description: 'Дата реєстрації руху (ISO 8601). Доступно тільки для ADMIN. Якщо не вказано, використовується поточна дата.',
+    example: '2024-11-01T10:30:00Z',
+    type: String,
+    format: 'date-time'
+  })
+  @IsOptional()
+  @IsDateString()
+  createdAt?: string;
 }

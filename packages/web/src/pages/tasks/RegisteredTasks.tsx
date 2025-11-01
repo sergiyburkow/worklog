@@ -187,42 +187,46 @@ export const RegisteredTasks: React.FC = () => {
     });
   };
 
+  // Функція для завантаження задач
+  const fetchTasks = async () => {
+    if (!projectId) return;
+    
+    try {
+      const params = new URLSearchParams();
+      
+      if (filters.type) {
+        params.append('type', filters.type);
+      }
+      if (filters.userId) {
+        params.append('userId', filters.userId);
+      }
+      if (filters.dateFrom && filters.predefinedRange !== 'ALL_TIME') {
+        const fromDate = startOfDay(parseISO(filters.dateFrom));
+        params.append('registeredFrom', fromDate.toISOString());
+      }
+      if (filters.dateTo && filters.predefinedRange !== 'ALL_TIME') {
+        const toDate = endOfDay(parseISO(filters.dateTo));
+        params.append('registeredTo', toDate.toISOString());
+      }
+
+      const response = await api.get(`/task-logs/project/${projectId}?${params.toString()}`);
+      setTasks(response.data);
+    } catch (error) {
+      console.error('Помилка при завантаженні задач:', error);
+      toast({
+        title: 'Помилка',
+        description: 'Не вдалося завантажити зареєстровані задачі',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+
   // Завантаження задач
   useEffect(() => {
-    const fetchTasks = async () => {
-      try {
-        const params = new URLSearchParams();
-        
-        if (filters.type) {
-          params.append('type', filters.type);
-        }
-        if (filters.userId) {
-          params.append('userId', filters.userId);
-        }
-        if (filters.dateFrom && filters.predefinedRange !== 'ALL_TIME') {
-          const fromDate = startOfDay(parseISO(filters.dateFrom));
-          params.append('registeredFrom', fromDate.toISOString());
-        }
-        if (filters.dateTo && filters.predefinedRange !== 'ALL_TIME') {
-          const toDate = endOfDay(parseISO(filters.dateTo));
-          params.append('registeredTo', toDate.toISOString());
-        }
-
-        const response = await api.get(`/task-logs/project/${projectId}?${params.toString()}`);
-        setTasks(response.data);
-      } catch (error) {
-        console.error('Помилка при завантаженні задач:', error);
-        toast({
-          title: 'Помилка',
-          description: 'Не вдалося завантажити зареєстровані задачі',
-          status: 'error',
-          duration: 3000,
-          isClosable: true,
-        });
-      }
-    };
-
     fetchTasks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId, filters]);
 
   // Завантаження користувачів проекту
@@ -335,7 +339,11 @@ export const RegisteredTasks: React.FC = () => {
           </CardBody>
         </Card>
 
-        <RegisteredTasksTable tasks={tasks} type={filters.type as any || 'PRODUCT'} />
+        <RegisteredTasksTable 
+          tasks={tasks} 
+          type={filters.type as any || 'PRODUCT'} 
+          onTaskDeleted={fetchTasks}
+        />
       </Box>
     </AdminLayout>
   );

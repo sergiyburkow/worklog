@@ -12,6 +12,16 @@ export class TasksService {
   constructor(private prisma: PrismaService) {}
 
   async create(createTaskDto: CreateTaskDto) {
+    // Перевіряємо що група належить до проекту (якщо вказана)
+    if (createTaskDto.groupId) {
+      const group = await this.prisma.taskGroup.findFirst({
+        where: { id: createTaskDto.groupId, projectId: createTaskDto.projectId },
+      });
+      if (!group) {
+        throw new BadRequestException('Task group does not belong to the project');
+      }
+    }
+
     return this.prisma.task.create({
       data: {
         name: createTaskDto.name,
@@ -26,9 +36,23 @@ export class TasksService {
             id: createTaskDto.projectId,
           },
         },
+        ...(createTaskDto.groupId && {
+          group: {
+            connect: {
+              id: createTaskDto.groupId,
+            },
+          },
+        }),
       },
       include: {
         project: true,
+        group: {
+          select: {
+            id: true,
+            name: true,
+            sortOrder: true,
+          },
+        },
       },
     });
   }
@@ -46,6 +70,13 @@ export class TasksService {
       where: { id },
       include: {
         project: true,
+        group: {
+          select: {
+            id: true,
+            name: true,
+            sortOrder: true,
+          },
+        },
       },
     });
 
@@ -74,14 +105,14 @@ export class TasksService {
     }
 
     const updateData: Prisma.TaskUpdateInput = {
-      ...(updateTaskDto.name && { name: updateTaskDto.name }),
-      ...(updateTaskDto.description && { description: updateTaskDto.description }),
-      ...(updateTaskDto.type && { type: updateTaskDto.type }),
-      ...(updateTaskDto.complexity && { complexity: updateTaskDto.complexity }),
-      ...(updateTaskDto.tags && { tags: updateTaskDto.tags }),
-      ...(updateTaskDto.status && { status: updateTaskDto.status }),
-      ...(updateTaskDto.estimatedTime && { 
-        estimatedTime: new Prisma.Decimal(updateTaskDto.estimatedTime) 
+      ...(updateTaskDto.name !== undefined && { name: updateTaskDto.name }),
+      ...(updateTaskDto.description !== undefined && { description: updateTaskDto.description ?? null }),
+      ...(updateTaskDto.type !== undefined && { type: updateTaskDto.type }),
+      ...(updateTaskDto.complexity !== undefined && { complexity: updateTaskDto.complexity ?? null }),
+      ...(updateTaskDto.tags !== undefined && { tags: updateTaskDto.tags ?? null }),
+      ...(updateTaskDto.status !== undefined && { status: updateTaskDto.status }),
+      ...(updateTaskDto.estimatedTime !== undefined && { 
+        estimatedTime: updateTaskDto.estimatedTime ? new Prisma.Decimal(updateTaskDto.estimatedTime) : new Prisma.Decimal(0)
       }),
       ...(updateTaskDto.cost !== undefined && { 
         cost: new Prisma.Decimal(updateTaskDto.cost) 
@@ -95,11 +126,38 @@ export class TasksService {
       }),
     };
 
+    // Обробка groupId: перевірка та оновлення
+    if (updateTaskDto.groupId !== undefined) {
+      const projectId = updateTaskDto.projectId || task.projectId;
+      
+      if (updateTaskDto.groupId === null || updateTaskDto.groupId === '') {
+        // Прибрати з групи
+        updateData.group = { disconnect: true };
+      } else if (updateTaskDto.groupId) {
+        // Перевіряємо що група належить до проекту
+        const group = await this.prisma.taskGroup.findFirst({
+          where: { id: updateTaskDto.groupId, projectId },
+        });
+        if (!group) {
+          throw new BadRequestException('Task group does not belong to the project');
+        }
+        // Встановлюємо групу через connect
+        updateData.group = { connect: { id: updateTaskDto.groupId } };
+      }
+    }
+
     return this.prisma.task.update({
       where: { id },
       data: updateData,
       include: {
         project: true,
+        group: {
+          select: {
+            id: true,
+            name: true,
+            sortOrder: true,
+          },
+        },
       },
     });
   }
@@ -132,6 +190,13 @@ export class TasksService {
       },
       include: {
         project: true,
+        group: {
+          select: {
+            id: true,
+            name: true,
+            sortOrder: true,
+          },
+        },
       },
     });
     

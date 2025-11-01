@@ -9,6 +9,7 @@ import {
   Button,
   ModalFooter,
   ModalBody,
+  HStack,
 } from '@chakra-ui/react';
 import { TaskType, TASK_TYPE_LABELS } from '../../types/task';
 
@@ -20,6 +21,13 @@ export interface TaskFormData {
   complexity?: number;
   tags?: string;
   cost?: number;
+  groupId?: string | null;
+}
+
+interface TaskGroup {
+  id: string;
+  name: string;
+  sortOrder: number;
 }
 
 interface TaskFormProps {
@@ -29,6 +37,8 @@ interface TaskFormProps {
   onChange: (data: Partial<TaskFormData>) => void;
   onCancel: () => void;
   submitButtonText?: string;
+  groups?: TaskGroup[];
+  onCreateGroup?: () => void;
 }
 
 export const TaskForm = ({ 
@@ -37,7 +47,9 @@ export const TaskForm = ({
   onSubmit, 
   onChange, 
   onCancel,
-  submitButtonText = 'Додати завдання'
+  submitButtonText = 'Додати завдання',
+  groups = [],
+  onCreateGroup,
 }: TaskFormProps) => {
 
   return (
@@ -60,6 +72,28 @@ export const TaskForm = ({
               onChange={(e) => onChange({ description: e.target.value })}
               placeholder="Введіть опис завдання"
             />
+          </FormControl>
+
+          <FormControl>
+            <FormLabel>Група задач</FormLabel>
+            <HStack>
+              <Select
+                value={formData.groupId || ''}
+                onChange={(e) => onChange({ groupId: e.target.value || null })}
+                placeholder="Без групи"
+              >
+                {groups.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.name}
+                  </option>
+                ))}
+              </Select>
+              {onCreateGroup && (
+                <Button onClick={onCreateGroup} variant="outline" size="md" type="button">
+                  Нова група
+                </Button>
+              )}
+            </HStack>
           </FormControl>
 
           <FormControl isRequired>

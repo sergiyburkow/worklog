@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -16,12 +16,32 @@ import {
   ModalCloseButton,
   useDisclosure,
   Text,
+  Card,
+  CardHeader,
+  CardBody,
+  Collapse,
+  Icon,
+  Select,
+  Accordion,
+  AccordionItem,
+  AccordionButton,
+  AccordionPanel,
+  AccordionIcon,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  FormControl,
+  FormLabel,
 } from '@chakra-ui/react';
+import { ChevronDownIcon } from '@chakra-ui/icons';
 import { api } from '../../lib/api';
 import { AdminLayout } from '../../components/admin/AdminLayout';
 import { TaskForm } from '../../components/forms/TaskForm';
 import { TasksTable } from '../../components/tables/TasksTable';
+import { TaskGroupModal } from '../../components/tasks/TaskGroupModal';
 import { Task, TaskType, TaskStatus } from '../../types/task';
+import { getTaskGroups, createTaskGroup, updateTaskGroup, deleteTaskGroup, TaskGroup } from '../../api/task-groups';
 
 const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
   [TaskStatus.NEW]: 'Нове',
@@ -47,6 +67,7 @@ interface TaskFormData {
   quantity?: number;
   product?: string;
   cost?: number;
+  groupId?: string | null;
 }
 
 export const Tasks = () => {
@@ -57,6 +78,10 @@ export const Tasks = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
+  const [taskGroups, setTaskGroups] = useState<TaskGroup[]>([]);
+  const [selectedGroupId, setSelectedGroupId] = useState<string>('');
+  const [editingGroup, setEditingGroup] = useState<TaskGroup | null>(null);
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
   const toast = useToast();
   const { 
     isOpen: isCreateOpen, 
@@ -78,7 +103,18 @@ export const Tasks = () => {
     name: '',
     description: '',
     type: TaskType.PRODUCT,
+    groupId: null,
   });
+
+  const fetchTaskGroups = async () => {
+    if (!projectId) return;
+    try {
+      const data = await getTaskGroups(projectId);
+      setTaskGroups(data.groups);
+    } catch (error) {
+      console.error('Failed to fetch task groups:', error);
+    }
+  };
 
   const fetchTasks = async () => {
     if (!projectId) {
@@ -114,6 +150,7 @@ export const Tasks = () => {
 
   useEffect(() => {
     fetchTasks();
+    fetchTaskGroups();
   }, [projectId]);
 
   const handleCreateSubmit = async (e: React.FormEvent) => {
@@ -125,7 +162,8 @@ export const Tasks = () => {
         ...formData,
         projectId,
         estimatedTime: formData.type === TaskType.GENERAL ? '0' : formData.estimatedTime,
-        cost: formData.cost || 0
+        cost: formData.cost || 0,
+        groupId: formData.groupId || undefined,
       });
 
       toast({
@@ -141,6 +179,7 @@ export const Tasks = () => {
         name: '',
         description: '',
         type: TaskType.PRODUCT,
+        groupId: null,
       });
 
       // Закриваємо модальне вікно
@@ -172,7 +211,8 @@ export const Tasks = () => {
       tags: task.tags,
       product: task.product,
       quantity: task.quantity,
-      cost: task.cost !== undefined && task.cost !== null ? Number(task.cost) : undefined
+      cost: task.cost !== undefined && task.cost !== null ? Number(task.cost) : undefined,
+      groupId: task.group?.id || null,
     });
     onEditOpen();
   };
@@ -184,12 +224,27 @@ export const Tasks = () => {
     setIsLoading(true);
 
     try {
-      await api.put(`/tasks/${taskToEdit.id}`, {
-        ...formData,
-        projectId,
-        estimatedTime: formData.type === TaskType.GENERAL ? '0' : formData.estimatedTime,
-        cost: formData.cost !== undefined && !isNaN(formData.cost) ? formData.cost : 0
-      });
+      const payload: any = {
+        name: formData.name,
+        description: formData.description || null,
+        type: formData.type,
+        estimatedTime: formData.type === TaskType.GENERAL ? '0' : (formData.estimatedTime || null),
+        cost: formData.cost !== undefined && !isNaN(formData.cost) ? formData.cost : 0,
+      };
+      
+      // Додаємо опціональні поля явно
+      if (formData.complexity !== undefined) {
+        payload.complexity = formData.complexity;
+      }
+      if (formData.tags !== undefined) {
+        payload.tags = formData.tags || null;
+      }
+      
+      // groupId завжди передаємо (null або string)
+      payload.groupId = formData.groupId || null;
+      
+      const response = await api.put(`/tasks/${taskToEdit.id}`, payload);
+      console.log('Update response:', response.data); // Для дебагу
 
       toast({
         title: 'Успіх',
@@ -204,14 +259,16 @@ export const Tasks = () => {
         name: '',
         description: '',
         type: TaskType.PRODUCT,
+        groupId: null,
       });
       setTaskToEdit(null);
 
       // Закриваємо модальне вікно
       onEditClose();
 
-      // Оновлюємо список завдань
+      // Оновлюємо список завдань та груп
       await fetchTasks();
+      await fetchTaskGroups();
     } catch (error) {
       toast({
         title: 'Помилка',
@@ -259,9 +316,121 @@ export const Tasks = () => {
     }
   };
 
-  const productTasks = tasks.filter(task => task.type === TaskType.PRODUCT);
-  const generalTasks = tasks.filter(task => task.type === TaskType.GENERAL);
-  const intermediateTasks = tasks.filter(task => task.type === TaskType.INTERMEDIATE);
+  // Фільтрація задач по групі (типи не фільтруємо)
+  const filteredTasks = (() => {
+    let filtered = [...tasks];
+    
+    if (selectedGroupId) {
+      if (selectedGroupId === 'none') {
+        filtered = filtered.filter(task => !task.group);
+      } else {
+        filtered = filtered.filter(task => task.group?.id === selectedGroupId);
+      }
+    }
+    
+    return filtered;
+  })();
+
+  // Групування задач для Accordion
+  const groupTasksByGroup = (taskList: Task[]) => {
+    const grouped: Record<string, Task[]> = {};
+    const noGroup: Task[] = [];
+
+    taskList.forEach(task => {
+      if (task.group) {
+        const groupId = task.group.id;
+        if (!grouped[groupId]) {
+          grouped[groupId] = [];
+        }
+        grouped[groupId].push(task);
+      } else {
+        noGroup.push(task);
+      }
+    });
+
+    // Сортуємо задачі в кожній групі за назвою
+    Object.keys(grouped).forEach(key => {
+      grouped[key].sort((a, b) => a.name.localeCompare(b.name));
+    });
+    noGroup.sort((a, b) => a.name.localeCompare(b.name));
+
+    return { grouped, noGroup };
+  };
+
+  // Обчислюємо defaultIndex для відкриття всіх акордіонів
+  const accordionDefaultIndex = useMemo(() => {
+    const { grouped, noGroup } = groupTasksByGroup(filteredTasks);
+    const sortedGroupIds = Object.keys(grouped).sort((a, b) => {
+      const groupA = taskGroups.find(g => g.id === a);
+      const groupB = taskGroups.find(g => g.id === b);
+      if (!groupA || !groupB) return 0;
+      return groupA.sortOrder - groupB.sortOrder || groupA.name.localeCompare(groupB.name);
+    });
+    const totalSections = sortedGroupIds.length + (noGroup.length > 0 ? 1 : 0);
+    return Array.from({ length: totalSections }, (_, i) => i);
+  }, [filteredTasks, taskGroups]);
+
+  const handleGroupSubmit = async (data: { name: string; description?: string; sortOrder?: number }) => {
+    if (!projectId) return;
+    
+    try {
+      if (editingGroup) {
+        await updateTaskGroup(projectId, editingGroup.id, data);
+        toast({
+          title: 'Успіх',
+          description: 'Групу оновлено',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
+      } else {
+        await createTaskGroup(projectId, data);
+        toast({
+          title: 'Успіх',
+          description: 'Групу створено',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
+      }
+      await fetchTaskGroups();
+      setEditingGroup(null);
+      setIsGroupModalOpen(false);
+    } catch (error) {
+      toast({
+        title: 'Помилка',
+        description: editingGroup ? 'Не вдалося оновити групу' : 'Не вдалося створити групу',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
+
+  const handleDeleteGroup = async (groupId: string) => {
+    if (!projectId) return;
+    
+    try {
+      await deleteTaskGroup(projectId, groupId);
+      toast({
+        title: 'Успіх',
+        description: 'Групу видалено',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+      await fetchTaskGroups();
+      await fetchTasks(); // Оновлюємо задачі, щоб прибрати видалену групу
+    } catch (error) {
+      toast({
+        title: 'Помилка',
+        description: 'Не вдалося видалити групу',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    }
+  };
 
   return (
     <AdminLayout>
@@ -269,40 +438,146 @@ export const Tasks = () => {
         <VStack spacing={6} align="stretch">
           <HStack justify="space-between">
             <Heading size="lg">Задачі проекту: {projectName}</Heading>
-            <Button colorScheme="blue" size="lg" onClick={onCreateOpen}>
-              Додати задачу
-            </Button>
+            <HStack>
+              <Menu>
+                <MenuButton as={Button} variant="outline" size="lg">
+                  Управління групами
+                </MenuButton>
+                <MenuList>
+                  <MenuItem onClick={() => { setEditingGroup(null); setIsGroupModalOpen(true); }}>
+                    Створити групу
+                  </MenuItem>
+                  {taskGroups.map(group => (
+                    <MenuItem key={group.id}>
+                      <HStack width="100%" justify="space-between">
+                        <Text>{group.name}</Text>
+                        <HStack>
+                          <Button 
+                            size="xs" 
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingGroup(group);
+                              setIsGroupModalOpen(true);
+                            }}
+                          >
+                            Редагувати
+                          </Button>
+                          <Button 
+                            size="xs" 
+                            colorScheme="red" 
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (window.confirm(`Видалити групу "${group.name}"?`)) {
+                                handleDeleteGroup(group.id);
+                              }
+                            }}
+                          >
+                            Видалити
+                          </Button>
+                        </HStack>
+                      </HStack>
+                    </MenuItem>
+                  ))}
+                </MenuList>
+              </Menu>
+              <Button colorScheme="blue" size="lg" onClick={onCreateOpen}>
+                Додати задачу
+              </Button>
+            </HStack>
           </HStack>
 
-          <Heading size="md">Продуктові задачі</Heading>
-          <TasksTable 
-            tasks={productTasks} 
-            title="Продуктові задачі" 
-            type={TaskType.PRODUCT}
-            onDelete={handleDeleteClick}
-            onEdit={handleEditClick}
-            projectId={projectId}
-          />
+          <Card>
+            <CardBody>
+              <HStack spacing={4}>
+                <FormControl width="300px">
+                  <FormLabel>Фільтр по групі</FormLabel>
+                  <Select
+                    value={selectedGroupId}
+                    onChange={(e) => setSelectedGroupId(e.target.value)}
+                    placeholder="Всі задачі"
+                  >
+                    <option value="">Всі задачі</option>
+                    <option value="none">Без групи</option>
+                    {taskGroups.map(group => (
+                      <option key={group.id} value={group.id}>
+                        {group.name}
+                      </option>
+                    ))}
+                  </Select>
+                </FormControl>
+              </HStack>
+            </CardBody>
+          </Card>
 
-          <Heading size="md">Проміжні задачі</Heading>
-          <TasksTable 
-            tasks={intermediateTasks} 
-            title="Проміжні задачі" 
-            type={TaskType.INTERMEDIATE}
-            onDelete={handleDeleteClick}
-            onEdit={handleEditClick}
-            projectId={projectId}
-          />
+          <Heading size="md">Задачі</Heading>
+          {filteredTasks.length === 0 ? (
+            <Text color="gray.500">Немає задач</Text>
+          ) : (
+            <Accordion allowMultiple defaultIndex={accordionDefaultIndex}>
+              {(() => {
+                const { grouped, noGroup } = groupTasksByGroup(filteredTasks);
+                const sortedGroupIds = Object.keys(grouped).sort((a, b) => {
+                  const groupA = taskGroups.find(g => g.id === a);
+                  const groupB = taskGroups.find(g => g.id === b);
+                  if (!groupA || !groupB) return 0;
+                  return groupA.sortOrder - groupB.sortOrder || groupA.name.localeCompare(groupB.name);
+                });
 
-          <Heading size="md">Загальні задачі</Heading>
-          <TasksTable 
-            tasks={generalTasks} 
-            title="Загальні задачі" 
-            type={TaskType.GENERAL}
-            onDelete={handleDeleteClick}
-            onEdit={handleEditClick}
-            projectId={projectId}
-          />
+                return (
+                  <>
+                    {sortedGroupIds.map(groupId => {
+                      const group = taskGroups.find(g => g.id === groupId);
+                      const groupTasks = grouped[groupId];
+                      return (
+                        <AccordionItem key={groupId}>
+                          <AccordionButton>
+                            <Box flex="1" textAlign="left">
+                              <Text fontWeight="bold">{group?.name || 'Невідома група'}</Text>
+                              <Text fontSize="sm" color="gray.500">{groupTasks.length} задач(и)</Text>
+                            </Box>
+                            <AccordionIcon />
+                          </AccordionButton>
+                          <AccordionPanel pb={4}>
+                            <TasksTable
+                              tasks={groupTasks}
+                              title=""
+                              type={undefined}
+                              onDelete={handleDeleteClick}
+                              onEdit={handleEditClick}
+                              projectId={projectId}
+                            />
+                          </AccordionPanel>
+                        </AccordionItem>
+                      );
+                    })}
+                    {noGroup.length > 0 && (
+                      <AccordionItem>
+                        <AccordionButton>
+                          <Box flex="1" textAlign="left">
+                            <Text fontWeight="bold">Без групи</Text>
+                            <Text fontSize="sm" color="gray.500">{noGroup.length} задач(и)</Text>
+                          </Box>
+                          <AccordionIcon />
+                        </AccordionButton>
+                        <AccordionPanel pb={4}>
+                          <TasksTable
+                            tasks={noGroup}
+                            title=""
+                            type={undefined}
+                            onDelete={handleDeleteClick}
+                            onEdit={handleEditClick}
+                            projectId={projectId}
+                          />
+                        </AccordionPanel>
+                      </AccordionItem>
+                    )}
+                  </>
+                );
+              })()}
+            </Accordion>
+          )}
         </VStack>
       </Box>
 
@@ -319,6 +594,12 @@ export const Tasks = () => {
               onChange={(data) => setFormData({ ...formData, ...data })}
               onCancel={onCreateClose}
               submitButtonText="Додати завдання"
+              groups={taskGroups}
+              onCreateGroup={() => {
+                onCreateClose();
+                setEditingGroup(null);
+                setIsGroupModalOpen(true);
+              }}
             />
           </ModalBody>
         </ModalContent>
@@ -337,6 +618,12 @@ export const Tasks = () => {
               onChange={(data) => setFormData({ ...formData, ...data })}
               onCancel={onEditClose}
               submitButtonText="Зберегти зміни"
+              groups={taskGroups}
+              onCreateGroup={() => {
+                onEditClose();
+                setEditingGroup(null);
+                setIsGroupModalOpen(true);
+              }}
             />
           </ModalBody>
         </ModalContent>
@@ -360,6 +647,16 @@ export const Tasks = () => {
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      <TaskGroupModal
+        isOpen={isGroupModalOpen}
+        onClose={() => {
+          setIsGroupModalOpen(false);
+          setEditingGroup(null);
+        }}
+        initial={editingGroup ? { name: editingGroup.name, description: editingGroup.description || undefined, sortOrder: editingGroup.sortOrder } : undefined}
+        onSubmit={handleGroupSubmit}
+      />
     </AdminLayout>
   );
 }; 

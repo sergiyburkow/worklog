@@ -25,6 +25,11 @@ export interface Task {
   quantity?: number;
   cost?: number;
   hasRecipe?: boolean;
+  group?: {
+    id: string;
+    name: string;
+    sortOrder: number;
+  } | null;
 }
 
 export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {

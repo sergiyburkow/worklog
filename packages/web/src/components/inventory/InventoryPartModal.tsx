@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, ModalCloseButton, Button, FormControl, FormLabel, Input, FormErrorMessage, HStack } from '@chakra-ui/react'
+import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, ModalCloseButton, Button, FormControl, FormLabel, Input, Textarea, FormErrorMessage, HStack } from '@chakra-ui/react'
 
 interface Props {
   isOpen: boolean
@@ -75,7 +75,13 @@ export const InventoryPartModal = ({ isOpen, onClose, onSubmit, groups = [], onC
           </FormControl>
           <FormControl mb={3}>
             <FormLabel>Опис</FormLabel>
-            <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Опціонально" />
+            <Textarea 
+              value={description} 
+              onChange={(e) => setDescription(e.target.value)} 
+              placeholder="Опціонально" 
+              rows={3}
+              resize="vertical"
+            />
           </FormControl>
           <FormControl>
             <FormLabel>Цільова кількість</FormLabel>

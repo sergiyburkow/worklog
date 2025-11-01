@@ -183,6 +183,71 @@ UX деталі:
 
 ---
 
+### 4.2) Task Groups System (Групи задач)
+**Мета:** Додати можливість групувати задачі в рамках проекту для кращої організації та структурування.
+
+**Архітектура даних:**
+- `TaskGroup` (група задач)
+  - `id` (uuid)
+  - `projectId` (uuid)
+  - `name` (string) — назва групи
+  - `description` (string | null) — опис групи
+  - `sortOrder` (number) — порядок сортування для відображення
+  - `createdAt` (datetime)
+  - `updatedAt` (datetime)
+- `Task` (оновлення моделі)
+  - Додати поле `groupId` (uuid | null) — посилання на групу задач
+  - Задача може належати групі або не мати групи (null)
+
+**Backend API (планується):**
+- `GET /projects/:projectId/task-groups` — отримати список груп задач для проекту
+  - Повертає: `{ groups: TaskGroup[] }`
+  - Сортування за `sortOrder`
+- `POST /projects/:projectId/task-groups` — створити нову групу задач
+  - Тіло: `{ name, description?, sortOrder? }`
+  - Доступ: ADMIN, PROJECT_MANAGER
+- `PUT /projects/:projectId/task-groups/:groupId` — оновити групу задач
+  - Тіло: `{ name?, description?, sortOrder? }`
+  - Доступ: ADMIN, PROJECT_MANAGER
+- `DELETE /projects/:projectId/task-groups/:groupId` — видалити групу задач
+  - При видаленні: задачі, що належали групі, отримують `groupId = null`
+  - Доступ: ADMIN, PROJECT_MANAGER
+- `GET /projects/:projectId/tasks` — оновлено для включення `groupId` та даних групи
+  - Повертає задачі з полем `group: { id, name, sortOrder } | null`
+- `POST /tasks` — оновлено для прийняття `groupId` (опціонально)
+- `PUT /tasks/:id` — оновлено для зміни `groupId` (опціонально)
+
+**Frontend UI (планується):**
+- Сторінка управління групами задач (аналогічно PartGroups):
+  - Список груп з можливістю редагування/видалення
+  - Модалка створення/редагування групи: name, description, sortOrder
+- Сторінка списку задач (`Tasks.tsx`) — оновлення:
+  - Групування задач за групами (Accordion/Collapse)
+  - Підсумок: "Без групи" для задач без групи
+  - Фільтр по групі (Select)
+- Форми створення/редагування задачі:
+  - Поле вибору групи (Select) — опціонально
+  - Варіанти: "Без групи" або вибір зі списку груп проекту
+
+**Етапи реалізації:**
+- Етап 4.2.1: Backend — моделі даних та міграції [NEXT]
+  - Створити модель `TaskGroup` в Prisma schema
+  - Додати поле `groupId` до моделі `Task`
+  - Створити міграцію
+- Етап 4.2.2: Backend — API endpoints [NEXT]
+  - CRUD операції для TaskGroup
+  - Оновити Task API для підтримки `groupId`
+  - Додати Swagger документацію
+- Етап 4.2.3: Frontend — UI управління групами [NEXT]
+  - Сторінка/модалки для CRUD груп задач
+  - Інтеграція в ProjectMenu або на сторінці Tasks
+- Етап 4.2.4: Frontend — UI списку задач з групуванням [NEXT]
+  - Оновити `Tasks.tsx` для групування за групами
+  - Додати фільтр по групі
+  - Оновити форми створення/редагування задачі
+
+---
+
 ### 5) Валідації та інваріанти
 - quantity > 0 для всіх створюваних логів
 - targetQuantity ≥ 0
@@ -235,6 +300,11 @@ UX деталі:
   - Підказки та приклади використання [DONE]
   - Swagger документація [DONE]
   - Інтеграційні тести [DONE]
+- Етап 4.2: Task Groups System (Групи задач) [NEXT]
+  - Backend: моделі даних та міграції [NEXT]
+  - Backend: API endpoints для CRUD груп задач [NEXT]
+  - Frontend: UI управління групами [NEXT]
+  - Frontend: групування задач в списку та фільтрація [NEXT]
 - Етап 5: Звіти/фільтри/оптимізації (пагінація, індекси, кешування) [NEXT]
 
 ---

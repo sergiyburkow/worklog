@@ -13,7 +13,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { api } from '../../lib/api';
 import { AddIcon, SettingsIcon, InfoIcon } from '@chakra-ui/icons';
-import { FiDollarSign, FiPackage, FiList, FiBox, FiHome } from 'react-icons/fi';
+import { FiDollarSign, FiPackage, FiList, FiBox, FiHome, FiCheckCircle } from 'react-icons/fi';
 
 interface ProjectMenuProps {
   isCollapsed: boolean;
@@ -107,11 +107,55 @@ export const ProjectMenu = ({ isCollapsed }: ProjectMenuProps) => {
             { path: `/projects/${projectId}/payments`, label: 'Платежі', icon: FiDollarSign },
             { path: `/projects/${projectId}/products`, label: 'Продукти', icon: FiPackage },
             { path: `/projects/${projectId}/tasks`, label: 'Задачі', icon: FiList },
+            { path: `/projects/${projectId}/tasks/registered`, label: 'Зареєстровані задачі', icon: FiCheckCircle },
             { path: `/projects/${projectId}/inventory`, label: 'Склад', icon: FiBox },
           ].map((item) => {
-            const isActive = item.exact 
-              ? location.pathname === item.path
-              : location.pathname.startsWith(item.path);
+            // Для точного співпадіння (exact: true)
+            if (item.exact) {
+              const isActive = location.pathname === item.path;
+              return (
+                <Button
+                  key={item.path}
+                  leftIcon={<Icon as={item.icon} />}
+                  variant={isActive ? "solid" : "ghost"}
+                  colorScheme={isActive ? "blue" : "gray"}
+                  justifyContent={isCollapsed ? "center" : "flex-start"}
+                  width="100%"
+                  onClick={() => navigate(item.path)}
+                  px={isCollapsed ? 2 : 4}
+                  overflow="hidden"
+                >
+                  {!isCollapsed && item.label}
+                </Button>
+              );
+            }
+            
+            // Для звичайних шляхів - перевіряємо точне співпадіння або що шлях починається з item.path
+            // Але якщо є дочірній шлях у меню, який активний, то базовий не підсвічується
+            // Наприклад: /tasks не має підсвічуватись коли ми на /tasks/registered
+            
+            // Список усіх шляхів у меню (виключаємо exact шляхи)
+            const allMenuPaths = [
+              `/projects/${projectId}/payments`,
+              `/projects/${projectId}/products`,
+              `/projects/${projectId}/tasks`,
+              `/projects/${projectId}/tasks/registered`,
+              `/projects/${projectId}/inventory`,
+            ];
+            
+            // Перевіряємо чи є дочірній шлях у меню, який відповідає поточному location
+            const activeChildPath = allMenuPaths.find(otherPath => 
+              otherPath !== item.path && 
+              otherPath.startsWith(item.path + '/') && 
+              location.pathname.startsWith(otherPath)
+            );
+            
+            // Активний, якщо:
+            // 1. Точне співпадіння з item.path
+            // 2. Або шлях починається з item.path, але немає активного дочірнього шляху
+            const isActive = location.pathname === item.path || 
+              (location.pathname.startsWith(item.path + '/') && !activeChildPath);
+            
             return (
               <Button
                 key={item.path}
